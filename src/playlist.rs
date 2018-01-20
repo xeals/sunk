@@ -14,7 +14,8 @@ pub struct Playlist {
 }
 
 impl Playlist {
-    fn from(j: json::Value) -> Result<Playlist> {
+    /// Parses a JSON map into a Playlist struct.
+    pub fn from(j: &json::Value) -> Result<Playlist> {
         if !j.is_object() { return Err(Error::ParseError("not an object")) }
 
         Ok(Playlist {
@@ -26,17 +27,31 @@ impl Playlist {
         })
     }
 
+    /// Fetches the songs contained in a playlist.
     fn songs(&self, sunk: &mut Sunk) -> Result<Vec<Song>> {
         get_playlist_content(sunk, self.id)
     }
 }
 
-fn get_playlists(sunk: &mut Sunk, user: Option<String>) -> Vec<Playlist> {
-    unimplemented!()
+fn get_playlists(sunk: &mut Sunk, user: Option<String>) -> Result<Vec<Playlist>> {
+    let arg = if let Some(u) = user {
+        vec![("username", u)]
+    } else {
+        vec![]
+    };
+    let (_, res) = sunk.get("getPlaylists", arg)?;
+    let mut pls = vec![];
+    for pl in res["subsonic-response"]["playlists"]["playlist"]
+        .as_array().ok_or(Error::ParseError("not an array"))?
+    {
+        pls.push(Playlist::from(pl)?);
+    }
+    Ok(pls)
 }
 
 fn get_playlist(sunk: &mut Sunk, id: u64) -> Result<Playlist> {
-    unimplemented!()
+    let (_, res) = sunk.get("getPlaylist", vec![("id", id)])?;
+    Playlist::from(&res["subsonic-response"]["playlist"])
 }
 
 fn get_playlist_content(sunk: &mut Sunk, id: u64) -> Result<Vec<Song>> {
