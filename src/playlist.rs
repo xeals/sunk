@@ -88,7 +88,9 @@ fn update_playlist(
     name: Option<String>,
     comment: Option<String>,
     public: Option<bool>,
+    /// List of song *IDs* to add to the playlist.
     to_add: Option<Vec<u64>>,
+    /// List of song *indexes* to remove from the playlist.
     to_remove: Option<Vec<u64>>,
 ) -> Result<()> {
     let mut args = vec![("id", id.to_string())];
@@ -99,6 +101,12 @@ fn update_playlist(
     push_all_if_some!(args, "songIndexToRemove", to_remove);
 
     sunk.get("updatePlaylist", args)?;
+
+    Ok(())
+}
+
+fn delete_playlist(sunk: &mut Sunk, id: u64) -> Result<()> {
+    sunk.get("deletePlaylist", vec![("id", id)])?;
 
     Ok(())
 }
