@@ -12,6 +12,7 @@ pub enum Error {
     #[fail(display = "IO error: {}", _0)] Io(#[cause] io::Error),
     #[fail(display = "API error: {}", _0)] ServerError(String), // InvalidUrl(&'static str)
     #[fail(display = "Connection error: {}", _0)] HyperError(#[cause] hyper::Error),
+    #[fail(display = "Bad field: {}", _0)] ParseError(&'static str),
 }
 
 pub fn subsonic_err(err: u64, tar_ver: &str, srv_ver: &json::Value, msg: &json::Value) -> Result<()> {
