@@ -73,16 +73,34 @@ fn create_playlist(sunk: &mut Sunk, name: String, songs: Option<Vec<u64>>) ->
     Result<Option<Playlist>>
 {
     let mut args = vec![("name", name)];
-    if let Some(songs) = songs {
-        for id in songs {
-            // `to_string()`, otherwise we have type conflicts.
-            args.push(("songId", id.to_string()))
-        }
-    }
+    push_all_if_some!(args, "songId", songs);
+
     let (_, res) = sunk.get("createPlaylist", args)?;
     // TODO Match the API and return the playlist on new versions.
 
     Ok(None)
+}
+
+/// Updates a playlist. Only the owner of the playlist is privileged to do so.
+fn update_playlist(
+    sunk: &mut Sunk,
+    id: u64,
+    name: Option<String>,
+    comment: Option<String>,
+    public: Option<bool>,
+    to_add: Option<Vec<u64>>,
+    to_remove: Option<Vec<u64>>,
+) -> Result<()> {
+    let mut args = vec![("id", id.to_string())];
+    push_if_some!(args, "name", name);
+    push_if_some!(args, "comment", comment);
+    push_if_some!(args, "public", public);
+    push_all_if_some!(args, "songIdToAdd", to_add);
+    push_all_if_some!(args, "songIndexToRemove", to_remove);
+
+    sunk.get("updatePlaylist", args)?;
+
+    Ok(())
 }
 
 #[cfg(test)]
