@@ -99,22 +99,26 @@ impl Sunk {
     // fn get<'de, T>(&mut self, query: &str) -> Result<(u16, T)>
     // where
     //     T: serde::Deserialize<'de>
-    fn get(&mut self, query: &str) -> Result<(u16, json::Value)>
+    fn get(&mut self, query: &str, args: Option<&str>) -> Result<(u16, json::Value)>
     {
         use futures::{Future, Stream};
 
-        let scheme = match self.url.scheme() {
-            Some(s) => s,
-            None => {
-                warn!("No scheme given; falling back to http");
-                "http"
-            },
-        };
+        let scheme = self.url.scheme().or_else(|| {
+            warn!("No scheme provided; falling back to http");
+            Some("http")
+        }).ok_or(Error::ServerError("Unable to determine scheme".into()))?;
         let addr = self.url.authority()
             .ok_or(Error::ServerError("No address provided".into()))?;
-        let base = [scheme, "://", addr, "/rest/"].concat();
 
-        let uri = (base + query + "?" + &self.auth.as_uri()).parse().unwrap();
+        let mut url = [scheme, "://", addr, "/rest/"].concat();
+        url.push_str(query);
+        url.push_str("?");
+        url.push_str(&self.auth.as_uri());
+        if let Some(a) = args {
+            url.push_str(a);
+        }
+
+        let uri = url.parse().unwrap();
         debug!("uri: {}", uri);
         let work = self.client.get(uri).and_then(|res| {
             let status = res.status();
@@ -138,7 +142,7 @@ impl Sunk {
     /// - incorrect API target
     fn check_connection(&mut self) -> Result<()> {
         // let (code, _res) = self.get::<json::Value>("ping.view")?;
-        let (code, _res) = self.get("ping.view")?;
+        let (code, _res) = self.get("ping", None)?;
         let res = &_res["subsonic-response"];
 
         macro_rules! err (
