@@ -1,10 +1,10 @@
 #[macro_use]
 extern crate failure;
-extern crate hyper;
 extern crate futures;
+extern crate hyper;
+extern crate serde;
+extern crate serde_json as json;
 extern crate tokio_core as tokio;
-extern crate serde_json;
-// extern crate url;
 
 extern crate md5;
 extern crate rand;
@@ -13,5 +13,4 @@ pub mod error;
 pub mod sunk;
 
 #[cfg(test)]
-mod tests {
-}
+mod tests {}
