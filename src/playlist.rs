@@ -65,6 +65,26 @@ fn get_playlist_content(sunk: &mut Sunk, id: u64) -> Result<Vec<Song>> {
     Ok(list)
 }
 
+/// Creates a playlist with the given name.
+///
+/// Since API version 1.14.0, the newly created playlist is returned. In earlier
+/// versions, an empty response is returned.
+fn create_playlist(sunk: &mut Sunk, name: String, songs: Option<Vec<u64>>) ->
+    Result<Option<Playlist>>
+{
+    let mut args = vec![("name", name)];
+    if let Some(songs) = songs {
+        for id in songs {
+            // `to_string()`, otherwise we have type conflicts.
+            args.push(("songId", id.to_string()))
+        }
+    }
+    let (_, res) = sunk.get("createPlaylist", args)?;
+    // TODO Match the API and return the playlist on new versions.
+
+    Ok(None)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
