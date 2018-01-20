@@ -146,27 +146,22 @@ impl Sunk {
         );
 
         if code >= 400 {
-            return Err(Error::ServerError(
-                format!("server not found: error {}", code)
-            ))
+            err!(format!("server not found: error {}", code))
         }
 
         match res["status"].as_str() {
             Some("ok") => {},
             Some("failed") => {
-                match res["error"].as_u64() {
-                    Some(30) => err!(format!(
-                            "incompatible protocol: \
-                             expecting >= {}, server has {}",
-                            TARGET_API, res["version"]
-                        )),
-                    Some(i) => err!(format!(
-                        "other error: {}", res["error"]["message"]
-                    )),
-                    None => err!(format!("unexpected respone: {:?}", res)),
+                if let Some(i) = res["error"].as_u64() {
+                    return subsonic_err(
+                        i, TARGET_API,
+                        &res["version"],
+                        &res["error"]["message"]
+                    )
+                } else {
+                    err!(format!("unexpected respone: {:?}", res))
                 }
             }
-            None => err!(format!("unexpected response: {:?}", res)),
             _ => unreachable!()
         }
 
