@@ -41,7 +41,7 @@ fn get_playlists(sunk: &mut Sunk, user: Option<String>) -> Result<Vec<Playlist>>
     };
     let (_, res) = sunk.get("getPlaylists", arg)?;
     let mut pls = vec![];
-    for pl in res["subsonic-response"]["playlists"]["playlist"]
+    for pl in pointer!(res, "/subsonic-response/playlists/playlist")
         .as_array().ok_or(Error::ParseError("not an array"))?
     {
         pls.push(Playlist::from(pl)?);
@@ -57,8 +57,7 @@ fn get_playlist(sunk: &mut Sunk, id: u64) -> Result<Playlist> {
 fn get_playlist_content(sunk: &mut Sunk, id: u64) -> Result<Vec<Song>> {
     let (_, res) = sunk.get("getPlaylist", vec![("id", id)])?;
     let mut list = vec![];
-    for song in res.pointer("/subsonic-response/playlist/entry")
-        .ok_or(Error::ParseError("no entries found"))?
+    for song in pointer!(res, "/subsonic-response/playlist/entry")
         .as_array().ok_or(Error::ParseError("not an array"))?
     {
         list.push(Song::from(song)?);

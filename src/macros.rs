@@ -32,3 +32,10 @@ macro_rules! fetch_maybe {
         }
     }
 }
+
+macro_rules! pointer {
+    ($json:ident, $path:expr) => (
+        $json.pointer($path)
+            .ok_or(Error::ParseError(stringify!(nothing found at $path)))?
+    )
+}
