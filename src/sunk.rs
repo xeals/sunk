@@ -75,7 +75,7 @@ impl SunkAuth {
 }
 
 impl Sunk {
-    fn new(url: &str, user: &str, password: &str) -> Result<Sunk> {
+    pub fn new(url: &str, user: &str, password: &str) -> Result<Sunk> {
         use std::str::FromStr;
 
         let auth = SunkAuth::new(user, password);
@@ -99,7 +99,9 @@ impl Sunk {
     // fn get<'de, T>(&mut self, query: &str) -> Result<(u16, T)>
     // where
     //     T: serde::Deserialize<'de>
-    fn get(&mut self, query: &str, args: Option<&str>) -> Result<(u16, json::Value)>
+    pub fn get<S>(&mut self, query: &str, args: Vec<(&str, S)>) -> Result<(u16, json::Value)>
+    where
+        S: ::std::fmt::Display + ::std::string::ToString
     {
         use futures::{Future, Stream};
 
@@ -114,8 +116,11 @@ impl Sunk {
         url.push_str(query);
         url.push_str("?");
         url.push_str(&self.auth.as_uri());
-        if let Some(a) = args {
-            url.push_str(a);
+        if !args.is_empty() {
+            for a in &args {
+                url.push_str("&");
+                url.push_str(&format!("{}={}", a.0, a.1));
+            }
         }
 
         let uri = url.parse().unwrap();
@@ -142,7 +147,7 @@ impl Sunk {
     /// - incorrect API target
     fn check_connection(&mut self) -> Result<()> {
         // let (code, _res) = self.get::<json::Value>("ping.view")?;
-        let (code, _res) = self.get("ping", None)?;
+        let (code, _res) = self.get("ping", vec![("", "")])?;
         let res = &_res["subsonic-response"];
 
         macro_rules! err (
@@ -177,24 +182,12 @@ impl Sunk {
 mod tests {
     use sunk::*;
     use std::io;
-
-    fn load_credentials() -> io::Result<(String, String, String)> {
-        use self::io::BufRead;
-
-        let mut file = ::std::fs::File::open("credentials")?;
-        let mut it = io::BufReader::new(file).lines();
-        let site = it.next().unwrap()?;
-        let user = it.next().unwrap()?;
-        let pass = it.next().unwrap()?;
-        Ok((site, user, pass))
-    }
+    use test_util::*;
 
     #[test]
     fn test_ping() {
         let (site, user, pass) = load_credentials().unwrap();
-        let mut srv = Sunk::new(site.as_str(),
-                               user.as_str(),
-                               pass.as_str())
+        let mut srv = Sunk::new(&site, &user, &pass)
             .expect("Failed to start client");
         debug!("{:?}", srv);
         srv.check_connection().unwrap();
