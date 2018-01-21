@@ -227,6 +227,26 @@ impl Sunk {
             Ok(())
         }
     }
+
+    /// Starts a library scan.
+    pub fn scan_library(&mut self) -> Result<()> {
+        self.get("startScan", Query::from("", ""))?;
+        Ok(())
+    }
+
+    /// Gets the status of a scan. Returns whether or not the scan is currently
+    /// running, and the number of media items found.
+    pub fn scan_status(&mut self) -> Result<(bool, u64)> {
+        let (_, res) = self.get("getScanStatus", Query::from("", ""))?;
+        let _status = pointer!(res, "/subsonic-response/scanStatus");
+
+        let status = _status["scanning"].as_bool()
+            .ok_or(Error::ParseError("status was not bool"))?;
+        let count = _status["count"].as_u64()
+            .ok_or(Error::ParseError("count was not u64"))?;
+
+        Ok((status, count))
+    }
 }
 
 #[cfg(test)]
@@ -251,5 +271,14 @@ mod tests {
         debug!("{:?}", srv);
         srv.check_connection().unwrap();
         assert!(srv.check_connection().is_ok())
+    }
+
+    #[test]
+    fn test_scan_status() {
+        let (site, user, pass) = load_credentials().unwrap();
+        let mut srv = Sunk::new(&site, &user, &pass).unwrap();
+        let (status, n) = srv.scan_status().unwrap();
+        assert_eq!(status, false);
+        assert_eq!(n, 5661);
     }
 }
