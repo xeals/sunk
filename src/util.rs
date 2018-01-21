@@ -1,8 +1,5 @@
 #![macro_use]
 
-use error::*;
-use json;
-
 macro_rules! fetch {
     ($j:ident->$i:ident: $t:ident) => (
         $j[stringify!($i)].$t().ok_or(
@@ -21,9 +18,6 @@ macro_rules! fetch_maybe {
         $j[stringify!($i)].$t()
     };
     ($j:ident->$i:ident: $t:ident, $u:ty) => {
-        // fetch_maybe!($j->$i: $t).map(|v| v.parse::<$u>().map_err(
-        //     |_| Error::ParseError(stringify!(not a $u))
-        // ))
         match fetch_maybe!($j->$i: $t).map(|v| v.parse::<$u>().map_err(
             |_| Error::ParseError(stringify!(not a $u))
         )) {
@@ -38,27 +32,6 @@ macro_rules! pointer {
         $json.pointer($path)
             .ok_or(Error::ParseError(stringify!(nothing found at $path)))?
     )
-}
-
-/// If the value is `Some`, pushes the value to the vector with the given key.
-macro_rules! push_if_some {
-    ($vec:ident, $key:expr, $val:ident) => {
-        if let Some(v) = $val {
-            $vec.push(($key, v.to_string()))
-        }
-    }
-}
-
-/// If the value is `Some`, pushes the values of the argument vector to the
-/// parent vector, all with the provided key.
-macro_rules! push_all_if_some {
-    ($vec:ident, $key:expr, $vals:ident) => {
-        if let Some(vs) = $vals {
-            for v in vs {
-                $vec.push(($key, v.to_string()))
-            }
-        }
-    }
 }
 
 pub(crate) fn map_str<T>(v: Option<T>) -> Option<String>

@@ -2,7 +2,7 @@ use json;
 
 use query::Query;
 use error::*;
-use macros::*;
+use util::*;
 use song::Song;
 use sunk::Sunk;
 

@@ -15,14 +15,16 @@ extern crate tokio_core as tokio;
 extern crate md5;
 extern crate rand;
 
-mod macros;
-mod test_util;
+mod util;
 pub mod error;
 pub mod sunk;
 pub mod song;
 pub mod playlist;
 pub mod api;
 pub mod query;
+
+#[cfg(test)]
+mod test_util;
 
 #[cfg(test)]
 mod tests {}

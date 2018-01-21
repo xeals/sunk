@@ -3,7 +3,7 @@ use json;
 use std::convert::From;
 use sunk::Sunk;
 
-use macros::*;
+use util::*;
 use query::Query;
 
 /// Audio encoding format.
