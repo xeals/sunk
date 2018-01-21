@@ -34,6 +34,17 @@ macro_rules! pointer {
     )
 }
 
+macro_rules! impl_cover_art {
+    () => {
+        pub fn cover_art(&self, sunk: &mut Sunk, size: Option<u64>) -> Result<String> {
+            let mut args = Query::new();
+            args.push("id", self.id);
+            args.push_some("size", size);
+            sunk.try_binary("getCoverArt", args)
+        }
+    }
+}
+
 pub(crate) fn map_str<T>(v: Option<T>) -> Option<String>
 where
     T: ::std::string::ToString
@@ -41,16 +52,22 @@ where
     v.map(|v| v.to_string())
 }
 
-pub(crate) fn map_some_vec<T, U, F>(
-    sv: Option<Vec<T>>, f: F
+fn map_some_vec<T, U, F>(
+    sv: Option<Vec<T>>, mut f: F
 ) -> Option<Vec<U>>
 where
-    F: FnOnce(&T) -> U,
+    F: FnMut(&T) -> U,
 {
-    unimplemented!();
-    // sv.map(|v| {
-    //     v.iter().map(|n| {
-    //         f(n)
-    //     }).collect::<Vec<U>>()
-    // })
+    sv.map(|v| {
+        v.iter().map(|n| {
+            f(n)
+        }).collect::<Vec<U>>()
+    })
+}
+
+pub(crate) fn map_vec_string<T>(sv: Option<Vec<T>>) -> Option<Vec<String>>
+where
+    T: ::std::string::ToString,
+{
+    map_some_vec(sv, T::to_string)
 }

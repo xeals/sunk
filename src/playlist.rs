@@ -82,7 +82,7 @@ fn create_playlist(
     let mut args = Query::new();
     args.push("name", name);
 
-    args.push_all_some("songId", map_some_vec(songs, |s| s.to_string()));
+    args.push_all_some("songId", map_vec_string(songs));
 
     let (_, res) = sunk.get("createPlaylist", args)?;
     // TODO Match the API and return the playlist on new versions.
@@ -105,9 +105,8 @@ fn update_playlist(
     args.push_some("name", name);
     args.push_some("comment", comment);
     args.push_some("public", map_str(public));
-    args.push_all_some("songIdToAdd", map_some_vec(to_add, |s| s.to_string()));
-    args.push_all_some("songIndexToRemove",
-                       map_some_vec(to_remove, |s| s.to_string()));
+    args.push_all_some("songIdToAdd", map_vec_string(to_add));
+    args.push_all_some("songIndexToRemove", map_vec_string(to_remove));
 
     sunk.get("updatePlaylist", args)?;
 
