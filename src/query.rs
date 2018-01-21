@@ -2,6 +2,7 @@ use error::*;
 use std::fmt::{self, Display};
 
 /// An expandable query set for a call.
+#[derive(Debug)]
 pub struct Query<'a, D: Display> {
     inner: Vec<(&'a str, D)>
 }

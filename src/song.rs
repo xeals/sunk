@@ -102,6 +102,31 @@ impl Song {
         self.stream_url(sunk, None, None)
     }
 
+    /// Creates an HLS (HTTP Live Streaming) playlist used for streaming video
+    /// or audio. HLS is a streaming protocol implemented by Apple and works by
+    /// breaking the overall stream into a sequence of small HTTP-based file
+    /// downloads. It's supported by iOS and newer versions of Android. This
+    /// method also supports adaptive bitrate streaming, see the bitRate
+    /// parameter.
+    ///
+    ///  Returns an M3U8 playlist on success (content type
+    ///  "application/vnd.apple.mpegurl").
+    pub fn hls(&self, sunk: &mut Sunk, bitrates: Option<Vec<u64>>) -> Result<String> {
+        let mut args = Query::new();
+        args.push("id", self.id);
+        args.push_all_some("bitrate", bitrates);
+
+        let raw = sunk.get_raw("hls", args)?;
+        {
+            let fline = raw.split('\n').next()
+                .ok_or(Error::StreamError("unexpected EOF"))?;
+            if fline.contains("xml") || fline.contains("{") {
+                return Err(Error::Api(SubsonicError::from_u16(70)?))
+            }
+        }
+        Ok(raw)
+    }
+
     /// Returns the URL of the cover art. Size is a single parameter and the
     /// image will be scaled on its longest edge.
     pub fn cover_art(&self, sunk: &mut Sunk, size: Option<u64>) -> Result<String> {
@@ -126,6 +151,7 @@ pub fn get_lyrics(sunk: &mut Sunk, artist: Option<&str>, title: Option<&str>) ->
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_util::*;
 
     #[test]
     fn parse_test() {
@@ -161,5 +187,22 @@ mod tests {
 
         let parsed = Song::from(&raw);
         assert!(parsed.is_ok());
+    }
+
+    #[test]
+    fn get_hls() {
+        let (s, u, p) = load_credentials().unwrap();
+        let mut srv = Sunk::new(&s, &u, &p).unwrap();
+        let song = Song::from(&json!(
+            {
+                "id": "1633",
+                "duration": 240,
+                "size": 1073,
+                "path": "A/Afterglow/That Is How I Roll!/01 That Is How I Roll!.flac"
+            }
+        )).unwrap();
+
+        let hls = song.hls(&mut srv, None);
+        assert!(hls.is_ok());
     }
 }

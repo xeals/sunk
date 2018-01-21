@@ -20,6 +20,7 @@ pub enum Error {
     HyperError(#[cause] hyper::Error),
     #[fail(display = "Bad field: {}", _0)] ParseError(&'static str),
     #[fail(display = "{}", _0)] Api(#[cause] SubsonicError),
+    #[fail(display = "Unable to fetch content: {}", _0)] StreamError(&'static str),
 }
 
 #[derive(Debug, Fail, Clone)]
@@ -48,6 +49,20 @@ impl SubsonicError {
             NotAuthorized(_) => 50,
             TrialExpired => 60,
             NotFound => 70,
+        }
+    }
+
+    pub fn from_u16(n: u16) -> self::Result<SubsonicError> {
+        use self::SubsonicError::*;
+        match n {
+            10 => Ok(MissingParameter),
+            40 => Ok(WrongAuth),
+            41 => Ok(Ldap),
+            60 => Ok(TrialExpired),
+            70 => Ok(NotFound),
+            _ => Err(Error::UnknownError(
+                "can't make error from u16; requires other arguments"
+            ))
         }
     }
 

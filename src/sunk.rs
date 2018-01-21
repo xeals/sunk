@@ -138,6 +138,7 @@ impl Sunk {
         url.push_str(query);
         url.push_str("?");
         url.push_str(&self.auth.as_uri(self.api));
+        url.push_str("&");
         url.push_str(&args.to_string());
 
         Ok(url)
@@ -157,7 +158,8 @@ impl Sunk {
         use futures::{Future, Stream};
 
         let uri = self.build_url(query, args)?.parse().unwrap();
-        debug!("uri: {}", uri);
+
+        info!("Connecting to {}", uri);
         let work = self.client.get(uri).and_then(|res| {
             let status = res.status();
             info!("Received `{}` for request /{}?", status, query);
@@ -195,6 +197,8 @@ impl Sunk {
 
         let raw_uri = self.build_url(query, args)?;
         let uri = raw_uri.parse().unwrap();
+
+        info!("Connecting to {}", uri);
         let work = self.client.get(uri).and_then(|res| {
             res.body().concat2().and_then(move |b| {
                 let valid_json = json::from_slice::<json::Value>(&b).is_ok();
@@ -207,6 +211,28 @@ impl Sunk {
         });
 
         self.core.run(work).map_err(|e| Error::HyperError(e))
+    }
+
+    pub fn get_raw<'a, D>(
+        &mut self,
+        query: &str,
+        args: Query<'a, D>
+    ) -> Result<String>
+    where
+        D: ::std::fmt::Display,
+    {
+        use futures::{Future, Stream};
+
+        let uri = self.build_url(query, args)?.parse().unwrap();
+
+        info!("Connecting to {}", uri);
+        let work = self.client.get(uri).and_then(|res| {
+            res.body().concat2()
+        });
+
+        let get = self.core.run(work).map_err(|e| Error::HyperError(e))?;
+        String::from_utf8(get.to_vec())
+            .map_err(|_| Error::ParseError("invalid stream".into()))
     }
 
     /// Attempts to connect to the server with the provided credentials.
