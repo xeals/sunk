@@ -100,6 +100,25 @@ impl Song {
     pub fn download_url(&self, sunk: &mut Sunk) -> Result<String> {
         self.stream_url(sunk, None, None)
     }
+
+    /// Returns the URL of the cover art. Size is a single parameter and the
+    /// image will be scaled on its longest edge.
+    pub fn cover_art(&self, sunk: &mut Sunk, size: Option<usize>) -> Result<String> {
+        let mut args = vec![("id", self.id.to_string())];
+        push_if_some!(args, "size", size);
+        sunk.try_binary("getCoverArt", args)
+    }
+}
+
+/// Searches for lyrics matching the artist and title. Returns an empty string
+/// if no lyrics are found.
+pub fn get_lyrics(sunk: &mut Sunk, artist: Option<&str>, title: Option<&str>) -> Result<String> {
+    let mut args = vec![];
+    push_if_some!(args, "artist", artist);
+    push_if_some!(args, "title", title);
+    let (_, json) = sunk.get("getLyrics", args)?;
+    pointer!(json, "/subsonic-response/lyrics").as_str()
+        .ok_or(Error::ParseError("not a string")).map(|s| s.to_string())
 }
 
 #[cfg(test)]
