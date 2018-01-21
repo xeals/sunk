@@ -16,22 +16,22 @@ const TARGET_API: &str = "1.14.0"; // For JSON support.
 
 #[derive(Debug)]
 pub struct Sunk {
-    url: Uri,
-    auth: SunkAuth,
+    url:    Uri,
+    auth:   SunkAuth,
     client: Client<HttpsConnector<hyper::client::HttpConnector>>,
-    core: tokio::reactor::Core,
+    core:   tokio::reactor::Core,
 }
 
 #[derive(Debug)]
 struct SunkAuth {
-    user: String,
+    user:     String,
     password: String,
 }
 
 impl SunkAuth {
     fn new(user: &str, password: &str) -> SunkAuth {
         SunkAuth {
-            user: user.into(),
+            user:     user.into(),
             password: password.into(),
         }
     }
@@ -42,19 +42,15 @@ impl SunkAuth {
         let auth = if TARGET_API >= "1.13.0" {
             use rand::{thread_rng, Rng};
 
-            let salt: String = thread_rng().gen_ascii_chars().take(SALT_SIZE).collect();
+            let salt: String =
+                thread_rng().gen_ascii_chars().take(SALT_SIZE).collect();
             let pre_t = self.password.to_string() + &salt;
             let token = format!("{:x}", md5::compute(pre_t.as_bytes()));
 
             // As detailed in http://www.subsonic.org/pages/api.jsp
-            format!("u={u}&t={t}&s={s}",
-                    u = self.user,
-                    t = token,
-                    s = salt)
+            format!("u={u}&t={t}&s={s}", u = self.user, t = token, s = salt)
         } else {
-            format!("u={u}&p={p}",
-                    u = self.user,
-                    p = self.password)
+            format!("u={u}&p={p}", u = self.user, p = self.password)
         };
 
         // Prefer JSON.
@@ -66,11 +62,13 @@ impl SunkAuth {
 
         let crate_name = ::std::env::var("CARGO_PKG_NAME").unwrap();
 
-        format!("{auth}&v={v}&c={c}&f={f}",
-                auth = auth,
-                v = TARGET_API,
-                c = crate_name,
-                f = format)
+        format!(
+            "{auth}&v={v}&c={c}&f={f}",
+            auth = auth,
+            v = TARGET_API,
+            c = crate_name,
+            f = format
+        )
     }
 }
 
@@ -89,23 +87,77 @@ impl Sunk {
             .build(&handle);
 
         Ok(Sunk {
-            url: uri,
-            auth: auth,
+            url:    uri,
+            auth:   auth,
             client: client,
-            core: core,
+            core:   core,
         })
+    }
+
+    /// Internal helper function to construct a URL when the actual fetching is
+    /// not required.
+    ///
+    /// Formats arguments in a standard HTTP format, using information from the
+    /// `Sunk`; for example:
+    ///
+    /// ```rust
+    /// use sunk::Sunk::*;
+    /// use error::*;
+    ///
+    /// let sunk = Sunk::new("subsonic.example.com", "user", "password")?;
+    /// let url = sunk.build_url("stream", vec![("id", 1), ("bitrate", 96)])?;
+    ///
+    /// assert_eq!(
+    ///     url,
+    ///     "https://subsonic.example.com/rest/stream \
+    ///         &u=user&p=password&v=1.14.0&id=1&bitrate=96".to_string()
+    /// )
+    /// ```
+    ///
+    /// Most usage of this function will be through `Sunk::get()`.
+    fn build_url<S>(&self, query: &str, args: Vec<(&str, S)>) -> Result<String>
+    where
+        S: ::std::fmt::Display,
+    {
+        let scheme = self.url
+            .scheme()
+            .or_else(|| {
+                warn!("No scheme provided; falling back to http");
+                Some("http")
+            })
+            .ok_or(Error::ServerError("Unable to determine scheme".into()))?;
+        let addr = self.url
+            .authority()
+            .ok_or(Error::ServerError("No address provided".into()))?;
+
+        let mut url = [scheme, "://", addr, "/rest/"].concat();
+        url.push_str(query);
+        url.push_str("?");
+        url.push_str(&self.auth.as_uri());
+        if !args.is_empty() {
+            for a in &args {
+                url.push_str("&");
+                url.push_str(&format!("{}={}", a.0, a.1));
+            }
+        }
+
+        Ok(url)
     }
 
     // fn get<'de, T>(&mut self, query: &str) -> Result<(u16, T)>
     // where
     //     T: serde::Deserialize<'de>
-    pub fn get<S>(&mut self, query: &str, args: Vec<(&str, S)>) -> Result<(u16, json::Value)>
+    pub fn get<S>(
+        &mut self,
+        query: &str,
+        args: Vec<(&str, S)>
+    ) -> Result<(u16, json::Value)>
     where
-        S: ::std::fmt::Display// + ::std::string::ToString
+        S: ::std::fmt::Display, // + ::std::string::ToString
     {
         use futures::{Future, Stream};
 
-        let uri = build_url(&self, query, args)?.parse().unwrap();
+        let uri = self.build_url(query, args)?.parse().unwrap();
         debug!("uri: {}", uri);
         let work = self.client.get(uri).and_then(|res| {
             let status = res.status();
@@ -132,13 +184,17 @@ impl Sunk {
     /// Specifically, it will succeed if `json::from_slice()` fails due to not
     /// receiving a valid JSON stream. It's assumed that the stream will be
     /// binary in this case.
-    pub fn try_binary<S>(&mut self, query: &str, args: Vec<(&str, S)>) -> Result<String>
+    pub fn try_binary<S>(
+        &mut self,
+        query: &str,
+        args: Vec<(&str, S)>
+    ) -> Result<String>
     where
-        S: ::std::fmt::Display
+        S: ::std::fmt::Display,
     {
         use futures::{Future, Stream};
 
-        let raw_uri = build_url(&self, query, args)?;
+        let raw_uri = self.build_url(query, args)?;
         let uri = raw_uri.parse().unwrap();
         let work = self.client.get(uri).and_then(|res| {
             res.body().concat2().and_then(move |b| {
@@ -172,11 +228,12 @@ impl Sunk {
         }
 
         match res["status"].as_str() {
-            Some("ok") => {},
+            Some("ok") => {}
             Some("failed") => {
                 if let Some(i) = res["error"].as_u64() {
                     return subsonic_err(
-                        i, TARGET_API,
+                        i,
+                        TARGET_API,
                         &res["version"],
                         &res["error"]["message"]
                     )
@@ -191,55 +248,10 @@ impl Sunk {
     }
 }
 
-/// Internal helper function to construct a URL when the actual fetching is not required.
-///
-/// Formats arguments in a standard HTTP format, using information from the
-/// `Sunk`; for example:
-///
-/// ```rust
-/// use sunk::{Sunk, build_url};
-/// use error::*;
-///
-/// let sunk = Sunk::new("subsonic.example.com", "user", "password")?;
-/// let url = build_url(&sunk, "stream", vec![("id", 1), ("bitrate", 96)])?;
-///
-/// assert_eq!(
-///     url,
-///     "https://subsonic.example.com/rest/stream \
-///         &u=user&p=password&v=1.14.0&id=1&bitrate=96".to_string()
-/// )
-/// ```
-///
-/// Most usage of this function will be through `Sunk::get()`.
-pub fn build_url<S>(sunk: &Sunk, query: &str, args: Vec<(&str, S)>) -> Result<String>
-where
-    S: ::std::fmt::Display
-{
-    let scheme = sunk.url.scheme().or_else(|| {
-        warn!("No scheme provided; falling back to http");
-        Some("http")
-    }).ok_or(Error::ServerError("Unable to determine scheme".into()))?;
-    let addr = sunk.url.authority()
-        .ok_or(Error::ServerError("No address provided".into()))?;
-
-    let mut url = [scheme, "://", addr, "/rest/"].concat();
-    url.push_str(query);
-    url.push_str("?");
-    url.push_str(&sunk.auth.as_uri());
-    if !args.is_empty() {
-        for a in &args {
-            url.push_str("&");
-            url.push_str(&format!("{}={}", a.0, a.1));
-        }
-    }
-
-    Ok(url)
-}
-
 #[cfg(test)]
 mod tests {
-    use sunk::*;
     use std::io;
+    use sunk::*;
     use test_util::*;
 
     #[test]
@@ -253,8 +265,8 @@ mod tests {
     #[test]
     fn test_ping() {
         let (site, user, pass) = load_credentials().unwrap();
-        let mut srv = Sunk::new(&site, &user, &pass)
-            .expect("Failed to start client");
+        let mut srv =
+            Sunk::new(&site, &user, &pass).expect("Failed to start client");
         debug!("{:?}", srv);
         srv.check_connection().unwrap();
         assert!(srv.check_connection().is_ok())

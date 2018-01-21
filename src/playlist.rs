@@ -42,7 +42,8 @@ fn get_playlists(sunk: &mut Sunk, user: Option<String>) -> Result<Vec<Playlist>>
     let (_, res) = sunk.get("getPlaylists", arg)?;
     let mut pls = vec![];
     for pl in pointer!(res, "/subsonic-response/playlists/playlist")
-        .as_array().ok_or(Error::ParseError("not an array"))?
+        .as_array()
+        .ok_or(Error::ParseError("not an array"))?
     {
         pls.push(Playlist::from(pl)?);
     }
@@ -69,8 +70,11 @@ fn get_playlist_content(sunk: &mut Sunk, id: u64) -> Result<Vec<Song>> {
 ///
 /// Since API version 1.14.0, the newly created playlist is returned. In earlier
 /// versions, an empty response is returned.
-fn create_playlist(sunk: &mut Sunk, name: String, songs: Option<Vec<u64>>) ->
-    Result<Option<Playlist>>
+fn create_playlist(
+    sunk: &mut Sunk,
+    name: String,
+    songs: Option<Vec<u64>>
+) -> Result<Option<Playlist>>
 {
     let mut args = vec![("name", name)];
     push_all_if_some!(args, "songId", songs);

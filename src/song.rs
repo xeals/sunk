@@ -66,21 +66,22 @@ impl Song {
     /// take the URI and stream it.
     pub fn stream_url(
         &self,
-        sunk: &Sunk,
+        sunk: &mut Sunk,
         bitrate: Option<u64>,
         format: Option<AudioFormat>
     ) -> Result<String> {
         let mut args = vec![("id", self.id.to_string())];
         push_if_some!(args, "maxBitRate", bitrate);
         push_if_some!(args, "format", format);
-        ::sunk::build_url(sunk, "stream", args)
+        // ::sunk::build_url(sunk, "stream", args)
+        sunk.try_binary("stream", args)
     }
 
     /// Returns a constructed URL for downloading the song.
     ///
     /// `download_url()` does not support transcoding, while `stream_url()`
     /// does.
-    pub fn download_url(&self, sunk: &Sunk) -> Result<String> {
+    pub fn download_url(&self, sunk: &mut Sunk) -> Result<String> {
         self.stream_url(sunk, None, None)
     }
 }
