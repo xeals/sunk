@@ -129,12 +129,7 @@ impl Song {
 
     /// Returns the URL of the cover art. Size is a single parameter and the
     /// image will be scaled on its longest edge.
-    pub fn cover_art(&self, sunk: &mut Sunk, size: Option<u64>) -> Result<String> {
-        let mut args = Query::new();
-        args.push("id", self.id);
-        args.push_some("size", size);
-        sunk.try_binary("getCoverArt", args)
-    }
+    impl_cover_art!();
 }
 
 /// Searches for lyrics matching the artist and title. Returns an empty string

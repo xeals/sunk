@@ -32,9 +32,11 @@ impl Playlist {
     }
 
     /// Fetches the songs contained in a playlist.
-    fn songs(&self, sunk: &mut Sunk) -> Result<Vec<Song>> {
+    pub fn songs(&self, sunk: &mut Sunk) -> Result<Vec<Song>> {
         get_playlist_content(sunk, self.id)
     }
+
+    impl_cover_art!();
 }
 
 fn get_playlists(
