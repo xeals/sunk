@@ -3,6 +3,8 @@ use json;
 use std::convert::From;
 use std::io;
 
+use api::Api;
+
 pub type Result<T> = ::std::result::Result<T, self::Error>;
 
 #[derive(Debug, Fail)]
@@ -19,7 +21,7 @@ pub enum Error {
 
 pub fn subsonic_err(
     err: u64,
-    tar_ver: &str,
+    tar_ver: Api,
     srv_ver: &json::Value,
     msg: &json::Value,
 ) -> Result<()> {

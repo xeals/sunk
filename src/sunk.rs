@@ -10,9 +10,9 @@ use serde;
 use tokio;
 
 use error::*;
+use api::Api;
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
-const TARGET_API: &str = "1.14.0"; // For JSON support.
 
 #[derive(Debug)]
 pub struct Sunk {
@@ -20,6 +20,7 @@ pub struct Sunk {
     auth:   SunkAuth,
     client: Client<HttpsConnector<hyper::client::HttpConnector>>,
     core:   tokio::reactor::Core,
+    api:    Api,
 }
 
 #[derive(Debug)]
@@ -29,7 +30,7 @@ struct SunkAuth {
 }
 
 impl SunkAuth {
-    fn new(user: &str, password: &str) -> SunkAuth {
+    fn new(user: &str, password: &str, api: &str) -> SunkAuth {
         SunkAuth {
             user:     user.into(),
             password: password.into(),
@@ -37,9 +38,9 @@ impl SunkAuth {
     }
 
     // TODO Actual version comparison support
-    fn as_uri(&self) -> String {
+    fn as_uri(&self, api: Api) -> String {
         // First md5 support.
-        let auth = if TARGET_API >= "1.13.0" {
+        let auth = if api >= "1.13.0".into() {
             use rand::{thread_rng, Rng};
 
             let salt: String =
@@ -54,7 +55,7 @@ impl SunkAuth {
         };
 
         // Prefer JSON.
-        let format = if TARGET_API >= "1.14.0" {
+        let format = if api >= "1.14.0".into() {
             "json"
         } else {
             "xml"
@@ -65,7 +66,7 @@ impl SunkAuth {
         format!(
             "{auth}&v={v}&c={c}&f={f}",
             auth = auth,
-            v = TARGET_API,
+            v = api,
             c = crate_name,
             f = format
         )
@@ -76,8 +77,9 @@ impl Sunk {
     pub fn new(url: &str, user: &str, password: &str) -> Result<Sunk> {
         use std::str::FromStr;
 
-        let auth = SunkAuth::new(user, password);
+        let auth = SunkAuth::new(user, password, "1.14.0");
         let uri = Uri::from_str(url)?;
+        let api = Api::from("1.14.0");
 
         let mut core = tokio::reactor::Core::new()?;
         let handle = core.handle();
@@ -91,6 +93,7 @@ impl Sunk {
             auth:   auth,
             client: client,
             core:   core,
+            api:    api,
         })
     }
 
@@ -133,7 +136,7 @@ impl Sunk {
         let mut url = [scheme, "://", addr, "/rest/"].concat();
         url.push_str(query);
         url.push_str("?");
-        url.push_str(&self.auth.as_uri());
+        url.push_str(&self.auth.as_uri(self.api));
         if !args.is_empty() {
             for a in &args {
                 url.push_str("&");
@@ -233,7 +236,7 @@ impl Sunk {
                 if let Some(i) = res["error"].as_u64() {
                     return subsonic_err(
                         i,
-                        TARGET_API,
+                        self.api,
                         &res["version"],
                         &res["error"]["message"],
                     )
