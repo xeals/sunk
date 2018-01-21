@@ -13,6 +13,7 @@ pub struct Artist {
     pub name: String,
     cover_id: Option<String>,
     albums: Vec<u64>,
+    album_count: u64,
 }
 
 impl Artist {
@@ -22,8 +23,10 @@ impl Artist {
         }
 
         let mut albums = vec![];
-        for album in fetch!(j->album: as_array).iter() {
-            albums.push(fetch!(album->id: as_str, u64))
+        if let Some(_) = j.get("album") {
+            for album in fetch!(j->album: as_array).iter() {
+                albums.push(fetch!(album->id: as_str, u64))
+            }
         }
 
         Ok(Artist {
@@ -31,22 +34,43 @@ impl Artist {
             name:     fetch!(j->name: as_str).into(),
             cover_id: Some(fetch!(j->coverArt: as_str).into()),
             albums:   albums,
+            album_count: fetch!(j->albumCount: as_u64),
         })
     }
 
     pub fn albums(&self, sunk: &mut Sunk) -> Result<Vec<Album>> {
         let mut album_list = vec![];
-        for id in &self.albums {
-            let (_, res) = sunk.get("getAlbum", Query::from("id", id))?;
-            album_list.push(
-                Album::from(pointer!(res, "/subsonic-response/album"))?
-            )
-        }
+
+        // Building an artist from `get_artists()` doesn't populate the album
+        // list, but `get_artist()` does. An artist can, however, exist without
+        // an album.
+        if self.albums.is_empty() && self.album_count > 0 {
+            let albums = get_artist(sunk, self.id)?.albums;
+
+            for id in &albums {
+                let (_, res) = sunk.get("getAlbum", Query::from("id", id))?;
+                album_list.push(
+                    Album::from(pointer!(res, "/subsonic-response/album"))?
+                )
+            }
+        } else {
+            for id in &self.albums {
+                let (_, res) = sunk.get("getAlbum", Query::from("id", id))?;
+                album_list.push(
+                    Album::from(pointer!(res, "/subsonic-response/album"))?
+                )
+            }
+        };
 
         Ok(album_list)
     }
 
     impl_cover_art!();
+}
+
+pub fn get_artist(sunk: &mut Sunk, id: u64) -> Result<Artist> {
+    let (_, res) = sunk.get("getArtist", Query::from("id", id))?;
+    Artist::from(&res["subsonic-response"]["playlist"])
 }
 
 #[cfg(test)]
@@ -104,6 +128,6 @@ mod tests {
         let cover = parsed.cover_art(&mut srv, None).unwrap();
 
         println!("{}", cover);
-        assert!()
+        assert!(true)
     }
 }
