@@ -2,7 +2,7 @@ use error::*;
 use std::{convert, fmt};
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Copy, Clone)]
-pub struct Api (u8, u8, u8);
+pub struct Api(u8, u8, u8);
 
 impl convert::From<String> for Api {
     fn from(s: String) -> Api {
@@ -19,14 +19,12 @@ impl convert::From<String> for Api {
         ver!(minor);
         ver!(inc);
 
-        Api (major, minor, inc)
+        Api(major, minor, inc)
     }
 }
 
 impl<'a> convert::From<&'a str> for Api {
-    fn from(s: &'a str) -> Api {
-        Api::from(s.to_string())
-    }
+    fn from(s: &'a str) -> Api { Api::from(s.to_string()) }
 }
 
 impl fmt::Debug for Api {

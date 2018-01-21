@@ -9,8 +9,8 @@ use rand;
 use serde;
 use tokio;
 
-use error::*;
 use api::Api;
+use error::*;
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
@@ -218,36 +218,18 @@ impl Sunk {
     /// - invalid credentials
     /// - incorrect API target
     fn check_connection(&mut self) -> Result<()> {
-        // let (code, _res) = self.get::<json::Value>("ping.view")?;
-        let (code, _res) = self.get("ping", vec![("", "")])?;
-        let res = &_res["subsonic-response"];
+        let (code, res) = self.get("ping", vec![("", "")])?;
 
-        macro_rules! err (
-            ($e:expr) => (return Err(Error::ServerError($e)))
-        );
-
-        if code >= 400 {
-            err!(format!("server not found: error {}", code))
+        if let Some("failed") =
+            pointer!(res, "/subsonic-response/status").as_str()
+        {
+            Err(Error::Api(SubsonicError::from_response(
+                &res,
+                self.api,
+            )?))
+        } else {
+            Ok(())
         }
-
-        match res["status"].as_str() {
-            Some("ok") => {}
-            Some("failed") => {
-                if let Some(i) = res["error"].as_u64() {
-                    return subsonic_err(
-                        i,
-                        self.api,
-                        &res["version"],
-                        &res["error"]["message"],
-                    )
-                } else {
-                    err!(format!("unexpected respone: {:?}", res))
-                }
-            }
-            _ => unreachable!(),
-        }
-
-        Ok(())
     }
 }
 
