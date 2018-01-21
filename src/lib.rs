@@ -22,6 +22,8 @@ pub mod song;
 pub mod playlist;
 pub mod api;
 pub mod query;
+pub mod artist;
+pub mod album;
 
 #[cfg(test)]
 mod test_util;
