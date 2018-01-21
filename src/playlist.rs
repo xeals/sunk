@@ -1,29 +1,31 @@
-use sunk::Sunk;
-use song::Song;
 use error::*;
 use json;
 use macros::*;
+use song::Song;
+use sunk::Sunk;
 
 #[derive(Debug)]
 pub struct Playlist {
-    id: u64,
-    name: String,
+    id:         u64,
+    name:       String,
     song_count: u64,
-    duration: u64,
-    cover: String,
+    duration:   u64,
+    cover:      String,
 }
 
 impl Playlist {
     /// Parses a JSON map into a Playlist struct.
     pub fn from(j: &json::Value) -> Result<Playlist> {
-        if !j.is_object() { return Err(Error::ParseError("not an object")) }
+        if !j.is_object() {
+            return Err(Error::ParseError("not an object"))
+        }
 
         Ok(Playlist {
-            id: fetch!(j->id: as_str, u64),
-            name: fetch!(j->name: as_str).into(),
+            id:         fetch!(j->id: as_str, u64),
+            name:       fetch!(j->name: as_str).into(),
             song_count: fetch!(j->songCount: as_u64),
-            duration: fetch!(j->duration: as_u64),
-            cover: fetch!(j->coverArt: as_str).into(),
+            duration:   fetch!(j->duration: as_u64),
+            cover:      fetch!(j->coverArt: as_str).into(),
         })
     }
 
@@ -33,7 +35,10 @@ impl Playlist {
     }
 }
 
-fn get_playlists(sunk: &mut Sunk, user: Option<String>) -> Result<Vec<Playlist>> {
+fn get_playlists(
+    sunk: &mut Sunk,
+    user: Option<String>,
+) -> Result<Vec<Playlist>> {
     let arg = if let Some(u) = user {
         vec![("username", u)]
     } else {
@@ -59,7 +64,8 @@ fn get_playlist_content(sunk: &mut Sunk, id: u64) -> Result<Vec<Song>> {
     let (_, res) = sunk.get("getPlaylist", vec![("id", id)])?;
     let mut list = vec![];
     for song in pointer!(res, "/subsonic-response/playlist/entry")
-        .as_array().ok_or(Error::ParseError("not an array"))?
+        .as_array()
+        .ok_or(Error::ParseError("not an array"))?
     {
         list.push(Song::from(song)?);
     }
@@ -73,9 +79,8 @@ fn get_playlist_content(sunk: &mut Sunk, id: u64) -> Result<Vec<Song>> {
 fn create_playlist(
     sunk: &mut Sunk,
     name: String,
-    songs: Option<Vec<u64>>
-) -> Result<Option<Playlist>>
-{
+    songs: Option<Vec<u64>>,
+) -> Result<Option<Playlist>> {
     let mut args = vec![("name", name)];
     push_all_if_some!(args, "songId", songs);
 

@@ -1,13 +1,13 @@
 // use url;
-use hyper::{self, Uri, Client};
-use hyper_tls::HttpsConnector;
 use futures;
-use tokio;
-use serde;
+use hyper::{self, Client, Uri};
+use hyper_tls::HttpsConnector;
 use json;
+use log;
 use md5;
 use rand;
-use log;
+use serde;
+use tokio;
 
 use error::*;
 
@@ -83,7 +83,7 @@ impl Sunk {
         let handle = core.handle();
         let client = Client::configure()
             .connector(HttpsConnector::new(4, &handle)
-                       .map_err(|_| Error::UnknownError("TLS"))?)
+                .map_err(|_| Error::UnknownError("TLS"))?)
             .build(&handle);
 
         Ok(Sunk {
@@ -150,7 +150,7 @@ impl Sunk {
     pub fn get<S>(
         &mut self,
         query: &str,
-        args: Vec<(&str, S)>
+        args: Vec<(&str, S)>,
     ) -> Result<(u16, json::Value)>
     where
         S: ::std::fmt::Display, // + ::std::string::ToString
@@ -187,7 +187,7 @@ impl Sunk {
     pub fn try_binary<S>(
         &mut self,
         query: &str,
-        args: Vec<(&str, S)>
+        args: Vec<(&str, S)>,
     ) -> Result<String>
     where
         S: ::std::fmt::Display,
@@ -235,13 +235,13 @@ impl Sunk {
                         i,
                         TARGET_API,
                         &res["version"],
-                        &res["error"]["message"]
+                        &res["error"]["message"],
                     )
                 } else {
                     err!(format!("unexpected respone: {:?}", res))
                 }
             }
-            _ => unreachable!()
+            _ => unreachable!(),
         }
 
         Ok(())

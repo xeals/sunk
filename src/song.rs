@@ -1,7 +1,7 @@
-use sunk::Sunk;
-use std::convert::From;
-use json;
 use error::*;
+use json;
+use std::convert::From;
+use sunk::Sunk;
 
 use macros::*;
 
@@ -10,9 +10,23 @@ use macros::*;
 /// Recognises all of Subsonic's default transcoding formats.
 #[derive(Debug)]
 pub enum AudioFormat {
-    Aac, Aif, Aiff, Ape, Flac, Flv, M4a, Mp3,
-    Mpc, Oga, Ogg, Ogx, Opus, Shn, Wav, Wma,
-    Raw
+    Aac,
+    Aif,
+    Aiff,
+    Ape,
+    Flac,
+    Flv,
+    M4a,
+    Mp3,
+    Mpc,
+    Oga,
+    Ogg,
+    Ogx,
+    Opus,
+    Shn,
+    Wav,
+    Wma,
+    Raw,
 }
 
 impl ::std::fmt::Display for AudioFormat {
@@ -25,38 +39,40 @@ impl ::std::fmt::Display for AudioFormat {
 pub struct Song {
     id: u64,
     // parent: u64,
-    title: Option<String>,
-    album: Option<String>,
-    album_id: Option<u64>,
-    artist: Option<String>,
+    title:     Option<String>,
+    album:     Option<String>,
+    album_id:  Option<u64>,
+    artist:    Option<String>,
     artist_id: Option<u64>,
-    track: Option<u64>,
-    year: Option<u64>,
-    genre: Option<String>,
-    cover_id: Option<u64>,
-    size: u64,
-    duration: u64,
-    path: String,
+    track:     Option<u64>,
+    year:      Option<u64>,
+    genre:     Option<String>,
+    cover_id:  Option<u64>,
+    size:      u64,
+    duration:  u64,
+    path:      String,
 }
 
 impl Song {
     pub fn from(j: &json::Value) -> Result<Song> {
-        if !j.is_object() { return Err(Error::ParseError("not an object")) }
+        if !j.is_object() {
+            return Err(Error::ParseError("not an object"))
+        }
 
         Ok(Song {
-            id: fetch!(j->id: as_str, u64),
-            title: fetch_maybe!(j->title: as_str).map(|v| v.into()),
-            album: fetch_maybe!(j->album: as_str).map(|v| v.into()),
-            album_id: fetch_maybe!(j->albumId: as_str, u64),
-            artist: fetch_maybe!(j->artist: as_str).map(|v| v.into()),
+            id:        fetch!(j->id: as_str, u64),
+            title:     fetch_maybe!(j->title: as_str).map(|v| v.into()),
+            album:     fetch_maybe!(j->album: as_str).map(|v| v.into()),
+            album_id:  fetch_maybe!(j->albumId: as_str, u64),
+            artist:    fetch_maybe!(j->artist: as_str).map(|v| v.into()),
             artist_id: fetch_maybe!(j->artistId: as_str, u64),
-            track: fetch_maybe!(j->track: as_u64),
-            year: fetch_maybe!(j->year: as_u64),
-            genre: fetch_maybe!(j->genre: as_str).map(|v| v.into()),
-            cover_id: fetch_maybe!(j->coverArt: as_str, u64),
-            size: fetch!(j->size: as_u64),
-            duration: fetch!(j->duration: as_u64),
-            path: fetch!(j->path: as_str).into(),
+            track:     fetch_maybe!(j->track: as_u64),
+            year:      fetch_maybe!(j->year: as_u64),
+            genre:     fetch_maybe!(j->genre: as_str).map(|v| v.into()),
+            cover_id:  fetch_maybe!(j->coverArt: as_str, u64),
+            size:      fetch!(j->size: as_u64),
+            duration:  fetch!(j->duration: as_u64),
+            path:      fetch!(j->path: as_str).into(),
         })
     }
 
@@ -68,7 +84,7 @@ impl Song {
         &self,
         sunk: &mut Sunk,
         bitrate: Option<u64>,
-        format: Option<AudioFormat>
+        format: Option<AudioFormat>,
     ) -> Result<String> {
         let mut args = vec![("id", self.id.to_string())];
         push_if_some!(args, "maxBitRate", bitrate);
