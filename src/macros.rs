@@ -60,3 +60,23 @@ macro_rules! push_all_if_some {
         }
     }
 }
+
+pub(crate) fn map_str<T>(v: Option<T>) -> Option<String>
+where
+    T: ::std::string::ToString
+{
+    v.map(|v| v.to_string())
+}
+
+pub(crate) fn map_some_vec<T, U, F>(
+    sv: Option<Vec<T>>, f: F
+) -> Option<Vec<U>>
+where
+    F: FnOnce(&T) -> U,
+{
+    sv.map(|v| {
+        v.iter().map(|n| {
+            f(n)
+        }).collect::<Vec<U>>()
+    })
+}

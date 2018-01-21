@@ -4,6 +4,7 @@ use std::convert::From;
 use sunk::Sunk;
 
 use macros::*;
+use query::Query;
 
 /// Audio encoding format.
 ///
@@ -86,10 +87,10 @@ impl Song {
         bitrate: Option<u64>,
         format: Option<AudioFormat>,
     ) -> Result<String> {
-        let mut args = vec![("id", self.id.to_string())];
-        push_if_some!(args, "maxBitRate", bitrate);
-        push_if_some!(args, "format", format);
-        // ::sunk::build_url(sunk, "stream", args)
+        let mut args = Query::new();
+        args.push("id", self.id.to_string());
+        args.push_some("maxBitRate", map_str(bitrate));
+        args.push_some("format", map_str(format));
         sunk.try_binary("stream", args)
     }
 
@@ -103,9 +104,10 @@ impl Song {
 
     /// Returns the URL of the cover art. Size is a single parameter and the
     /// image will be scaled on its longest edge.
-    pub fn cover_art(&self, sunk: &mut Sunk, size: Option<usize>) -> Result<String> {
-        let mut args = vec![("id", self.id.to_string())];
-        push_if_some!(args, "size", size);
+    pub fn cover_art(&self, sunk: &mut Sunk, size: Option<u64>) -> Result<String> {
+        let mut args = Query::new();
+        args.push("id", self.id);
+        args.push_some("size", size);
         sunk.try_binary("getCoverArt", args)
     }
 }
@@ -113,9 +115,9 @@ impl Song {
 /// Searches for lyrics matching the artist and title. Returns an empty string
 /// if no lyrics are found.
 pub fn get_lyrics(sunk: &mut Sunk, artist: Option<&str>, title: Option<&str>) -> Result<String> {
-    let mut args = vec![];
-    push_if_some!(args, "artist", artist);
-    push_if_some!(args, "title", title);
+    let mut args = Query::new();
+    args.push_some("artist", artist);
+    args.push_some("title", title);
     let (_, json) = sunk.get("getLyrics", args)?;
     pointer!(json, "/subsonic-response/lyrics").as_str()
         .ok_or(Error::ParseError("not a string")).map(|s| s.to_string())

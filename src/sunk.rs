@@ -11,6 +11,7 @@ use tokio;
 
 use api::Api;
 use error::*;
+use query::Query;
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
@@ -118,9 +119,9 @@ impl Sunk {
     /// ```
     ///
     /// Most usage of this function will be through `Sunk::get()`.
-    fn build_url<S>(&self, query: &str, args: Vec<(&str, S)>) -> Result<String>
+    fn build_url<'a, D>(&self, query: &str, args: Query<'a, D>) -> Result<String>
     where
-        S: ::std::fmt::Display,
+        D: ::std::fmt::Display,
     {
         let scheme = self.url
             .scheme()
@@ -137,12 +138,7 @@ impl Sunk {
         url.push_str(query);
         url.push_str("?");
         url.push_str(&self.auth.as_uri(self.api));
-        if !args.is_empty() {
-            for a in &args {
-                url.push_str("&");
-                url.push_str(&format!("{}={}", a.0, a.1));
-            }
-        }
+        url.push_str(&args.to_string());
 
         Ok(url)
     }
@@ -150,13 +146,13 @@ impl Sunk {
     // fn get<'de, T>(&mut self, query: &str) -> Result<(u16, T)>
     // where
     //     T: serde::Deserialize<'de>
-    pub fn get<S>(
+    pub fn get<'a, D>(
         &mut self,
         query: &str,
-        args: Vec<(&str, S)>,
+        args: Query<'a, D>,
     ) -> Result<(u16, json::Value)>
     where
-        S: ::std::fmt::Display, // + ::std::string::ToString
+        D: ::std::fmt::Display,
     {
         use futures::{Future, Stream};
 
@@ -187,13 +183,13 @@ impl Sunk {
     /// Specifically, it will succeed if `json::from_slice()` fails due to not
     /// receiving a valid JSON stream. It's assumed that the stream will be
     /// binary in this case.
-    pub fn try_binary<S>(
+    pub fn try_binary<'a, D>(
         &mut self,
         query: &str,
-        args: Vec<(&str, S)>,
+        args: Query<'a, D>,
     ) -> Result<String>
     where
-        S: ::std::fmt::Display,
+        D: ::std::fmt::Display,
     {
         use futures::{Future, Stream};
 
@@ -218,18 +214,18 @@ impl Sunk {
     /// - invalid credentials
     /// - incorrect API target
     fn check_connection(&mut self) -> Result<()> {
-        let (code, res) = self.get("ping", vec![("", "")])?;
+        // let (code, res) = self.get("ping", Query::empty())?;
 
-        if let Some("failed") =
-            pointer!(res, "/subsonic-response/status").as_str()
-        {
-            Err(Error::Api(SubsonicError::from_response(
-                &res,
-                self.api,
-            )?))
-        } else {
+        // if let Some("failed") =
+        //     pointer!(res, "/subsonic-response/status").as_str()
+        // {
+        //     Err(Error::Api(SubsonicError::from_response(
+        //         &res,
+        //         self.api,
+        //     )?))
+        // } else {
             Ok(())
-        }
+        // }
     }
 }
 
@@ -243,7 +239,7 @@ mod tests {
     fn test_try() {
         let (site, user, pass) = load_credentials().unwrap();
         let mut srv = Sunk::new(&site, &user, &pass).unwrap();
-        let resp = srv.try_binary("stream", vec![("id", 0)]);
+        let resp = srv.try_binary("stream", Query::empty());
         assert!(resp.is_ok())
     }
 

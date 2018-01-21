@@ -1,5 +1,7 @@
-use error::*;
 use json;
+
+use query::Query;
+use error::*;
 use macros::*;
 use song::Song;
 use sunk::Sunk;
@@ -39,12 +41,8 @@ fn get_playlists(
     sunk: &mut Sunk,
     user: Option<String>,
 ) -> Result<Vec<Playlist>> {
-    let arg = if let Some(u) = user {
-        vec![("username", u)]
-    } else {
-        vec![]
-    };
-    let (_, res) = sunk.get("getPlaylists", arg)?;
+    let (_, res) = sunk.get("getPlaylists", Query::from_some("username", user))?;
+
     let mut pls = vec![];
     for pl in pointer!(res, "/subsonic-response/playlists/playlist")
         .as_array()
@@ -56,12 +54,12 @@ fn get_playlists(
 }
 
 fn get_playlist(sunk: &mut Sunk, id: u64) -> Result<Playlist> {
-    let (_, res) = sunk.get("getPlaylist", vec![("id", id)])?;
+    let (_, res) = sunk.get("getPlaylist", Query::from("id", id))?;
     Playlist::from(&res["subsonic-response"]["playlist"])
 }
 
 fn get_playlist_content(sunk: &mut Sunk, id: u64) -> Result<Vec<Song>> {
-    let (_, res) = sunk.get("getPlaylist", vec![("id", id)])?;
+    let (_, res) = sunk.get("getPlaylist", Query::from("id", id))?;
     let mut list = vec![];
     for song in pointer!(res, "/subsonic-response/playlist/entry")
         .as_array()
@@ -81,8 +79,11 @@ fn create_playlist(
     name: String,
     songs: Option<Vec<u64>>,
 ) -> Result<Option<Playlist>> {
-    let mut args = vec![("name", name)];
-    push_all_if_some!(args, "songId", songs);
+    let mut args = Query::new();
+    args.push("name", name);
+
+    let str_songs = map_some_vec(songs, |s| s.to_string());
+    args.push_all_some("songId", str_songs);
 
     let (_, res) = sunk.get("createPlaylist", args)?;
     // TODO Match the API and return the playlist on new versions.
@@ -100,12 +101,21 @@ fn update_playlist(
     to_add: Option<Vec<u64>>,
     to_remove: Option<Vec<u64>>,
 ) -> Result<()> {
-    let mut args = vec![("id", id.to_string())];
-    push_if_some!(args, "name", name);
-    push_if_some!(args, "comment", comment);
-    push_if_some!(args, "public", public);
-    push_all_if_some!(args, "songIdToAdd", to_add);
-    push_all_if_some!(args, "songIndexToRemove", to_remove);
+    let mut args = Query::new();
+    args.push("id", id.to_string());
+    args.push_some("name", name);
+    args.push_some("comment", comment);
+    args.push_some("public", map_str(public));
+    args.push_all_some("songIdToAdd", map_some_vec(to_add, |s| s.to_string()));
+    args.push_all_some("songIndexToRemove",
+                       map_some_vec(to_remove, |s| s.to_string()));
+
+    // let mut args = vec![("id", id.to_string())];
+    // push_if_some!(args, "name", name);
+    // push_if_some!(args, "comment", comment);
+    // push_if_some!(args, "public", public);
+    // push_all_if_some!(args, "songIdToAdd", to_add);
+    // push_all_if_some!(args, "songIndexToRemove", to_remove);
 
     sunk.get("updatePlaylist", args)?;
 
@@ -113,7 +123,7 @@ fn update_playlist(
 }
 
 fn delete_playlist(sunk: &mut Sunk, id: u64) -> Result<()> {
-    sunk.get("deletePlaylist", vec![("id", id)])?;
+    sunk.get("deletePlaylist", Query::from("id", id))?;
 
     Ok(())
 }
