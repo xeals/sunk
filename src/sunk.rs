@@ -214,18 +214,18 @@ impl Sunk {
     /// - invalid credentials
     /// - incorrect API target
     fn check_connection(&mut self) -> Result<()> {
-        // let (code, res) = self.get("ping", Query::empty())?;
+        let (code, res) = self.get("ping", Query::from("", ""))?;
 
-        // if let Some("failed") =
-        //     pointer!(res, "/subsonic-response/status").as_str()
-        // {
-        //     Err(Error::Api(SubsonicError::from_response(
-        //         &res,
-        //         self.api,
-        //     )?))
-        // } else {
+        if let Some("failed") =
+            pointer!(res, "/subsonic-response/status").as_str()
+        {
+            Err(Error::Api(SubsonicError::from_response(
+                &res,
+                self.api,
+            )?))
+        } else {
             Ok(())
-        // }
+        }
     }
 }
 
@@ -239,7 +239,7 @@ mod tests {
     fn test_try() {
         let (site, user, pass) = load_credentials().unwrap();
         let mut srv = Sunk::new(&site, &user, &pass).unwrap();
-        let resp = srv.try_binary("stream", Query::empty());
+        let resp = srv.try_binary("stream", Query::from("", ""));
         assert!(resp.is_ok())
     }
 

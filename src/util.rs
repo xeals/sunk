@@ -47,9 +47,10 @@ pub(crate) fn map_some_vec<T, U, F>(
 where
     F: FnOnce(&T) -> U,
 {
-    sv.map(|v| {
-        v.iter().map(|n| {
-            f(n)
-        }).collect::<Vec<U>>()
-    })
+    unimplemented!();
+    // sv.map(|v| {
+    //     v.iter().map(|n| {
+    //         f(n)
+    //     }).collect::<Vec<U>>()
+    // })
 }
