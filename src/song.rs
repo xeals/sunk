@@ -5,6 +5,22 @@ use error::*;
 
 use macros::*;
 
+/// Audio encoding format.
+///
+/// Recognises all of Subsonic's default transcoding formats.
+#[derive(Debug)]
+pub enum AudioFormat {
+    Aac, Aif, Aiff, Ape, Flac, Flv, M4a, Mp3,
+    Mpc, Oga, Ogg, Ogx, Opus, Shn, Wav, Wma,
+    Raw
+}
+
+impl ::std::fmt::Display for AudioFormat {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "{}", format!("{:?}", self).to_lowercase())
+    }
+}
+
 #[derive(Debug)]
 pub struct Song {
     id: u64,
@@ -42,6 +58,30 @@ impl Song {
             duration: fetch!(j->duration: as_u64),
             path: fetch!(j->path: as_str).into(),
         })
+    }
+
+    /// Returns a constructed URL for streaming with desired arguments.
+    ///
+    /// This would be used in conjunction with a streaming library to directly
+    /// take the URI and stream it.
+    pub fn stream_url(
+        &self,
+        sunk: &Sunk,
+        bitrate: Option<u64>,
+        format: Option<AudioFormat>
+    ) -> Result<String> {
+        let mut args = vec![("id", self.id.to_string())];
+        push_if_some!(args, "maxBitRate", bitrate);
+        push_if_some!(args, "format", format);
+        ::sunk::build_url(sunk, "stream", args)
+    }
+
+    /// Returns a constructed URL for downloading the song.
+    ///
+    /// `download_url()` does not support transcoding, while `stream_url()`
+    /// does.
+    pub fn download_url(&self, sunk: &Sunk) -> Result<String> {
+        self.stream_url(sunk, None, None)
     }
 }
 

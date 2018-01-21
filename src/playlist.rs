@@ -88,9 +88,7 @@ fn update_playlist(
     name: Option<String>,
     comment: Option<String>,
     public: Option<bool>,
-    /// List of song *IDs* to add to the playlist.
     to_add: Option<Vec<u64>>,
-    /// List of song *indexes* to remove from the playlist.
     to_remove: Option<Vec<u64>>,
 ) -> Result<()> {
     let mut args = vec![("id", id.to_string())];
@@ -132,7 +130,7 @@ mod tests {
             }
         );
 
-        let parsed = Playlist::from(raw).unwrap();
+        let parsed = Playlist::from(&raw).unwrap();
         let auth = load_credentials().unwrap();
         let mut srv = Sunk::new(&auth.0, &auth.1, &auth.2).unwrap();
         let songs = parsed.songs(&mut srv).unwrap();
