@@ -122,7 +122,7 @@ impl Song {
             let fline = raw.split('\n').next()
                 .ok_or(Error::StreamError("unexpected EOF"))?;
             if fline.contains("xml") || fline.contains('{') {
-                return Err(Error::Api(SubsonicError::from_u16(70)?))
+                return Err(Error::Api(ApiError::from_u16(70)?))
             }
         }
         Ok(raw)

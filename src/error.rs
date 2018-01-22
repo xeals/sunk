@@ -3,7 +3,7 @@ use json;
 use std::{fmt, io, result, num};
 use std::convert::From;
 
-// pub type ApiResult<T> = result::Result<T, self::SubsonicError>;
+// pub type ApiResult<T> = result::Result<T, self::ApiError>;
 pub type Result<T> = result::Result<T, self::Error>;
 
 #[derive(Debug, Fail)]
@@ -21,7 +21,7 @@ pub enum Error {
     #[fail(display = "Bad field: {}", _0)]
     ParseError(&'static str),
     #[fail(display = "{}", _0)]
-    Api(#[cause] SubsonicError),
+    Api(#[cause] ApiError),
     #[fail(display = "Unable to fetch content: {}", _0)]
     StreamError(&'static str),
     #[fail(display = "Error parsing JSON: {}", _0)]
@@ -32,6 +32,8 @@ pub enum Error {
     SerdeError(#[cause] json::Error),
     #[fail(display = "Unable to connect to server: received {}", _0)]
     ConnectionError(hyper::StatusCode),
+    #[fail(display = "{}", _0)]
+    Other(&'static str),
 }
 
 #[derive(Debug, Fail)]
@@ -45,7 +47,7 @@ pub enum UriError {
 }
 
 #[derive(Debug, Fail, Clone)]
-pub enum SubsonicError {
+pub enum ApiError {
     Generic(String),
     MissingParameter,
     ClientMustUpgrade,
@@ -59,9 +61,9 @@ pub enum SubsonicError {
     NotFound,
 }
 
-impl SubsonicError {
+impl ApiError {
     pub fn as_u16(&self) -> u16 {
-        use self::SubsonicError::*;
+        use self::ApiError::*;
         match *self {
             Generic(_) => 0,
             MissingParameter => 10,
@@ -77,8 +79,8 @@ impl SubsonicError {
         }
     }
 
-    pub fn try_from(json: &json::Value) -> Result<SubsonicError> {
-        use self::SubsonicError::*;
+    pub fn try_from(json: &json::Value) -> Result<ApiError> {
+        use self::ApiError::*;
         let code = json["code"].as_u64().unwrap();
         let message = json["message"].as_str().unwrap().to_string();
         match code {
@@ -94,8 +96,8 @@ impl SubsonicError {
         }
     }
 
-    pub fn from_u16(n: u16) -> self::Result<SubsonicError> {
-        use self::SubsonicError::*;
+    pub fn from_u16(n: u16) -> self::Result<ApiError> {
+        use self::ApiError::*;
         match n {
             10 => Ok(MissingParameter),
             40 => Ok(WrongAuth),
@@ -111,7 +113,7 @@ impl SubsonicError {
     // pub fn from_response(
     //     res: &json::Value,
     //     client_ver: Api,
-    // ) -> self::Result<SubsonicError> {
+    // ) -> self::Result<ApiError> {
     //     macro_rules! get {
     //         ($j:ident $f:expr) => (
     //             $j.get($f)
@@ -130,7 +132,7 @@ impl SubsonicError {
     //     let code = get!(error "code");
     //     let message = get!(error "message");
 
-    //     use self::SubsonicError::*;
+    //     use self::ApiError::*;
 
     //     Ok(match code.as_u64().ok_or(Error::ParseError("not a u64"))? {
     //         0 => Generic(parse!(message as_str).to_string()),
@@ -157,9 +159,9 @@ impl SubsonicError {
     // }
 }
 
-impl fmt::Display for SubsonicError {
+impl fmt::Display for ApiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use self::SubsonicError::*;
+        use self::ApiError::*;
         match *self {
             Generic(ref s) => write!(f, "Generic error: {}", s),
             MissingParameter => write!(f, "Missing a required parameter"),

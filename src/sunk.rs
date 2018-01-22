@@ -84,7 +84,7 @@ impl Sunk {
         let handle = core.handle();
         let client = Client::configure()
             .connector(HttpsConnector::new(4, &handle)
-                .map_err(|_| Error::UnknownError("TLS"))?)
+                .map_err(|_| Error::Other("Unable to use secure conection"))?)
             .build(&handle);
 
         Ok(Sunk {
@@ -189,7 +189,7 @@ impl Sunk {
                 match out["status"].as_str() {
                     Some("success") => return Ok(out[2].clone()),
                     Some("failed") => {
-                        return Err(Error::Api(SubsonicError::try_from(out)?))
+                        return Err(Error::Api(ApiError::try_from(out)?))
                     }
                     _ => panic!()
                 }
@@ -257,7 +257,7 @@ impl Sunk {
 
         let get = self.core.run(work)?;
         String::from_utf8(get.to_vec())
-            .map_err(|_| Error::ParseError("invalid stream"))
+            .map_err(|_| Error::Other("Unable to parse stream as UTF-8"))
     }
 
     /// Attempts to connect to the server with the provided credentials.
@@ -275,14 +275,17 @@ impl Sunk {
     /// running, and the number of media items found.
     pub fn scan_status(&mut self) -> Result<(bool, u64)> {
         let res = self.get("getScanStatus", Query::with("", ""))?;
-        let _status = pointer!(res, "/subsonic-response/scanStatus");
 
-        let status = _status["scanning"].as_bool()
-            .ok_or(Error::ParseError("status was not bool"))?;
-        let count = _status["count"].as_u64()
-            .ok_or(Error::ParseError("count was not u64"))?;
+        if let Some(status) = res["scanning"].as_bool() {
+            if let Some(count) = res["count"].as_u64() {
+                Ok((status, count))
+            } else {
+                unreachable!()
+            }
+        } else {
+            unreachable!()
+        }
 
-        Ok((status, count))
     }
 }
 
