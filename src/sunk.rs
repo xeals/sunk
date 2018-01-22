@@ -176,6 +176,17 @@ impl Sunk {
         let (status, res): (hyper::StatusCode, json::Value) =
             self.core.run(work).map_err(|e| Error::HyperError(e))?;
         if status.is_success() {
+            if let Some(out) =  res.get("subsonic-response") {
+                match out["status"].as_str() {
+                    Some("success") => return Ok(out[2].clone()),
+                    Some("failed") => {
+                        return Err(Error::Api(SubsonicError::try_from(out)?))
+                    }
+                    _ => panic!()
+                }
+            } else {
+                panic!()
+            }
             Ok(res)
         } else {
             Err(Error::ConnectionError(status))
@@ -246,18 +257,7 @@ impl Sunk {
     /// - invalid credentials
     /// - incorrect API target
     fn check_connection(&mut self) -> Result<()> {
-        let res = self.get("ping", Query::with("", ""))?;
-
-        if let Some("failed") =
-            pointer!(res, "/subsonic-response/status").as_str()
-        {
-            Err(Error::Api(SubsonicError::from_response(
-                &res,
-                self.api,
-            )?))
-        } else {
-            Ok(())
-        }
+        self.get("ping", Query::with("", "")).map(|_| ())
     }
 
     /// Starts a library scan.
