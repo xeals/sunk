@@ -40,7 +40,7 @@ pub struct Album {
     pub name: String,
     pub artist: Option<String>,
     artist_id: Option<u64>,
-    cover_id: String,
+    cover_id: Option<String>,
     pub duration: u64,
     pub year: Option<u64>,
     pub genre: Option<String>,
@@ -57,7 +57,7 @@ struct AlbumSerde {
     name: String,
     artist: Option<String>,
     artistId: Option<String>,
-    coverArt: String,
+    coverArt: Option<String>,
     songCount: u64,
     duration: u64,
     created: String,
@@ -92,32 +92,6 @@ impl Album {
             genre: serde.genre,
             song_count: serde.songCount,
             songs,
-        })
-    }
-
-    pub fn from(j: &json::Value) -> Result<Album> {
-        if !j.is_object() {
-            return Err(Error::ParseError("not an object"))
-        }
-
-        let mut songs = vec![];
-        if j.get("song").is_some() {
-            for song in fetch!(j->song: as_array).iter() {
-                songs.push(fetch!(song->id: as_str, u64))
-            }
-        }
-
-        Ok(Album {
-            id: fetch!(j->id: as_str, u64),
-            name: fetch!(j->name: as_str).into(),
-            artist: fetch_maybe!(j->artist: as_str).map(|v| v.to_string()),
-            artist_id: fetch_maybe!(j->artistId: as_str, u64),
-            cover_id: fetch!(j->coverArt: as_str).into(),
-            duration: fetch!(j->duration: as_u64),
-            year: fetch_maybe!(j->year: as_u64),
-            genre: fetch_maybe!(j->genre: as_str).map(|v| v.to_string()),
-            songs: songs,
-            song_count: fetch!(j->songCount: as_u64),
         })
     }
 }
@@ -187,7 +161,7 @@ mod tests {
         let alb = Album::from_json(json).unwrap();
 
         assert_eq!(alb.id, 200);
-        assert_eq!(alb.cover_id, "al-200".to_string());
+        assert_eq!(alb.cover_id, Some("al-200".to_string()));
         assert_eq!(alb.songs, vec![1450]);
     }
 
