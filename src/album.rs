@@ -5,7 +5,7 @@ use query::Query;
 use error::*;
 use util::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ListType {
     AlphaByArtist,
     AlphaByName,
@@ -101,7 +101,7 @@ impl Album {
         }
 
         let mut songs = vec![];
-        if let Some(_) = j.get("song") {
+        if j.get("song").is_some() {
             for song in fetch!(j->song: as_array).iter() {
                 songs.push(fetch!(song->id: as_str, u64))
             }

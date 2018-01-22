@@ -23,7 +23,7 @@ impl Artist {
         }
 
         let mut albums = vec![];
-        if let Some(_) = j.get("album") {
+        if j.get("album").is_some() {
             for album in fetch!(j->album: as_array).iter() {
                 albums.push(fetch!(album->id: as_str, u64))
             }

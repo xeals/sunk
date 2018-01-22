@@ -3,9 +3,6 @@ use json;
 use std::{fmt, io, result, num};
 use std::convert::From;
 
-use api::Api;
-use util::*;
-
 // pub type ApiResult<T> = result::Result<T, self::SubsonicError>;
 pub type Result<T> = result::Result<T, self::Error>;
 

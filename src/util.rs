@@ -1,6 +1,6 @@
 #![macro_use]
 
-use json::{self, Value};
+use json::Value;
 use json::value::{Map, Index};
 
 use error;
@@ -87,18 +87,18 @@ pub trait ValueExt {
 impl ValueExt for Value {
     fn try_get<I: Index>(&self, index: I) -> error::Result<&Value> {
         self.get(index)
-            .ok_or(error::Error::JsonError(format!("missing index in {}", self)))
+            .ok_or_else(|| error::Error::JsonError(format!("missing index in {}", self)))
     }
 
     fn try_array(&self) -> error::Result<Vec<Value>> {
         self.as_array()
-            .ok_or(error::Error::JsonError(format!("{} not an array", self)))
+            .ok_or_else(|| error::Error::JsonError(format!("{} not an array", self)))
             .map(|a| a.clone())
     }
 
     fn try_map(&self) -> error::Result<Map<String, Value>> {
         self.as_object()
-            .ok_or(error::Error::JsonError(format!("{} not a map", self)))
+            .ok_or_else(|| error::Error::JsonError(format!("{} not a map", self)))
             .map(|m| m.clone())
     }
 }

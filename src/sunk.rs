@@ -1,12 +1,8 @@
 // use url;
-use futures;
 use hyper::{self, Client, Uri};
 use hyper_tls::HttpsConnector;
 use json;
 use log;
-use md5;
-use rand;
-use serde;
 use tokio;
 
 use api::Api;
@@ -31,7 +27,7 @@ struct SunkAuth {
 }
 
 impl SunkAuth {
-    fn new(user: &str, password: &str, api: &str) -> SunkAuth {
+    fn new(user: &str, password: &str) -> SunkAuth {
         SunkAuth {
             user:     user.into(),
             password: password.into(),
@@ -43,6 +39,7 @@ impl SunkAuth {
         // First md5 support.
         let auth = if api >= "1.13.0".into() {
             use rand::{thread_rng, Rng};
+            use md5;
 
             let salt: String =
                 thread_rng().gen_ascii_chars().take(SALT_SIZE).collect();
@@ -78,11 +75,11 @@ impl Sunk {
     pub fn new(url: &str, user: &str, password: &str) -> Result<Sunk> {
         use std::str::FromStr;
 
-        let auth = SunkAuth::new(user, password, "1.14.0");
+        let auth = SunkAuth::new(user, password);
         let uri = Uri::from_str(url)?;
         let api = Api::from("1.14.0");
 
-        let mut core = tokio::reactor::Core::new()?;
+        let core = tokio::reactor::Core::new()?;
         let handle = core.handle();
         let client = Client::configure()
             .connector(HttpsConnector::new(4, &handle)
@@ -105,8 +102,8 @@ impl Sunk {
     /// `Sunk`; for example:
     ///
     /// ```rust
-    /// use sunk::Sunk::*;
-    /// use error::*;
+    /// # use sunk::Sunk::*;
+    /// # use error::*;
     ///
     /// let sunk = Sunk::new("subsonic.example.com", "user", "password")?;
     /// let url = sunk.build_url("stream", vec![("id", 1), ("bitrate", 96)])?;
@@ -119,6 +116,7 @@ impl Sunk {
     /// ```
     ///
     /// Most usage of this function will be through `Sunk::get()`.
+    #[allow(needless_pass_by_value)]
     fn build_url<'a, D>(&self, query: &str, args: Query<'a, D>) -> Result<String>
     where
         D: ::std::fmt::Display,
@@ -129,10 +127,10 @@ impl Sunk {
                 warn!("No scheme provided; falling back to http");
                 Some("http")
             })
-            .ok_or(Error::ServerError("Unable to determine scheme".into()))?;
+            .ok_or_else(|| Error::ServerError("Unable to determine scheme".into()))?;
         let addr = self.url
             .authority()
-            .ok_or(Error::ServerError("No address provided".into()))?;
+            .ok_or_else(|| Error::ServerError("No address provided".into()))?;
 
         let mut url = [scheme, "://", addr, "/rest/"].concat();
         url.push_str(query);
@@ -144,9 +142,19 @@ impl Sunk {
         Ok(url)
     }
 
-    // fn get<'de, T>(&mut self, query: &str) -> Result<(u16, T)>
-    // where
-    //     T: serde::Deserialize<'de>
+    /// Issues a request to the `sunk` server.
+    ///
+    /// A query should be one documented in the [official API].
+    ///
+    /// [official API]: http://www.subsonic.org/pages/api.jsp
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if any of the following occurs:
+    ///
+    /// - server is build with an incomplete URL
+    /// - connecting to the server fails
+    /// - the server returns an API error
     pub fn get<'a, D>(
         &mut self,
         query: &str,
@@ -174,7 +182,7 @@ impl Sunk {
         });
 
         let (status, res): (hyper::StatusCode, json::Value) =
-            self.core.run(work).map_err(|e| Error::HyperError(e))?;
+            self.core.run(work)?;
         if status.is_success() {
             if let Some(out) =  res.get("subsonic-response") {
                 match out["status"].as_str() {
@@ -187,7 +195,6 @@ impl Sunk {
             } else {
                 panic!()
             }
-            Ok(res)
         } else {
             Err(Error::ConnectionError(status))
         }
@@ -220,9 +227,9 @@ impl Sunk {
             res.body().concat2().and_then(move |b| {
                 let valid_json = json::from_slice::<json::Value>(&b).is_ok();
                 if !valid_json {
-                    return Ok(raw_uri)
+                    Ok(raw_uri)
                 } else {
-                    return Err(hyper::Error::Method)
+                    Err(hyper::Error::Method)
                 }
             })
         });
@@ -247,15 +254,12 @@ impl Sunk {
             res.body().concat2()
         });
 
-        let get = self.core.run(work).map_err(|e| Error::HyperError(e))?;
+        let get = self.core.run(work)?;
         String::from_utf8(get.to_vec())
-            .map_err(|_| Error::ParseError("invalid stream".into()))
+            .map_err(|_| Error::ParseError("invalid stream"))
     }
 
     /// Attempts to connect to the server with the provided credentials.
-    /// Subsonic API will throw an error on any of the following:
-    /// - invalid credentials
-    /// - incorrect API target
     fn check_connection(&mut self) -> Result<()> {
         self.get("ping", Query::with("", "")).map(|_| ())
     }

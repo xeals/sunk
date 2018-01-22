@@ -1,6 +1,5 @@
 use error::*;
 use json;
-use std::convert::From;
 use sunk::Sunk;
 
 use util::*;
@@ -122,7 +121,7 @@ impl Song {
         {
             let fline = raw.split('\n').next()
                 .ok_or(Error::StreamError("unexpected EOF"))?;
-            if fline.contains("xml") || fline.contains("{") {
+            if fline.contains("xml") || fline.contains('{') {
                 return Err(Error::Api(SubsonicError::from_u16(70)?))
             }
         }
