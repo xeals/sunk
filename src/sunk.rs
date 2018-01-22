@@ -188,6 +188,10 @@ impl Sunk {
             if let Some(out) = res.get("subsonic-response") {
                 match out["status"].as_str() {
                     Some("ok") => {
+                        if query == "ping" {
+                            return Ok(json::Value::Null)
+                        }
+
                         let out = out.as_object().unwrap();
                         for (k, v) in out {
                             if k != "status" && k != "version" {
@@ -308,7 +312,7 @@ mod tests {
     fn remote_try_binary() {
         let (site, user, pass) = load_credentials().unwrap();
         let mut srv = Sunk::new(&site, &user, &pass).unwrap();
-        let resp = srv.try_binary("stream", Query::with("id", 1));
+        let resp = srv.try_binary("stream", Query::with("id", 125));
         assert!(resp.is_ok())
     }
 
