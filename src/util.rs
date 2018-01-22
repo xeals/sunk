@@ -37,9 +37,10 @@ macro_rules! pointer {
 macro_rules! impl_cover_art {
     () => {
         pub fn cover_art(&self, sunk: &mut Sunk, size: Option<u64>) -> Result<String> {
-            let mut args = Query::new();
-            args.push("id", self.id);
-            args.push_some("size", size);
+            let args = Query::new()
+                .arg("id", self.id)
+                .maybe_arg("size", size)
+                .build();
             sunk.try_binary("getCoverArt", args)
         }
     }

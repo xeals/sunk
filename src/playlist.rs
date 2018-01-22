@@ -43,7 +43,7 @@ fn get_playlists(
     sunk: &mut Sunk,
     user: Option<String>,
 ) -> Result<Vec<Playlist>> {
-    let (_, res) = sunk.get("getPlaylists", Query::from_some("username", user))?;
+    let (_, res) = sunk.get("getPlaylists", Query::maybe_with("username", user))?;
 
     let mut pls = vec![];
     for pl in pointer!(res, "/subsonic-response/playlists/playlist")
@@ -56,12 +56,12 @@ fn get_playlists(
 }
 
 fn get_playlist(sunk: &mut Sunk, id: u64) -> Result<Playlist> {
-    let (_, res) = sunk.get("getPlaylist", Query::from("id", id))?;
+    let (_, res) = sunk.get("getPlaylist", Query::with("id", id))?;
     Playlist::from(&res["subsonic-response"]["playlist"])
 }
 
 fn get_playlist_content(sunk: &mut Sunk, id: u64) -> Result<Vec<Song>> {
-    let (_, res) = sunk.get("getPlaylist", Query::from("id", id))?;
+    let (_, res) = sunk.get("getPlaylist", Query::with("id", id))?;
     let mut list = vec![];
     for song in pointer!(res, "/subsonic-response/playlist/entry")
         .as_array()
@@ -81,10 +81,10 @@ fn create_playlist(
     name: String,
     songs: Option<Vec<u64>>,
 ) -> Result<Option<Playlist>> {
-    let mut args = Query::new();
-    args.push("name", name);
-
-    args.push_all_some("songId", map_vec_string(songs));
+    let args = Query::new()
+        .arg("name", name)
+        .maybe_arg_list("songId", map_vec_string(songs))
+        .build();
 
     let (_, res) = sunk.get("createPlaylist", args)?;
     // TODO Match the API and return the playlist on new versions.
@@ -102,13 +102,14 @@ fn update_playlist(
     to_add: Option<Vec<u64>>,
     to_remove: Option<Vec<u64>>,
 ) -> Result<()> {
-    let mut args = Query::new();
-    args.push("id", id.to_string());
-    args.push_some("name", name);
-    args.push_some("comment", comment);
-    args.push_some("public", map_str(public));
-    args.push_all_some("songIdToAdd", map_vec_string(to_add));
-    args.push_all_some("songIndexToRemove", map_vec_string(to_remove));
+    let args = Query::new()
+        .arg("id", id.to_string())
+        .maybe_arg("name", name)
+        .maybe_arg("comment", comment)
+        .maybe_arg("public", map_str(public))
+        .maybe_arg_list("songIdToAdd", map_vec_string(to_add))
+        .maybe_arg_list("songIndexToRemove", map_vec_string(to_remove))
+        .build();
 
     sunk.get("updatePlaylist", args)?;
 
@@ -116,7 +117,7 @@ fn update_playlist(
 }
 
 fn delete_playlist(sunk: &mut Sunk, id: u64) -> Result<()> {
-    sunk.get("deletePlaylist", Query::from("id", id))?;
+    sunk.get("deletePlaylist", Query::with("id", id))?;
 
     Ok(())
 }

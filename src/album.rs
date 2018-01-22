@@ -83,11 +83,12 @@ pub fn get_albums(
     offset: Option<u64>,
     folder_id: Option<u64>
 ) -> Result<Vec<Album>> {
-    let mut args = Query::new();
-    args.push("type", list_type.to_string());
-    args.push_some("size", map_str(size));
-    args.push_some("offset", map_str(offset));
-    args.push_some("musicFolderId", map_str(folder_id));
+    let args = Query::new()
+        .arg("type", list_type.to_string())
+        .maybe_arg("size", map_str(size))
+        .maybe_arg("offset", map_str(offset))
+        .maybe_arg("musicFolderId", map_str(folder_id))
+        .build();
 
     let (_, res) = sunk.get("getAlbumList2", args)?;
 

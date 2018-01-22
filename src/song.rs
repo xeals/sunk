@@ -87,10 +87,11 @@ impl Song {
         bitrate: Option<u64>,
         format: Option<AudioFormat>,
     ) -> Result<String> {
-        let mut args = Query::new();
-        args.push("id", self.id.to_string());
-        args.push_some("maxBitRate", map_str(bitrate));
-        args.push_some("format", map_str(format));
+        let args = Query::new()
+            .arg("id", self.id.to_string())
+            .maybe_arg("maxBitRate", map_str(bitrate))
+            .maybe_arg("format", map_str(format))
+            .build();
         sunk.try_binary("stream", args)
     }
 
@@ -112,9 +113,10 @@ impl Song {
     ///  Returns an M3U8 playlist on success (content type
     ///  "application/vnd.apple.mpegurl").
     pub fn hls(&self, sunk: &mut Sunk, bitrates: Option<Vec<u64>>) -> Result<String> {
-        let mut args = Query::new();
-        args.push("id", self.id);
-        args.push_all_some("bitrate", bitrates);
+        let args = Query::new()
+            .arg("id", self.id)
+            .maybe_arg_list("bitrate", bitrates)
+            .build();
 
         let raw = sunk.get_raw("hls", args)?;
         {
@@ -135,9 +137,10 @@ impl Song {
 /// Searches for lyrics matching the artist and title. Returns an empty string
 /// if no lyrics are found.
 pub fn get_lyrics(sunk: &mut Sunk, artist: Option<&str>, title: Option<&str>) -> Result<String> {
-    let mut args = Query::new();
-    args.push_some("artist", artist);
-    args.push_some("title", title);
+    let args = Query::new()
+        .maybe_arg("artist", artist)
+        .maybe_arg("title", title)
+        .build();
     let (_, json) = sunk.get("getLyrics", args)?;
     pointer!(json, "/subsonic-response/lyrics").as_str()
         .ok_or(Error::ParseError("not a string")).map(|s| s.to_string())

@@ -240,7 +240,7 @@ impl Sunk {
     /// - invalid credentials
     /// - incorrect API target
     fn check_connection(&mut self) -> Result<()> {
-        let (code, res) = self.get("ping", Query::from("", ""))?;
+        let (code, res) = self.get("ping", Query::with("", ""))?;
 
         if let Some("failed") =
             pointer!(res, "/subsonic-response/status").as_str()
@@ -256,14 +256,14 @@ impl Sunk {
 
     /// Starts a library scan.
     pub fn scan_library(&mut self) -> Result<()> {
-        self.get("startScan", Query::from("", ""))?;
+        self.get("startScan", Query::with("", ""))?;
         Ok(())
     }
 
     /// Gets the status of a scan. Returns whether or not the scan is currently
     /// running, and the number of media items found.
     pub fn scan_status(&mut self) -> Result<(bool, u64)> {
-        let (_, res) = self.get("getScanStatus", Query::from("", ""))?;
+        let (_, res) = self.get("getScanStatus", Query::with("", ""))?;
         let _status = pointer!(res, "/subsonic-response/scanStatus");
 
         let status = _status["scanning"].as_bool()
@@ -285,7 +285,7 @@ mod tests {
     fn test_try() {
         let (site, user, pass) = load_credentials().unwrap();
         let mut srv = Sunk::new(&site, &user, &pass).unwrap();
-        let resp = srv.try_binary("stream", Query::from("", ""));
+        let resp = srv.try_binary("stream", Query::with("", ""));
         assert!(resp.is_ok())
     }
 

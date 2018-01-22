@@ -8,48 +8,54 @@ pub struct Query<'a, D: Display> {
 }
 
 impl<'a, D: Display> Query<'a, D> {
-    /// Use `Query::from("", "")` if no arguments are needed. This is due to a
+    /// Use `Query::with("", "")` if no arguments are needed. This is due to a
     /// behaviour in the type inference system that I can't wrap my head around.
     pub fn new() -> Query<'a, D> {
         Query { inner: vec![] }
     }
 
-    pub fn from(key: &'a str, val: D) -> Query<'a, D> {
-        let mut q = self::Query::new();
-        q.push(key, val);
-        q
+    pub fn with(key: &'a str, val: D) -> Query<'a, D> {
+        Query { inner: vec![(key, val)] }
     }
 
-    pub fn from_some(key: &'a str, val: Option<D>) -> Query<'a, D> {
-        let mut q = self::Query::new();
+    pub fn maybe_with(key: &'a str, val: Option<D>) -> Query<'a, D> {
         if let Some(v) = val {
-            q.push(key, v);
-        }
-        q
-    }
-
-    pub fn push(&mut self, key: &'a str, val: D) {
-        self.inner.push((key, val))
-    }
-
-    pub fn push_some(&mut self, key: &'a str, val: Option<D>) {
-        if let Some(v) = val {
-            self.push(key, v)
+            self::Query::with(key, v)
+        } else {
+            self::Query::new()
         }
     }
 
-    pub fn push_all(&mut self, key: &'a str, val: Vec<D>) {
+    pub fn arg(&mut self, key: &'a str, val: D) -> &mut Query<'a, D> {
+        self.inner.push((key, val));
+        self
+    }
+
+    pub fn maybe_arg(&mut self, key: &'a str, val: Option<D>) -> &mut Query<'a, D> {
+        if let Some(v) = val {
+            self.arg(key, v);
+        }
+        self
+    }
+
+    pub fn arg_list(&mut self, key: &'a str, val: Vec<D>) -> &mut Query<'a, D> {
         for v in val {
-            self.push(key, v)
+            self.arg(key, v);
         }
+        self
     }
 
-    pub fn push_all_some(&mut self, key: &'a str, val: Option<Vec<D>>) {
+    pub fn maybe_arg_list(&mut self, key: &'a str, val: Option<Vec<D>>) -> &mut Query<'a, D> {
         if let Some(vals) = val {
             for v in vals {
-                self.push(key, v)
+                self.arg(key, v);
             }
         }
+        self
+    }
+
+    pub fn build(&mut self) -> Query<'a, D> {
+        Query { inner: self.inner.drain(..).collect() }
     }
 }
 
@@ -68,44 +74,50 @@ impl<'a, D: Display> Display for Query<'a, D> {
     }
 }
 
+impl<'a, D: Display> Default for Query<'a, D> {
+    fn default() -> Query<'a, D> {
+        Query::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn empty_query_is_empty() {
-        let q = Query::from("", "");
+        let q = Query::with("", "");
         assert_eq!("", &format!("{}", q))
     }
 
     #[test]
     fn single_query() {
-        let q = Query::from("id", 64);
+        let q = Query::with("id", 64);
         assert_eq!("id=64", &format!("{}", q))
     }
 
     #[test]
     fn two_queries() {
-        let mut q = Query::new();
-        q.push("id", 64);
-        q.push("album", 12);
+        let q = Query::new()
+            .arg("id", 64)
+            .arg("album", 12)
+            .build();
         assert_eq!("id=64&album=12", &format!("{}", q))
     }
 
     #[test]
     fn optional_query() {
-        let mut q = Query::new();
-        q.push_some("album", None);
+        let mut q = Query::maybe_with("album", None);
         assert_eq!("", &format!("{}", q));
-        q.push_some("id", Some(64));
+        q.maybe_arg("id", Some(64));
         assert_eq!("id=64", &format!("{}", q));
     }
 
     #[test]
     fn query_vec() {
-        let mut q = Query::new();
         let ids = vec![1, 2, 3, 4];
-        q.push_all("id", ids);
+        let mut q = Query::new();
+        q.arg_list("id", ids);
         assert_eq!("id=1&id=2&id=3&id=4", &format!("{}", q))
     }
 }

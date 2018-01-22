@@ -48,14 +48,14 @@ impl Artist {
             let albums = get_artist(sunk, self.id)?.albums;
 
             for id in &albums {
-                let (_, res) = sunk.get("getAlbum", Query::from("id", id))?;
+                let (_, res) = sunk.get("getAlbum", Query::with("id", id))?;
                 album_list.push(
                     Album::from(pointer!(res, "/subsonic-response/album"))?
                 )
             }
         } else {
             for id in &self.albums {
-                let (_, res) = sunk.get("getAlbum", Query::from("id", id))?;
+                let (_, res) = sunk.get("getAlbum", Query::with("id", id))?;
                 album_list.push(
                     Album::from(pointer!(res, "/subsonic-response/album"))?
                 )
@@ -69,7 +69,7 @@ impl Artist {
 }
 
 pub fn get_artist(sunk: &mut Sunk, id: u64) -> Result<Artist> {
-    let (_, res) = sunk.get("getArtist", Query::from("id", id))?;
+    let (_, res) = sunk.get("getArtist", Query::with("id", id))?;
     Artist::from(&res["subsonic-response"]["playlist"])
 }
 
