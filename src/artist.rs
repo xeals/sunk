@@ -116,7 +116,7 @@ mod tests {
     }
 
     #[test]
-    fn album_list() {
+    fn remote_artist_album_list() {
         let (s, u, p) = load_credentials().unwrap();
         let mut srv = Sunk::new(&s, &u, &p).unwrap();
         let parsed = Artist::from(&raw()).unwrap();
@@ -128,13 +128,13 @@ mod tests {
     }
 
     #[test]
-    fn cover_art() {
+    fn remote_artist_cover_art() {
         let (s, u, p) = load_credentials().unwrap();
         let mut srv = Sunk::new(&s, &u, &p).unwrap();
         let parsed = Artist::from(&raw()).unwrap();
         let cover = parsed.cover_art(&mut srv, None).unwrap();
 
-        println!("{}", cover);
-        assert!(true)
+        println!("{:?}", cover);
+        assert!(!cover.is_empty())
     }
 }

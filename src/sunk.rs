@@ -186,8 +186,12 @@ impl Sunk {
             self.core.run(work)?;
         if status.is_success() {
             if let Some(out) =  res.get("subsonic-response") {
+                println!("response: {}", out);
+                println!("response0: {}", out[0]);
+                println!("response0: {}", out[1]);
+                println!("response2: {}", out[2]);
                 match out["status"].as_str() {
-                    Some("success") => return Ok(out[2].clone()),
+                    Some("ok") => return Ok(out[2].clone()),
                     Some("failed") => {
                         return Err(Error::Api(ApiError::try_from(out)?))
                     }
@@ -276,6 +280,7 @@ impl Sunk {
     pub fn scan_status(&mut self) -> Result<(bool, u64)> {
         let res = self.get("getScanStatus", Query::with("", ""))?;
 
+        println!("{}", res);
         if let Some(status) = res["scanning"].as_bool() {
             if let Some(count) = res["count"].as_u64() {
                 Ok((status, count))
@@ -296,25 +301,24 @@ mod tests {
     use test_util::*;
 
     #[test]
-    fn test_try() {
+    fn remote_try_binary() {
         let (site, user, pass) = load_credentials().unwrap();
         let mut srv = Sunk::new(&site, &user, &pass).unwrap();
-        let resp = srv.try_binary("stream", Query::with("", ""));
+        let resp = srv.try_binary("stream", Query::with("id", 1));
         assert!(resp.is_ok())
     }
 
     #[test]
-    fn test_ping() {
+    fn remote_ping() {
         let (site, user, pass) = load_credentials().unwrap();
-        let mut srv =
-            Sunk::new(&site, &user, &pass).expect("Failed to start client");
+        let mut srv = Sunk::new(&site, &user, &pass).unwrap();
         debug!("{:?}", srv);
         srv.check_connection().unwrap();
         assert!(srv.check_connection().is_ok())
     }
 
     #[test]
-    fn test_scan_status() {
+    fn remote_scan_status() {
         let (site, user, pass) = load_credentials().unwrap();
         let mut srv = Sunk::new(&site, &user, &pass).unwrap();
         let (status, n) = srv.scan_status().unwrap();

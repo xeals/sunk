@@ -139,16 +139,11 @@ pub fn get_albums(
     let res = sunk.get("getAlbumList2", args)?;
 
     let mut albums = vec![];
-    // for album in pointer!(res, "/subsonic-response/albumList2/album")
-    //     .as_array()
-    //     .ok_or(Error::ParseError("albumList2 not an array"))?
-    for album in res.try_get("subsonic-response")?
-    .try_get("albumList2")?
-    .try_get("album")?
-    .try_array()?
-        {
+    if let Some(album_arr) = res["album"].as_array() {
+        for album in album_arr.clone() {
             albums.push(Album::from_json(album)?);
         }
+    }
     Ok(albums)
 }
 
@@ -158,14 +153,13 @@ mod tests {
     use test_util::*;
 
     #[test]
-    fn test_get_albums() {
+    fn remote_get_albums() {
         let (s, u, p) = load_credentials().unwrap();
         let mut srv = Sunk::new(&s, &u, &p).unwrap();
         let albums = get_albums(&mut srv, ListType::AlphaByArtist, None, None, None).unwrap();
 
         println!("{:?}", albums);
-        // assert!(true)
-        panic!()
+        assert!(!albums.is_empty())
     }
 
     #[test]
@@ -191,7 +185,7 @@ mod tests {
             }
         );
         let alb = Album::from_json(json).unwrap();
-        println!("{:?}", alb);
+
         assert_eq!(alb.id, 200);
         assert_eq!(alb.cover_id, "al-200".to_string());
         assert_eq!(alb.songs, vec![1450]);
@@ -214,7 +208,7 @@ mod tests {
             }
         );
         let alb = Album::from_json(json).unwrap();
-        println!("{:?}", alb);
+
         assert_eq!(alb.id, 314);
         assert_eq!(alb.name, "#3".to_string());
         assert!(alb.songs.is_empty());

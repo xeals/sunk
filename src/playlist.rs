@@ -126,7 +126,7 @@ mod tests {
     use test_util::*;
 
     #[test]
-    fn test_songs_from_playlist() {
+    fn remote_playlist_songs() {
         let raw = json!(
             {
                 "id" : "1",
@@ -145,5 +145,8 @@ mod tests {
         let auth = load_credentials().unwrap();
         let mut srv = Sunk::new(&auth.0, &auth.1, &auth.2).unwrap();
         let songs = parsed.songs(&mut srv).unwrap();
+
+        println!("{:?}", songs);
+        assert!(!songs.is_empty())
     }
 }

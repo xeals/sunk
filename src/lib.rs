@@ -8,6 +8,7 @@ extern crate hyper_tls;
 #[macro_use]
 extern crate log;
 extern crate serde;
+#[macro_use]
 extern crate serde_json as json;
 extern crate tokio_core as tokio;
 #[macro_use]
