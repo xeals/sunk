@@ -185,13 +185,17 @@ impl Sunk {
         let (status, res): (hyper::StatusCode, json::Value) =
             self.core.run(work)?;
         if status.is_success() {
-            if let Some(out) =  res.get("subsonic-response") {
-                println!("response: {}", out);
-                println!("response0: {}", out[0]);
-                println!("response0: {}", out[1]);
-                println!("response2: {}", out[2]);
+            if let Some(out) = res.get("subsonic-response") {
                 match out["status"].as_str() {
-                    Some("ok") => return Ok(out[2].clone()),
+                    Some("ok") => {
+                        let out = out.as_object().unwrap();
+                        for (k, v) in out {
+                            if k != "status" && k != "version" {
+                                return Ok(v.clone())
+                            }
+                        }
+                        unreachable!()
+                    }
                     Some("failed") => {
                         return Err(Error::Api(ApiError::try_from(out)?))
                     }
