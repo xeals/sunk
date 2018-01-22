@@ -27,6 +27,8 @@ pub enum Error {
     ParError(#[cause] num::ParseIntError),
     #[fail(display = "Error serialising: {}", _0)]
     SerdeError(#[cause] json::Error),
+    #[fail(display = "Unable to connect to server: received {}", _0)]
+    ConnectionError(hyper::StatusCode),
 }
 
 /*

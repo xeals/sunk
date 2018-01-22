@@ -151,7 +151,7 @@ impl Sunk {
         &mut self,
         query: &str,
         args: Query<'a, D>,
-    ) -> Result<(u16, json::Value)>
+    ) -> Result<json::Value>
     where
         D: ::std::fmt::Display,
     {
@@ -169,11 +169,17 @@ impl Sunk {
                     use std::io;
                     io::Error::new(io::ErrorKind::Other, e)
                 })?;
-                Ok((status.as_u16(), v))
+                Ok((status, v))
             })
         });
 
-        self.core.run(work).map_err(|e| Error::HyperError(e))
+        let (status, res): (hyper::StatusCode, json::Value) =
+            self.core.run(work).map_err(|e| Error::HyperError(e))?;
+        if status.is_success() {
+            Ok(res)
+        } else {
+            Err(Error::ConnectionError(status))
+        }
     }
 
     /// Attempts to connect to the `Sunk` with the provided query and args.
@@ -240,7 +246,7 @@ impl Sunk {
     /// - invalid credentials
     /// - incorrect API target
     fn check_connection(&mut self) -> Result<()> {
-        let (code, res) = self.get("ping", Query::with("", ""))?;
+        let res = self.get("ping", Query::with("", ""))?;
 
         if let Some("failed") =
             pointer!(res, "/subsonic-response/status").as_str()
@@ -263,7 +269,7 @@ impl Sunk {
     /// Gets the status of a scan. Returns whether or not the scan is currently
     /// running, and the number of media items found.
     pub fn scan_status(&mut self) -> Result<(bool, u64)> {
-        let (_, res) = self.get("getScanStatus", Query::with("", ""))?;
+        let res = self.get("getScanStatus", Query::with("", ""))?;
         let _status = pointer!(res, "/subsonic-response/scanStatus");
 
         let status = _status["scanning"].as_bool()

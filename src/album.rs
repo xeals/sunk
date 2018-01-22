@@ -136,7 +136,7 @@ pub fn get_albums(
         .maybe_arg("musicFolderId", map_str(folder_id))
         .build();
 
-    let (_, res) = sunk.get("getAlbumList2", args)?;
+    let res = sunk.get("getAlbumList2", args)?;
 
     let mut albums = vec![];
     // for album in pointer!(res, "/subsonic-response/albumList2/album")

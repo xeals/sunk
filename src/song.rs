@@ -141,8 +141,8 @@ pub fn get_lyrics(sunk: &mut Sunk, artist: Option<&str>, title: Option<&str>) ->
         .maybe_arg("artist", artist)
         .maybe_arg("title", title)
         .build();
-    let (_, json) = sunk.get("getLyrics", args)?;
-    pointer!(json, "/subsonic-response/lyrics").as_str()
+    let res = sunk.get("getLyrics", args)?;
+    pointer!(res, "/subsonic-response/lyrics").as_str()
         .ok_or(Error::ParseError("not a string")).map(|s| s.to_string())
 }
 

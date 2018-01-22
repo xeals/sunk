@@ -43,7 +43,7 @@ fn get_playlists(
     sunk: &mut Sunk,
     user: Option<String>,
 ) -> Result<Vec<Playlist>> {
-    let (_, res) = sunk.get("getPlaylists", Query::maybe_with("username", user))?;
+    let res = sunk.get("getPlaylists", Query::maybe_with("username", user))?;
 
     let mut pls = vec![];
     for pl in pointer!(res, "/subsonic-response/playlists/playlist")
@@ -56,12 +56,12 @@ fn get_playlists(
 }
 
 fn get_playlist(sunk: &mut Sunk, id: u64) -> Result<Playlist> {
-    let (_, res) = sunk.get("getPlaylist", Query::with("id", id))?;
+    let res = sunk.get("getPlaylist", Query::with("id", id))?;
     Playlist::from(&res["subsonic-response"]["playlist"])
 }
 
 fn get_playlist_content(sunk: &mut Sunk, id: u64) -> Result<Vec<Song>> {
-    let (_, res) = sunk.get("getPlaylist", Query::with("id", id))?;
+    let res = sunk.get("getPlaylist", Query::with("id", id))?;
     let mut list = vec![];
     for song in pointer!(res, "/subsonic-response/playlist/entry")
         .as_array()
@@ -86,7 +86,7 @@ fn create_playlist(
         .maybe_arg_list("songId", map_vec_string(songs))
         .build();
 
-    let (_, res) = sunk.get("createPlaylist", args)?;
+    let res = sunk.get("createPlaylist", args)?;
     // TODO Match the API and return the playlist on new versions.
 
     Ok(None)
