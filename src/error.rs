@@ -8,16 +8,22 @@ pub type Result<T> = result::Result<T, self::Error>;
 
 #[derive(Debug, Fail)]
 pub enum Error {
-    #[fail(display = "Unknown error: {}", _0)] UnknownError(&'static str),
+    #[fail(display = "Unknown error: {}", _0)]
+    UnknownError(&'static str),
     #[fail(display = "Invalid URL: {}", _0)]
-    InvalidUrl(#[cause] hyper::error::UriError),
-    #[fail(display = "IO error: {}", _0)] Io(#[cause] io::Error),
-    #[fail(display = "API error: {}", _0)] ServerError(String), /* InvalidUrl(&'static str) */
+    Uri(UriError),
+    #[fail(display = "IO error: {}", _0)]
+    Io(#[cause] io::Error),
+    #[fail(display = "API error: {}", _0)]
+    ServerError(String), /* InvalidUrl(&'static str) */
     #[fail(display = "Connection error: {}", _0)]
     HyperError(#[cause] hyper::Error),
-    #[fail(display = "Bad field: {}", _0)] ParseError(&'static str),
-    #[fail(display = "{}", _0)] Api(#[cause] SubsonicError),
-    #[fail(display = "Unable to fetch content: {}", _0)] StreamError(&'static str),
+    #[fail(display = "Bad field: {}", _0)]
+    ParseError(&'static str),
+    #[fail(display = "{}", _0)]
+    Api(#[cause] SubsonicError),
+    #[fail(display = "Unable to fetch content: {}", _0)]
+    StreamError(&'static str),
     #[fail(display = "Error parsing JSON: {}", _0)]
     JsonError(String),
     #[fail(display = "Failed to parse value: {}", _0)]
@@ -28,15 +34,15 @@ pub enum Error {
     ConnectionError(hyper::StatusCode),
 }
 
-/*
-
-pub enum Error {
-    IoError,
-    HyperError,
-    ApiError,
+#[derive(Debug, Fail)]
+pub enum UriError {
+    #[fail(display = "{}", _0)]
+    Hyper(#[cause] hyper::error::UriError),
+    #[fail(display = "Unable to determine scheme")]
+    Scheme,
+    #[fail(display = "Missing server address")]
+    Address,
 }
-
-*/
 
 #[derive(Debug, Fail, Clone)]
 pub enum SubsonicError {
@@ -192,7 +198,12 @@ macro_rules! box_err {
 }
 
 box_err!(hyper::Error, HyperError);
-box_err!(hyper::error::UriError, InvalidUrl);
 box_err!(io::Error, Io);
 box_err!(num::ParseIntError, ParError);
 box_err!(json::Error, SerdeError);
+
+impl From<hyper::error::UriError> for UriError {
+    fn from(err: hyper::error::UriError) -> UriError {
+        UriError::Hyper(err)
+    }
+}

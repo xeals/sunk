@@ -76,7 +76,8 @@ impl Sunk {
         use std::str::FromStr;
 
         let auth = SunkAuth::new(user, password);
-        let uri = Uri::from_str(url)?;
+        let uri =
+            Uri::from_str(url).map_err(|e| Error::Uri(UriError::Hyper(e)))?;
         let api = Api::from("1.14.0");
 
         let core = tokio::reactor::Core::new()?;
@@ -127,10 +128,10 @@ impl Sunk {
                 warn!("No scheme provided; falling back to http");
                 Some("http")
             })
-            .ok_or_else(|| Error::ServerError("Unable to determine scheme".into()))?;
+            .ok_or_else(|| Error::Uri(UriError::Scheme))?;
         let addr = self.url
             .authority()
-            .ok_or_else(|| Error::ServerError("No address provided".into()))?;
+            .ok_or_else(|| Error::Uri(UriError::Address))?;
 
         let mut url = [scheme, "://", addr, "/rest/"].concat();
         url.push_str(query);
