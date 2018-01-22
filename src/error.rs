@@ -1,6 +1,6 @@
 use hyper;
 use json;
-use std::{fmt, io, result};
+use std::{fmt, io, result, num};
 use std::convert::From;
 
 use api::Api;
@@ -21,7 +21,23 @@ pub enum Error {
     #[fail(display = "Bad field: {}", _0)] ParseError(&'static str),
     #[fail(display = "{}", _0)] Api(#[cause] SubsonicError),
     #[fail(display = "Unable to fetch content: {}", _0)] StreamError(&'static str),
+    #[fail(display = "Error parsing JSON: {}", _0)]
+    JsonError(String),
+    #[fail(display = "Failed to parse value: {}", _0)]
+    ParError(#[cause] num::ParseIntError),
+    #[fail(display = "Error serialising: {}", _0)]
+    SerdeError(#[cause] json::Error),
 }
+
+/*
+
+pub enum Error {
+    IoError,
+    HyperError,
+    ApiError,
+}
+
+*/
 
 #[derive(Debug, Fail, Clone)]
 pub enum SubsonicError {
@@ -156,3 +172,5 @@ macro_rules! box_err {
 box_err!(hyper::Error, HyperError);
 box_err!(hyper::error::UriError, InvalidUrl);
 box_err!(io::Error, Io);
+box_err!(num::ParseIntError, ParError);
+box_err!(json::Error, SerdeError);

@@ -50,14 +50,21 @@ impl Artist {
             for id in &albums {
                 let (_, res) = sunk.get("getAlbum", Query::with("id", id))?;
                 album_list.push(
-                    Album::from_json(pointer!(res, "/subsonic-response/album"))?
+                    Album::from_json(
+                        res.try_get("subsonic-response")?
+                        .try_get("album")?
+                        .try_map()?.into())?
+                    // Album::from_json(pointer!(res, "/subsonic-response/album"))?
                 )
             }
         } else {
             for id in &self.albums {
                 let (_, res) = sunk.get("getAlbum", Query::with("id", id))?;
                 album_list.push(
-                    Album::from_json(pointer!(res, "/subsonic-response/album"))?
+                    Album::from_json(
+                        res.try_get("subsonic-response")?
+                        .try_get("album")?.try_map()?.into())?
+                    // Album::from_json(pointer!(res, "/subsonic-response/album"))?
                 )
             }
         };

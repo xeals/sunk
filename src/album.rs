@@ -66,24 +66,23 @@ struct AlbumSerde {
 }
 
 impl Album {
-    // FIXME Don't use unwrap.
+    /// Deserialzises a `json::Value` into an album.
     pub fn from_json(json: json::Value) -> Result<Album> {
-
         // `getAlbum` returns the songs in the album, but `albumList` does not.
         let mut songs = Vec::new();
         if let Some(Some(list)) = json.get("song").map(|v| v.as_array()) {
             for song in list {
                 println!("found: {}", song);
                 songs.push(song
-                    .get("id").expect("Unable to get ID")
+                    .try_get("id")?
                     .as_str().unwrap()
-                    .parse::<u64>().unwrap());
+                    .parse::<u64>()?);
             }
         }
 
-        let serde: AlbumSerde = json::from_value(json).unwrap();
+        let serde: AlbumSerde = json::from_value(json)?;
         Ok(Album {
-            id: serde.id.parse().unwrap(),
+            id: serde.id.parse()?,
             name: serde.name,
             artist: serde.artist,
             artist_id: serde.artistId.map(|i| i.parse().unwrap()),
@@ -140,9 +139,13 @@ pub fn get_albums(
     let (_, res) = sunk.get("getAlbumList2", args)?;
 
     let mut albums = vec![];
-    for album in pointer!(res, "/subsonic-response/albumList2/album")
-        .as_array()
-        .ok_or(Error::ParseError("albumList2 not an array"))?
+    // for album in pointer!(res, "/subsonic-response/albumList2/album")
+    //     .as_array()
+    //     .ok_or(Error::ParseError("albumList2 not an array"))?
+    for album in res.try_get("subsonic-response")?
+    .try_get("albumList2")?
+    .try_get("album")?
+    .try_array()?
         {
             albums.push(Album::from_json(album)?);
         }
@@ -198,16 +201,16 @@ mod tests {
     fn parse_from_album_list() {
         let json = json!(
             {
-            "id" : "314",
-            "name" : "#3",
-            "artist" : "The Script",
-            "artistId" : "177",
-            "coverArt" : "al-314",
-            "songCount" : 7,
-            "duration" : 1736,
-            "created" : "2018-01-01T10:31:35.000Z",
-            "year" : 2012,
-            "genre" : "Pop"
+                "id" : "314",
+                "name" : "#3",
+                "artist" : "The Script",
+                "artistId" : "177",
+                "coverArt" : "al-314",
+                "songCount" : 7,
+                "duration" : 1736,
+                "created" : "2018-01-01T10:31:35.000Z",
+                "year" : 2012,
+                "genre" : "Pop"
             }
         );
         let alb = Album::from_json(json).unwrap();

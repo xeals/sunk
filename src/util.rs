@@ -1,5 +1,10 @@
 #![macro_use]
 
+use json::{self, Value};
+use json::value::{Map, Index};
+
+use error;
+
 macro_rules! fetch {
     ($j:ident->$i:ident: $t:ident) => (
         $j[stringify!($i)].$t().ok_or(
@@ -71,4 +76,29 @@ where
     T: ::std::string::ToString,
 {
     map_some_vec(sv, T::to_string)
+}
+
+pub trait ValueExt {
+    fn try_get<I: Index>(&self, index: I) -> error::Result<&Value>;
+    fn try_array(&self) -> error::Result<Vec<Value>>;
+    fn try_map(&self) -> error::Result<Map<String, Value>>;
+}
+
+impl ValueExt for Value {
+    fn try_get<I: Index>(&self, index: I) -> error::Result<&Value> {
+        self.get(index)
+            .ok_or(error::Error::JsonError(format!("missing index in {}", self)))
+    }
+
+    fn try_array(&self) -> error::Result<Vec<Value>> {
+        self.as_array()
+            .ok_or(error::Error::JsonError(format!("{} not an array", self)))
+            .map(|a| a.clone())
+    }
+
+    fn try_map(&self) -> error::Result<Map<String, Value>> {
+        self.as_object()
+            .ok_or(error::Error::JsonError(format!("{} not a map", self)))
+            .map(|m| m.clone())
+    }
 }
