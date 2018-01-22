@@ -117,15 +117,7 @@ impl Song {
             .maybe_arg_list("bitrate", bitrates)
             .build();
 
-        let raw = sunk.get_raw("hls", args)?;
-        {
-            let fline = raw.split('\n').next()
-                .ok_or(Error::StreamError("unexpected EOF"))?;
-            if fline.contains("xml") || fline.contains('{') {
-                return Err(Error::Api(ApiError::from_u16(70)?))
-            }
-        }
-        Ok(raw)
+        sunk.get_raw("hls", args)
     }
 
     /// Returns the URL of the cover art. Size is a single parameter and the
@@ -133,16 +125,26 @@ impl Song {
     impl_cover_art!();
 }
 
-/// Searches for lyrics matching the artist and title. Returns an empty string
-/// if no lyrics are found.
-pub fn get_lyrics(sunk: &mut Sunk, artist: Option<&str>, title: Option<&str>) -> Result<String> {
+/// Searches for lyrics matching the artist and title. Returns `None` if no
+/// lyrics are found.
+pub fn get_lyrics(sunk: &mut Sunk, artist: Option<&str>, title: Option<&str>) -> Result<Option<Lyrics>> {
     let args = Query::new()
         .maybe_arg("artist", artist)
         .maybe_arg("title", title)
         .build();
     let res = sunk.get("getLyrics", args)?;
-    pointer!(res, "/subsonic-response/lyrics").as_str()
-        .ok_or(Error::ParseError("not a string")).map(|s| s.to_string())
+    if res.get("value").is_some() {
+        Ok(Some(json::from_value(res)?))
+    } else {
+        Ok(None)
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Lyrics {
+    title: String,
+    artist: String,
+    value: String,
 }
 
 #[cfg(test)]

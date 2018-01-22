@@ -23,7 +23,7 @@ pub enum Error {
     #[fail(display = "{}", _0)]
     Api(#[cause] ApiError),
     #[fail(display = "Unable to fetch content: {}", _0)]
-    StreamError(&'static str),
+    Stream(&'static str),
     #[fail(display = "Error parsing JSON: {}", _0)]
     JsonError(String),
     #[fail(display = "Failed to parse value: {}", _0)]
