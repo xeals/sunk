@@ -40,7 +40,7 @@ pub struct Album {
     pub name: String,
     pub artist: Option<String>,
     artist_id: Option<u64>,
-    cover_id: Option<String>,
+    cover_id: String,
     pub duration: u64,
     pub year: Option<u64>,
     pub genre: Option<String>,
@@ -48,7 +48,54 @@ pub struct Album {
     song_count: u64,
 }
 
+
+/// Internal struct matching exactly what `serde` expects.
+#[derive(Debug, Deserialize)]
+#[allow(non_snake_case)]
+struct AlbumSerde {
+    id: String,
+    name: String,
+    artist: Option<String>,
+    artistId: Option<String>,
+    coverArt: String,
+    songCount: u64,
+    duration: u64,
+    created: String,
+    year: Option<u64>,
+    genre: Option<String>,
+}
+
 impl Album {
+    // FIXME Don't use unwrap.
+    pub fn from_json(json: json::Value) -> Result<Album> {
+
+        // `getAlbum` returns the songs in the album, but `albumList` does not.
+        let mut songs = Vec::new();
+        if let Some(Some(list)) = json.get("song").map(|v| v.as_array()) {
+            for song in list {
+                println!("found: {}", song);
+                songs.push(song
+                    .get("id").expect("Unable to get ID")
+                    .as_str().unwrap()
+                    .parse::<u64>().unwrap());
+            }
+        }
+
+        let serde: AlbumSerde = json::from_value(json).unwrap();
+        Ok(Album {
+            id: serde.id.parse().unwrap(),
+            name: serde.name,
+            artist: serde.artist,
+            artist_id: serde.artistId.map(|i| i.parse().unwrap()),
+            cover_id: serde.coverArt,
+            duration: serde.duration,
+            year: serde.year,
+            genre: serde.genre,
+            song_count: serde.songCount,
+            songs,
+        })
+    }
+
     pub fn from(j: &json::Value) -> Result<Album> {
         if !j.is_object() {
             return Err(Error::ParseError("not an object"))
@@ -66,7 +113,7 @@ impl Album {
             name: fetch!(j->name: as_str).into(),
             artist: fetch_maybe!(j->artist: as_str).map(|v| v.to_string()),
             artist_id: fetch_maybe!(j->artistId: as_str, u64),
-            cover_id: fetch_maybe!(j->coverArt: as_str).map(|v| v.to_string()),
+            cover_id: fetch!(j->coverArt: as_str).into(),
             duration: fetch!(j->duration: as_u64),
             year: fetch_maybe!(j->year: as_u64),
             genre: fetch_maybe!(j->genre: as_str).map(|v| v.to_string()),
@@ -96,9 +143,9 @@ pub fn get_albums(
     for album in pointer!(res, "/subsonic-response/albumList2/album")
         .as_array()
         .ok_or(Error::ParseError("albumList2 not an array"))?
-    {
-        albums.push(Album::from(album)?);
-    }
+        {
+            albums.push(Album::from_json(album)?);
+        }
     Ok(albums)
 }
 
@@ -116,5 +163,57 @@ mod tests {
         println!("{:?}", albums);
         // assert!(true)
         panic!()
+    }
+
+    #[test]
+    fn parse_from_get_album() {
+        let json = json!(
+            {
+                "id" : "200",
+                "name" : "Aqours オリジナルソングCD 1",
+                "artist" : "高海千歌(CV⋯伊波杏樹)",
+                "artistId" : "126",
+                "coverArt" : "al-200",
+                "songCount" : 2,
+                "duration" : 544,
+                "created" : "2018-01-01T10:31:42.000Z",
+                "year" : 2017,
+                "genre" : "J-Pop",
+                "song" : [ {
+                    "id" : "1450",
+                    "title" : "One More Sunshine Story",
+                    "album" : "Aqours オリジナルソングCD 1",
+                    "artist" : "高海千歌(CV⋯伊波杏樹)"
+                }]
+            }
+        );
+        let alb = Album::from_json(json).unwrap();
+        println!("{:?}", alb);
+        assert_eq!(alb.id, 200);
+        assert_eq!(alb.cover_id, "al-200".to_string());
+        assert_eq!(alb.songs, vec![1450]);
+    }
+
+    #[test]
+    fn parse_from_album_list() {
+        let json = json!(
+            {
+            "id" : "314",
+            "name" : "#3",
+            "artist" : "The Script",
+            "artistId" : "177",
+            "coverArt" : "al-314",
+            "songCount" : 7,
+            "duration" : 1736,
+            "created" : "2018-01-01T10:31:35.000Z",
+            "year" : 2012,
+            "genre" : "Pop"
+            }
+        );
+        let alb = Album::from_json(json).unwrap();
+        println!("{:?}", alb);
+        assert_eq!(alb.id, 314);
+        assert_eq!(alb.name, "#3".to_string());
+        assert!(alb.songs.is_empty());
     }
 }
