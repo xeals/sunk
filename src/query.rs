@@ -4,18 +4,18 @@ use std::fmt::{self, Display};
 /// An expandable query set for a call.
 #[derive(Debug)]
 pub struct Query<'a, D: Display> {
-    inner: Vec<(&'a str, D)>
+    inner: Vec<(&'a str, D)>,
 }
 
 impl<'a, D: Display> Query<'a, D> {
     /// Use `Query::with("", "")` if no arguments are needed. This is due to a
     /// behaviour in the type inference system that I can't wrap my head around.
-    pub fn new() -> Query<'a, D> {
-        Query { inner: vec![] }
-    }
+    pub fn new() -> Query<'a, D> { Query { inner: vec![] } }
 
     pub fn with(key: &'a str, val: D) -> Query<'a, D> {
-        Query { inner: vec![(key, val)] }
+        Query {
+            inner: vec![(key, val)],
+        }
     }
 
     pub fn maybe_with(key: &'a str, val: Option<D>) -> Query<'a, D> {
@@ -31,7 +31,11 @@ impl<'a, D: Display> Query<'a, D> {
         self
     }
 
-    pub fn maybe_arg(&mut self, key: &'a str, val: Option<D>) -> &mut Query<'a, D> {
+    pub fn maybe_arg(
+        &mut self,
+        key: &'a str,
+        val: Option<D>,
+    ) -> &mut Query<'a, D> {
         if let Some(v) = val {
             self.arg(key, v);
         }
@@ -45,7 +49,11 @@ impl<'a, D: Display> Query<'a, D> {
         self
     }
 
-    pub fn maybe_arg_list(&mut self, key: &'a str, val: Option<Vec<D>>) -> &mut Query<'a, D> {
+    pub fn maybe_arg_list(
+        &mut self,
+        key: &'a str,
+        val: Option<Vec<D>>,
+    ) -> &mut Query<'a, D> {
         if let Some(vals) = val {
             for v in vals {
                 self.arg(key, v);
@@ -55,7 +63,9 @@ impl<'a, D: Display> Query<'a, D> {
     }
 
     pub fn build(&mut self) -> Query<'a, D> {
-        Query { inner: self.inner.drain(..).collect() }
+        Query {
+            inner: self.inner.drain(..).collect(),
+        }
     }
 }
 
@@ -64,7 +74,7 @@ impl<'a, D: Display> Display for Query<'a, D> {
         #[cfg_attr(feature = "cargo-clippy", allow(needless_borrow))]
         for (i, &(ref k, ref v)) in self.inner.iter().enumerate() {
             if k.is_empty() {
-                break;
+                break
             }
             write!(f, "{}={}", k, v)?;
             if i + 1 < self.inner.len() {
@@ -76,9 +86,7 @@ impl<'a, D: Display> Display for Query<'a, D> {
 }
 
 impl<'a, D: Display> Default for Query<'a, D> {
-    fn default() -> Query<'a, D> {
-        Query::new()
-    }
+    fn default() -> Query<'a, D> { Query::new() }
 }
 
 #[cfg(test)]
@@ -99,10 +107,7 @@ mod tests {
 
     #[test]
     fn two_queries() {
-        let q = Query::new()
-            .arg("id", 64)
-            .arg("album", 12)
-            .build();
+        let q = Query::new().arg("id", 64).arg("album", 12).build();
         assert_eq!("id=64&album=12", &format!("{}", q))
     }
 

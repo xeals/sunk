@@ -13,23 +13,23 @@ const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
 #[derive(Debug)]
 pub struct Sunk {
-    url:    Uri,
-    auth:   SunkAuth,
+    url: Uri,
+    auth: SunkAuth,
     client: Client<HttpsConnector<hyper::client::HttpConnector>>,
-    core:   tokio::reactor::Core,
-    api:    Api,
+    core: tokio::reactor::Core,
+    api: Api,
 }
 
 #[derive(Debug)]
 struct SunkAuth {
-    user:     String,
+    user: String,
     password: String,
 }
 
 impl SunkAuth {
     fn new(user: &str, password: &str) -> SunkAuth {
         SunkAuth {
-            user:     user.into(),
+            user: user.into(),
             password: password.into(),
         }
     }
@@ -38,8 +38,8 @@ impl SunkAuth {
     fn as_uri(&self, api: Api) -> String {
         // First md5 support.
         let auth = if api >= "1.13.0".into() {
-            use rand::{thread_rng, Rng};
             use md5;
+            use rand::{thread_rng, Rng};
 
             let salt: String =
                 thread_rng().gen_ascii_chars().take(SALT_SIZE).collect();
@@ -88,11 +88,11 @@ impl Sunk {
             .build(&handle);
 
         Ok(Sunk {
-            url:    uri,
-            auth:   auth,
+            url: uri,
+            auth: auth,
             client: client,
-            core:   core,
-            api:    api,
+            core: core,
+            api: api,
         })
     }
 
@@ -118,7 +118,11 @@ impl Sunk {
     ///
     /// Most usage of this function will be through `Sunk::get()`.
     #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
-    fn build_url<'a, D>(&self, query: &str, args: Query<'a, D>) -> Result<String>
+    fn build_url<'a, D>(
+        &self,
+        query: &str,
+        args: Query<'a, D>,
+    ) -> Result<String>
     where
         D: ::std::fmt::Display,
     {
@@ -203,7 +207,7 @@ impl Sunk {
                     Some("failed") => {
                         return Err(Error::Api(ApiError::try_from(out)?))
                     }
-                    _ => panic!()
+                    _ => panic!(),
                 }
             } else {
                 panic!()
@@ -253,7 +257,7 @@ impl Sunk {
     pub fn get_raw<'a, D>(
         &mut self,
         query: &str,
-        args: Query<'a, D>
+        args: Query<'a, D>,
     ) -> Result<String>
     where
         D: ::std::fmt::Display,
@@ -263,9 +267,7 @@ impl Sunk {
         let uri = self.build_url(query, args)?.parse().unwrap();
 
         info!("Connecting to {}", uri);
-        let work = self.client.get(uri).and_then(|res| {
-            res.body().concat2()
-        });
+        let work = self.client.get(uri).and_then(|res| res.body().concat2());
 
         let get = self.core.run(work)?;
         String::from_utf8(get.to_vec())
@@ -298,7 +300,6 @@ impl Sunk {
         } else {
             unreachable!()
         }
-
     }
 }
 

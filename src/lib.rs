@@ -9,10 +9,10 @@ extern crate hyper_tls;
 extern crate log;
 extern crate serde;
 #[macro_use]
+extern crate serde_derive;
+#[macro_use]
 extern crate serde_json as json;
 extern crate tokio_core as tokio;
-#[macro_use]
-extern crate serde_derive;
 
 extern crate md5;
 extern crate rand;

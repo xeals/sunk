@@ -1,18 +1,18 @@
 use json;
 
-use query::Query;
 use error::*;
-use util::*;
+use query::Query;
 use sunk::Sunk;
+use util::*;
 
 use song;
 
 #[derive(Debug)]
 pub struct Playlist {
-    id:         u64,
-    name:       String,
-    duration:   u64,
-    cover_id:      String,
+    id: u64,
+    name: String,
+    duration: u64,
+    cover_id: String,
     song_count: u64,
     songs: Vec<song::Song>,
 }
@@ -41,7 +41,10 @@ impl Playlist {
         let mut songs = Vec::new();
         if let Some(Some(list)) = json.get("entry").map(|e| e.as_array()) {
             for song in list {
-                info!("Found song {} for playlist {}", song["name"], json["name"]);
+                info!(
+                    "Found song {} for playlist {}",
+                    song["name"], json["name"]
+                );
                 songs.push(song::Song::try_from(song.clone())?);
             }
         }

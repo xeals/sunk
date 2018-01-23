@@ -1,9 +1,9 @@
 use json;
 
-use sunk::Sunk;
-use song;
-use query::Query;
 use error::*;
+use query::Query;
+use song;
+use sunk::Sunk;
 use util::*;
 
 #[derive(Debug, Clone, Copy)]
@@ -29,7 +29,7 @@ impl ::std::fmt::Display for ListType {
             Newest => "newest",
             Random => "random",
             Recent => "recent",
-            Starred => "starred"
+            Starred => "starred",
         };
         write!(f, "{}", fmt)
     }
@@ -48,7 +48,6 @@ pub struct Album {
     song_count: u64,
     songs: Vec<song::Song>,
 }
-
 
 /// Internal struct matching exactly what `serde` expects.
 #[derive(Debug, Deserialize)]
@@ -115,7 +114,7 @@ pub fn get_albums(
     list_type: ListType,
     size: Option<u64>,
     offset: Option<u64>,
-    folder_id: Option<u64>
+    folder_id: Option<u64>,
 ) -> Result<Vec<Album>> {
     let args = Query::new()
         .arg("type", list_type.to_string())
@@ -144,7 +143,9 @@ mod tests {
     fn remote_get_albums() {
         let (s, u, p) = load_credentials().unwrap();
         let mut srv = Sunk::new(&s, &u, &p).unwrap();
-        let albums = get_albums(&mut srv, ListType::AlphaByArtist, None, None, None).unwrap();
+        let albums =
+            get_albums(&mut srv, ListType::AlphaByArtist, None, None, None)
+                .unwrap();
 
         println!("{:?}", albums);
         assert!(!albums.is_empty())

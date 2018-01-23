@@ -2,8 +2,8 @@ use error::*;
 use json;
 use sunk::Sunk;
 
-use util::*;
 use query::Query;
+use util::*;
 
 /// Audio encoding format.
 ///
@@ -39,25 +39,25 @@ impl ::std::fmt::Display for AudioFormat {
 pub struct Song {
     pub id: u64,
     // parent: u64,
-    pub title:     String,
-    pub album:     Option<String>,
-    album_id:  Option<u64>,
-    pub artist:    Option<String>,
+    pub title: String,
+    pub album: Option<String>,
+    album_id: Option<u64>,
+    pub artist: Option<String>,
     artist_id: Option<u64>,
-    pub track:     Option<u64>,
-    pub year:      Option<u64>,
-    pub genre:     Option<String>,
-    cover_id:  Option<u64>,
-    size:      u64,
-    duration:  u64,
-    path:      String,
+    pub track: Option<u64>,
+    pub year: Option<u64>,
+    pub genre: Option<String>,
+    cover_id: Option<u64>,
+    size: u64,
+    duration: u64,
+    path: String,
 }
 
 #[derive(Debug, Deserialize)]
 #[allow(non_snake_case)]
 struct SongSerde {
     id: String,
-    parent:	String,
+    parent: String,
     isDir: bool,
     title: String,
     album: Option<String>,
@@ -78,7 +78,7 @@ struct SongSerde {
     created: String,
     albumId: Option<String>,
     artistId: Option<String>,
-    //type: String,
+    // type: String,
 }
 
 impl Song {
@@ -136,7 +136,11 @@ impl Song {
     ///
     ///  Returns an M3U8 playlist on success (content type
     ///  "application/vnd.apple.mpegurl").
-    pub fn hls(&self, sunk: &mut Sunk, bitrates: Option<Vec<u64>>) -> Result<String> {
+    pub fn hls(
+        &self,
+        sunk: &mut Sunk,
+        bitrates: Option<Vec<u64>>,
+    ) -> Result<String> {
         let args = Query::new()
             .arg("id", self.id)
             .maybe_arg_list("bitrate", bitrates)
@@ -157,7 +161,11 @@ pub fn get_song(sunk: &mut Sunk, id: u64) -> Result<Song> {
 
 /// Searches for lyrics matching the artist and title. Returns `None` if no
 /// lyrics are found.
-pub fn get_lyrics(sunk: &mut Sunk, artist: Option<&str>, title: Option<&str>) -> Result<Option<Lyrics>> {
+pub fn get_lyrics(
+    sunk: &mut Sunk,
+    artist: Option<&str>,
+    title: Option<&str>,
+) -> Result<Option<Lyrics>> {
     let args = Query::new()
         .maybe_arg("artist", artist)
         .maybe_arg("title", title)

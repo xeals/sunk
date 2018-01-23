@@ -1,9 +1,9 @@
 use json;
 
-use query::Query;
 use error::*;
-use util::*;
+use query::Query;
 use sunk::Sunk;
+use util::*;
 
 use album;
 use song;
@@ -36,7 +36,10 @@ impl Artist {
         let mut albums = Vec::new();
         if let Some(Some(list)) = json.get("album").map(|a| a.as_array()) {
             for album in list {
-                info!("Found album {} for artist {}", album["name"], json["name"]);
+                info!(
+                    "Found album {} for artist {}",
+                    album["name"], json["name"]
+                );
                 albums.push(album::Album::try_from(album.clone())?);
             }
         }
