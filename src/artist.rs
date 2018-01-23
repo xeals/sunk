@@ -16,7 +16,41 @@ pub struct Artist {
     album_count: u64,
 }
 
+#[derive(Debug, Deserialize)]
+#[allow(non_snake_case)]
+struct ArtistSerde {
+    id: String,
+    name: String,
+    coverArt: Option<String>,
+    albumCount: u64,
+}
+
 impl Artist {
+    /// Deserializes a JSON value into an artist.
+    ///
+    /// # Notes
+    ///
+    /// This is a temporary function until TryFrom is stabilised.
+    pub fn try_from(json: json::Value) -> Result<Artist> {
+        let mut albums = Vec::new();
+        if let Some(Some(list)) = json.get("album").map(|a| a.as_array()) {
+            for album in list {
+                if let Some(Some(id)) = album.get("id").map(|i| i.as_str()) {
+                    info!("Found album {} for artist {}", album, json["name"]);
+                    albums.push(id.parse::<u64>()?);
+                }
+            }
+        }
+
+        let serde: ArtistSerde = json::from_value(json)?;
+        Ok(Artist {
+            id: serde.id.parse()?,
+            name: serde.name,
+            cover_id: serde.coverArt,
+            album_count: serde.albumCount,
+            albums,
+        })
+    }
     pub fn from(j: &json::Value) -> Result<Artist> {
         if !j.is_object() {
             return Err(Error::ParseError("not an object"))
@@ -101,7 +135,7 @@ mod tests {
 
     #[test]
     fn parse_artist() {
-        let parsed = Artist::from(&raw()).unwrap();
+        let parsed = Artist::try_from(raw()).unwrap();
 
         assert_eq!(parsed.name, "Backstreet Boys".to_string());
         assert_eq!(parsed.albums.len(), 1);
