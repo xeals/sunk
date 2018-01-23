@@ -3,40 +3,82 @@ use json;
 use query::Query;
 use error::*;
 use util::*;
-use song::Song;
 use sunk::Sunk;
+
+use song;
 
 #[derive(Debug)]
 pub struct Playlist {
     id:         u64,
     name:       String,
-    song_count: u64,
     duration:   u64,
-    cover:      String,
+    cover_id:      String,
+    song_count: u64,
+    songs: Vec<u64>,
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(non_snake_case)]
+struct PlaylistSerde {
+    id: String,
+    name: String,
+    comment: Option<String>,
+    owner: String,
+    songCount: u64,
+    duration: u64,
+    created: String,
+    changed: String,
+    coverArt: String,
 }
 
 impl Playlist {
-    /// Parses a JSON map into a Playlist struct.
-    pub fn from(j: &json::Value) -> Result<Playlist> {
-        if !j.is_object() {
-            return Err(Error::ParseError("not an object"))
+    /// Deserialzises a JSON value into an artist.
+    ///
+    /// # Notes
+    ///
+    /// This is a temporary function until TryFrom is stabilised.
+    pub fn try_from(json: json::Value) -> Result<Playlist> {
+        let mut songs = Vec::new();
+        if let Some(Some(list)) = json.get("entry").map(|e| e.as_array()) {
+            for song in list {
+                if let Some(Some(id)) = song.get("id").map(|i| i.as_str()) {
+                    info!("Found song {} for playlist {}", song, json["name"]);
+                    songs.push(id.parse::<u64>()?);
+                }
+            }
         }
 
+        let serde: PlaylistSerde = json::from_value(json)?;
         Ok(Playlist {
-            id:         fetch!(j->id: as_str, u64),
-            name:       fetch!(j->name: as_str).into(),
-            song_count: fetch!(j->songCount: as_u64),
-            duration:   fetch!(j->duration: as_u64),
-            cover:      fetch!(j->coverArt: as_str).into(),
+            id: serde.id.parse()?,
+            name: serde.name,
+            duration: serde.duration,
+            cover_id: serde.coverArt,
+            song_count: serde.songCount,
+            songs,
         })
     }
 
     /// Fetches the songs contained in a playlist.
-    pub fn songs(&self, sunk: &mut Sunk) -> Result<Vec<Song>> {
-        get_playlist_content(sunk, self.id)
+    pub fn songs(&self, sunk: &mut Sunk) -> Result<Vec<song::Song>> {
+        let mut song_list = Vec::new();
+
+        if self.songs.len() as u64 != self.song_count {
+            let songs = get_playlist(sunk, self.id)?.songs;
+
+            for id in &songs {
+                song_list.push(song::get_song(sunk, *id)?);
+            }
+        } else {
+            for id in &self.songs {
+                song_list.push(song::get_song(sunk, *id)?);
+            }
+        }
+
+        Ok(song_list)
     }
 
-    impl_cover_art!();
+    // impl_cover_art!();
 }
 
 fn get_playlists(
@@ -47,8 +89,8 @@ fn get_playlists(
 
     let mut pls = vec![];
     if let Some(pl) = res["playlist"].as_array() {
-        for p in pl {
-            pls.push(Playlist::from(p)?);
+        for p in pl.clone() {
+            pls.push(Playlist::try_from(p)?);
         }
     }
     Ok(pls)
@@ -56,19 +98,20 @@ fn get_playlists(
 
 fn get_playlist(sunk: &mut Sunk, id: u64) -> Result<Playlist> {
     let res = sunk.get("getPlaylist", Query::with("id", id))?;
-    Playlist::from(&res["subsonic-response"]["playlist"])
+    Playlist::try_from(res)
 }
 
-fn get_playlist_content(sunk: &mut Sunk, id: u64) -> Result<Vec<Song>> {
-    let res = sunk.get("getPlaylist", Query::with("id", id))?;
-    let mut list = vec![];
-    if let Some(songs) = res["entry"].as_array() {
-        for song in songs {
-            list.push(Song::from(song)?);
-        }
-    }
-    Ok(list)
-}
+// fn get_playlist_songs(sunk: &mut Sunk, id: u64) -> Result<Vec<song::Song>> {
+//     let res = sunk.get("getPlaylist", Query::with("id", id))?;
+
+//     let mut list = Vec::new();
+//     if let Some(songs) = res["entry"].as_array() {
+//         for song in songs {
+//             list.push(song::Song::from(song)?);
+//         }
+//     }
+//     Ok(list)
+// }
 
 /// Creates a playlist with the given name.
 ///
@@ -141,7 +184,7 @@ mod tests {
             }
         );
 
-        let parsed = Playlist::from(&raw).unwrap();
+        let parsed = Playlist::try_from(raw).unwrap();
         let auth = load_credentials().unwrap();
         let mut srv = Sunk::new(&auth.0, &auth.1, &auth.2).unwrap();
         let songs = parsed.songs(&mut srv).unwrap();

@@ -67,17 +67,20 @@ struct AlbumSerde {
 }
 
 impl Album {
-    /// Deserialzises a `json::Value` into an album.
-    pub fn from_json(json: json::Value) -> Result<Album> {
+    /// Deserialzises a JSON value into an album.
+    ///
+    /// # Notes
+    ///
+    /// This is a temporary function until TryFrom is stabilised.
+    pub fn try_from(json: json::Value) -> Result<Album> {
         // `getAlbum` returns the songs in the album, but `albumList` does not.
         let mut songs = Vec::new();
         if let Some(Some(list)) = json.get("song").map(|v| v.as_array()) {
             for song in list {
-                println!("found: {}", song);
-                songs.push(song
-                    .try_get("id")?
-                    .as_str().unwrap()
-                    .parse::<u64>()?);
+                if let Some(Some(id)) = song.get("id").map(|i| i.as_str()) {
+                    info!("Found song {} for album {}", song, json["name"]);
+                    songs.push(id.parse::<u64>()?);
+                }
             }
         }
 
@@ -117,7 +120,7 @@ impl Album {
 
 pub fn get_album(sunk: &mut Sunk, id: u64) -> Result<Album> {
     let res = sunk.get("getAlbum", Query::with("id", id))?;
-    Album::from_json(res)
+    Album::try_from(res)
 }
 
 pub fn get_albums(
@@ -139,7 +142,7 @@ pub fn get_albums(
     let mut albums = vec![];
     if let Some(album_arr) = res["album"].as_array() {
         for album in album_arr.clone() {
-            albums.push(Album::from_json(album)?);
+            albums.push(Album::try_from(album)?);
         }
     }
     Ok(albums)
@@ -182,7 +185,7 @@ mod tests {
                 }]
             }
         );
-        let alb = Album::from_json(json).unwrap();
+        let alb = Album::try_from(json).unwrap();
 
         assert_eq!(alb.id, 200);
         assert_eq!(alb.cover_id, Some("al-200".to_string()));
@@ -205,7 +208,7 @@ mod tests {
                 "genre" : "Pop"
             }
         );
-        let alb = Album::from_json(json).unwrap();
+        let alb = Album::try_from(json).unwrap();
 
         assert_eq!(alb.id, 314);
         assert_eq!(alb.name, "#3".to_string());

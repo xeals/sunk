@@ -3,9 +3,10 @@ use json;
 use query::Query;
 use error::*;
 use util::*;
-use song::Song;
 use sunk::Sunk;
-use album::Album;
+
+use album;
+use song;
 
 #[derive(Debug)]
 pub struct Artist {
@@ -51,48 +52,22 @@ impl Artist {
             albums,
         })
     }
-    pub fn from(j: &json::Value) -> Result<Artist> {
-        if !j.is_object() {
-            return Err(Error::ParseError("not an object"))
-        }
 
-        let mut albums = vec![];
-        if j.get("album").is_some() {
-            for album in fetch!(j->album: as_array).iter() {
-                albums.push(fetch!(album->id: as_str, u64))
-            }
-        }
-
-        Ok(Artist {
-            id:       fetch!(j->id: as_str, u64),
-            name:     fetch!(j->name: as_str).into(),
-            cover_id: Some(fetch!(j->coverArt: as_str).into()),
-            albums:   albums,
-            album_count: fetch!(j->albumCount: as_u64),
-        })
-    }
-
-    pub fn albums(&self, sunk: &mut Sunk) -> Result<Vec<Album>> {
-        let mut album_list = vec![];
+    pub fn albums(&self, sunk: &mut Sunk) -> Result<Vec<album::Album>> {
+        let mut album_list = Vec::new();
 
         // Building an artist from `get_artists()` doesn't populate the album
         // list, but `get_artist()` does. An artist can, however, exist without
         // an album.
-        if self.albums.is_empty() && self.album_count > 0 {
+        if self.albums.len() as u64 != self.album_count {
             let albums = get_artist(sunk, self.id)?.albums;
 
             for id in &albums {
-                let res = sunk.get("getAlbum", Query::with("id", id))?;
-                album_list.push(
-                    Album::from_json(res)?
-                )
+                album_list.push(album::get_album(sunk, *id)?)
             }
         } else {
             for id in &self.albums {
-                let res = sunk.get("getAlbum", Query::with("id", id))?;
-                album_list.push(
-                    Album::from_json(res)?
-                )
+                album_list.push(album::get_album(sunk, *id)?)
             }
         };
 
@@ -104,7 +79,7 @@ impl Artist {
 
 pub fn get_artist(sunk: &mut Sunk, id: u64) -> Result<Artist> {
     let res = sunk.get("getArtist", Query::with("id", id))?;
-    Artist::from(&res["subsonic-response"]["playlist"])
+    Artist::try_from(res)
 }
 
 #[cfg(test)]
@@ -146,7 +121,7 @@ mod tests {
     fn remote_artist_album_list() {
         let (s, u, p) = load_credentials().unwrap();
         let mut srv = Sunk::new(&s, &u, &p).unwrap();
-        let parsed = Artist::from(&raw()).unwrap();
+        let parsed = Artist::try_from(raw()).unwrap();
         let albums = parsed.albums(&mut srv).unwrap();
 
         println!("Parsed: {:?}", albums);
@@ -158,7 +133,7 @@ mod tests {
     fn remote_artist_cover_art() {
         let (s, u, p) = load_credentials().unwrap();
         let mut srv = Sunk::new(&s, &u, &p).unwrap();
-        let parsed = Artist::from(&raw()).unwrap();
+        let parsed = Artist::try_from(raw()).unwrap();
         let cover = parsed.cover_art(&mut srv, None).unwrap();
 
         println!("{:?}", cover);
