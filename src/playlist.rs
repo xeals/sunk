@@ -14,7 +14,7 @@ pub struct Playlist {
     duration:   u64,
     cover_id:      String,
     song_count: u64,
-    songs: Vec<u64>,
+    songs: Vec<song::Song>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -41,10 +41,8 @@ impl Playlist {
         let mut songs = Vec::new();
         if let Some(Some(list)) = json.get("entry").map(|e| e.as_array()) {
             for song in list {
-                if let Some(Some(id)) = song.get("id").map(|i| i.as_str()) {
-                    info!("Found song {} for playlist {}", song, json["name"]);
-                    songs.push(id.parse::<u64>()?);
-                }
+                info!("Found song {} for playlist {}", song["name"], json["name"]);
+                songs.push(song::Song::try_from(song.clone())?);
             }
         }
 
@@ -61,21 +59,11 @@ impl Playlist {
 
     /// Fetches the songs contained in a playlist.
     pub fn songs(&self, sunk: &mut Sunk) -> Result<Vec<song::Song>> {
-        let mut song_list = Vec::new();
-
         if self.songs.len() as u64 != self.song_count {
-            let songs = get_playlist(sunk, self.id)?.songs;
-
-            for id in &songs {
-                song_list.push(song::get_song(sunk, *id)?);
-            }
+            Ok(get_playlist(sunk, self.id)?.songs)
         } else {
-            for id in &self.songs {
-                song_list.push(song::get_song(sunk, *id)?);
-            }
+            Ok(self.songs.clone())
         }
-
-        Ok(song_list)
     }
 
     // impl_cover_art!();
