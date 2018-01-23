@@ -35,44 +35,69 @@ impl ::std::fmt::Display for AudioFormat {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Song {
-    id: u64,
+    pub id: u64,
     // parent: u64,
-    title:     Option<String>,
-    album:     Option<String>,
+    pub title:     String,
+    pub album:     Option<String>,
     album_id:  Option<u64>,
-    artist:    Option<String>,
+    pub artist:    Option<String>,
     artist_id: Option<u64>,
-    track:     Option<u64>,
-    year:      Option<u64>,
-    genre:     Option<String>,
+    pub track:     Option<u64>,
+    pub year:      Option<u64>,
+    pub genre:     Option<String>,
     cover_id:  Option<u64>,
     size:      u64,
     duration:  u64,
     path:      String,
 }
 
-impl Song {
-    pub fn from(j: &json::Value) -> Result<Song> {
-        if !j.is_object() {
-            return Err(Error::ParseError("not an object"))
-        }
+#[derive(Debug, Deserialize)]
+#[allow(non_snake_case)]
+struct SongSerde {
+    id: String,
+    parent:	String,
+    isDir: bool,
+    title: String,
+    album: Option<String>,
+    artist: Option<String>,
+    track: Option<u64>,
+    year: Option<u64>,
+    genre: Option<String>,
+    coverArt: Option<String>,
+    size: u64,
+    contentType: String,
+    suffix: String,
+    duration: u64,
+    bitRate: u64,
+    path: String,
+    isVideo: bool,
+    playCount: u64,
+    discNumber: Option<u64>,
+    created: String,
+    albumId: Option<String>,
+    artistId: Option<String>,
+    //type: String,
+}
 
+impl Song {
+    pub fn try_from(json: json::Value) -> Result<Song> {
+        let serde: SongSerde = json::from_value(json)?;
         Ok(Song {
-            id:        fetch!(j->id: as_str, u64),
-            title:     fetch_maybe!(j->title: as_str).map(|v| v.into()),
-            album:     fetch_maybe!(j->album: as_str).map(|v| v.into()),
-            album_id:  fetch_maybe!(j->albumId: as_str, u64),
-            artist:    fetch_maybe!(j->artist: as_str).map(|v| v.into()),
-            artist_id: fetch_maybe!(j->artistId: as_str, u64),
-            track:     fetch_maybe!(j->track: as_u64),
-            year:      fetch_maybe!(j->year: as_u64),
-            genre:     fetch_maybe!(j->genre: as_str).map(|v| v.into()),
-            cover_id:  fetch_maybe!(j->coverArt: as_str, u64),
-            size:      fetch!(j->size: as_u64),
-            duration:  fetch!(j->duration: as_u64),
-            path:      fetch!(j->path: as_str).into(),
+            id: serde.id.parse()?,
+            title: serde.title,
+            album: serde.album,
+            album_id: serde.albumId.map(|i| i.parse().unwrap()),
+            artist: serde.artist,
+            artist_id: serde.artistId.map(|i| i.parse().unwrap()),
+            cover_id: serde.coverArt.map(|i| i.parse().unwrap()),
+            track: serde.track,
+            year: serde.year,
+            genre: serde.genre,
+            size: serde.size,
+            duration: serde.duration,
+            path: serde.path,
         })
     }
 
@@ -127,7 +152,7 @@ impl Song {
 
 pub fn get_song(sunk: &mut Sunk, id: u64) -> Result<Song> {
     let res = sunk.get("getSong", Query::with("id", id))?;
-    Song::from(&res)
+    Song::try_from(res)
 }
 
 /// Searches for lyrics matching the artist and title. Returns `None` if no
@@ -189,7 +214,7 @@ mod tests {
             }
         );
 
-        let parsed = Song::from(&raw);
+        let parsed = Song::try_from(raw);
         assert!(parsed.is_ok());
     }
 
@@ -197,7 +222,7 @@ mod tests {
     fn get_hls() {
         let (s, u, p) = load_credentials().unwrap();
         let mut srv = Sunk::new(&s, &u, &p).unwrap();
-        let song = Song::from(&json!(
+        let song = Song::try_from(json!(
             {
                 "id": "1633",
                 "duration": 240,

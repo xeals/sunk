@@ -45,8 +45,8 @@ pub struct Album {
     pub duration: u64,
     pub year: Option<u64>,
     pub genre: Option<String>,
-    songs: Vec<u64>,
     song_count: u64,
+    songs: Vec<song::Song>,
 }
 
 
@@ -77,10 +77,12 @@ impl Album {
         let mut songs = Vec::new();
         if let Some(Some(list)) = json.get("song").map(|v| v.as_array()) {
             for song in list {
-                if let Some(Some(id)) = song.get("id").map(|i| i.as_str()) {
-                    info!("Found song {} for album {}", song, json["name"]);
-                    songs.push(id.parse::<u64>()?);
-                }
+                info!("Found song {} for album {}", song["name"], json["name"]);
+                songs.push(song::Song::try_from(song.clone())?);
+                // if let Some(Some(id)) = song.get("id").map(|i| i.as_str()) {
+                //     info!("Found song {} for album {}", song, json["name"]);
+                //     songs.push(id.parse::<u64>()?);
+                // }
             }
         }
 
@@ -100,21 +102,11 @@ impl Album {
     }
 
     pub fn songs(&self, sunk: &mut Sunk) -> Result<Vec<song::Song>> {
-        let mut song_list = Vec::new();
-
         if self.songs.len() as u64 != self.song_count {
-            let songs = get_album(sunk, self.id)?.songs;
-
-            for id in &songs {
-                song_list.push(song::get_song(sunk, *id)?);
-            }
+            Ok(get_album(sunk, self.id)?.songs)
         } else {
-            for id in &self.songs {
-                song_list.push(song::get_song(sunk, *id)?);
-            }
+            Ok(self.songs.clone())
         }
-
-        Ok(song_list)
     }
 }
 
@@ -167,29 +159,49 @@ mod tests {
     fn parse_from_get_album() {
         let json = json!(
             {
-                "id" : "200",
-                "name" : "Aqours オリジナルソングCD 1",
-                "artist" : "高海千歌(CV⋯伊波杏樹)",
-                "artistId" : "126",
-                "coverArt" : "al-200",
-                "songCount" : 2,
-                "duration" : 544,
-                "created" : "2018-01-01T10:31:42.000Z",
-                "year" : 2017,
-                "genre" : "J-Pop",
+                "id" : "18",
+                "name" : "Hooked on a Feeling",
+                "artist" : "Blue Swede",
+                "artistId" : "8",
+                "coverArt" : "al-18",
+                "songCount" : 1,
+                "duration" : 172,
+                "created" : "2018-01-01T10:30:15.000Z",
+                "year" : 1974,
+                "genre" : "Classic Rock",
                 "song" : [ {
-                    "id" : "1450",
-                    "title" : "One More Sunshine Story",
-                    "album" : "Aqours オリジナルソングCD 1",
-                    "artist" : "高海千歌(CV⋯伊波杏樹)"
-                }]
+                    "id" : "201",
+                    "parent" : "200",
+                    "isDir" : false,
+                    "title" : "Hooked on a Feeling",
+                    "album" : "Hooked on a Feeling",
+                    "artist" : "Blue Swede",
+                    "track" : 1,
+                    "year" : 1974,
+                    "genre" : "Classic Rock",
+                    "coverArt" : "200",
+                    "size" : 7191717,
+                    "contentType" : "audio/mpeg",
+                    "suffix" : "mp3",
+                    "duration" : 172,
+                    "bitRate" : 320,
+                    "path" : "B/Blue Swede/Hooked on a Feeling/01 Hooked on a Feeling.mp3",
+                    "isVideo" : false,
+                    "playCount" : 0,
+                    "discNumber" : 1,
+                    "created" : "2018-01-01T10:30:15.000Z",
+                    "albumId" : "18",
+                    "artistId" : "8",
+                    "type" : "music"
+                } ]
             }
         );
         let alb = Album::try_from(json).unwrap();
 
-        assert_eq!(alb.id, 200);
-        assert_eq!(alb.cover_id, Some("al-200".to_string()));
-        assert_eq!(alb.songs, vec![1450]);
+        assert_eq!(alb.id, 18);
+        assert_eq!(alb.cover_id, Some("al-18".to_string()));
+        assert_eq!(alb.songs.len(), 1);
+        assert_eq!(alb.songs[0].title, "Hooked on a Feeling".to_string())
     }
 
     #[test]
