@@ -4,6 +4,7 @@ use sunk::Sunk;
 
 use query::Query;
 use util::*;
+use library::search;
 
 /// Audio encoding format.
 ///
@@ -157,6 +158,58 @@ impl Song {
 pub fn get_song(sunk: &mut Sunk, id: u64) -> Result<Song> {
     let res = sunk.get("getSong", Query::with("id", id))?;
     Song::try_from(res)
+}
+
+pub fn get_random_songs(
+    sunk: &mut Sunk,
+    size: Option<u64>,
+    genre: Option<&str>,
+    from_year: Option<usize>,
+    to_year: Option<usize>,
+    folder_id: Option<usize>,
+) -> Result<Vec<Song>>
+{
+    let args = Query::new()
+        .arg("size", size.unwrap_or(10).to_string())
+        .maybe_arg("genre", map_str(genre))
+        .maybe_arg("fromYear", map_str(from_year))
+        .maybe_arg("toYear", map_str(to_year))
+        .maybe_arg("musicFolderId", map_str(folder_id))
+        .build();
+
+    let res = sunk.get("getRandomSongs", args)?;
+
+    let mut song_list = Vec::new();
+    if let Some(Some(list)) = res.get("randomSongs").map(|r| r.as_array()) {
+        for song in list {
+            song_list.push(Song::try_from(song.clone())?);
+        }
+    }
+    Ok(song_list)
+}
+
+pub fn get_songs_in_genre(
+    sunk: &mut Sunk,
+    genre: &str,
+    page: search::SearchPage,
+    folder_id: Option<usize>,
+) -> Result<Vec<Song>>
+{
+    let args = Query::with("genre", genre.to_string())
+        .arg("count", page.count.to_string())
+        .arg("offset", page.offset.to_string())
+        .maybe_arg("musicFolderId", map_str(folder_id))
+        .build();
+
+    let res = sunk.get("getSongsByGenre", args)?;
+
+    let mut song_list = Vec::new();
+    if let Some(Some(list)) = res.get("songsByGenre").map(|r| r.as_array()) {
+        for song in list {
+            song_list.push(Song::try_from(song.clone())?);
+        }
+    }
+    Ok(song_list)
 }
 
 /// Searches for lyrics matching the artist and title. Returns `None` if no
