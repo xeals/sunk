@@ -117,7 +117,7 @@ impl Sunk {
     /// ```
     ///
     /// Most usage of this function will be through `Sunk::get()`.
-    #[allow(needless_pass_by_value)]
+    #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
     fn build_url<'a, D>(&self, query: &str, args: Query<'a, D>) -> Result<String>
     where
         D: ::std::fmt::Display,

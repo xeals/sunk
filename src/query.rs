@@ -61,6 +61,7 @@ impl<'a, D: Display> Query<'a, D> {
 
 impl<'a, D: Display> Display for Query<'a, D> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        #[cfg_attr(feature = "cargo-clippy", allow(needless_borrow))]
         for (i, &(ref k, ref v)) in self.inner.iter().enumerate() {
             if k.is_empty() {
                 break;
