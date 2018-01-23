@@ -13,7 +13,7 @@ pub struct Artist {
     id: u64,
     pub name: String,
     cover_id: Option<String>,
-    albums: Vec<u64>,
+    albums: Vec<album::Album>,
     album_count: u64,
 }
 
@@ -36,10 +36,8 @@ impl Artist {
         let mut albums = Vec::new();
         if let Some(Some(list)) = json.get("album").map(|a| a.as_array()) {
             for album in list {
-                if let Some(Some(id)) = album.get("id").map(|i| i.as_str()) {
-                    info!("Found album {} for artist {}", album, json["name"]);
-                    albums.push(id.parse::<u64>()?);
-                }
+                info!("Found album {} for artist {}", album["name"], json["name"]);
+                albums.push(album::Album::try_from(album.clone())?);
             }
         }
 
@@ -54,24 +52,11 @@ impl Artist {
     }
 
     pub fn albums(&self, sunk: &mut Sunk) -> Result<Vec<album::Album>> {
-        let mut album_list = Vec::new();
-
-        // Building an artist from `get_artists()` doesn't populate the album
-        // list, but `get_artist()` does. An artist can, however, exist without
-        // an album.
         if self.albums.len() as u64 != self.album_count {
-            let albums = get_artist(sunk, self.id)?.albums;
-
-            for id in &albums {
-                album_list.push(album::get_album(sunk, *id)?)
-            }
+            Ok(get_artist(sunk, self.id)?.albums)
         } else {
-            for id in &self.albums {
-                album_list.push(album::get_album(sunk, *id)?)
-            }
-        };
-
-        Ok(album_list)
+            Ok(self.albums.clone())
+        }
     }
 
     impl_cover_art!();
@@ -114,7 +99,6 @@ mod tests {
 
         assert_eq!(parsed.name, "Backstreet Boys".to_string());
         assert_eq!(parsed.albums.len(), 1);
-        assert_eq!(parsed.albums, vec![1]);
     }
 
     #[test]

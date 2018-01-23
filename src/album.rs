@@ -35,7 +35,7 @@ impl ::std::fmt::Display for ListType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Album {
     pub id: u64,
     pub name: String,
@@ -73,16 +73,11 @@ impl Album {
     ///
     /// This is a temporary function until TryFrom is stabilised.
     pub fn try_from(json: json::Value) -> Result<Album> {
-        // `getAlbum` returns the songs in the album, but `albumList` does not.
         let mut songs = Vec::new();
         if let Some(Some(list)) = json.get("song").map(|v| v.as_array()) {
             for song in list {
                 info!("Found song {} for album {}", song["name"], json["name"]);
                 songs.push(song::Song::try_from(song.clone())?);
-                // if let Some(Some(id)) = song.get("id").map(|i| i.as_str()) {
-                //     info!("Found song {} for album {}", song, json["name"]);
-                //     songs.push(id.parse::<u64>()?);
-                // }
             }
         }
 
