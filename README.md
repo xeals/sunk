@@ -1,21 +1,21 @@
-### sunk
+# sunk
 
 A library for interfacing with the Subsonic API.
 
-### Example
+## Example
 
 TBA
 
-### Currently supported
+## Currently supported
 
 - Playlist controls
 - Library scanning
 - Retrieval (stream, download, HLS)
+- Searching
 
-### Currently not supported
+## Currently not supported
 
 - Most browsing
-- Searching
 - Annotation
 - Sharing
 - Podcasts
@@ -26,11 +26,18 @@ TBA
 - Bookmarks
 - Anything to do with video
 
-### Left to the implementor
+## Left to the implementor
 
 - Playback (skipping, current playlist, etc.)
 
-## License
+## What needs work
+
+- ***Documentation***
+- Lesser API support (pre-1.4.0 mainly)
+- Proper module splitting
+- Unit testing for methods that don't require a server, and manual get-and-verify for ones that do
+
+# License
 
 Licensed under either of
 
