@@ -283,6 +283,11 @@ impl Sunk {
         self.get("ping", Query::with("", "")).map(|_| ())
     }
 
+    fn check_license(&mut self) -> Result<License> {
+        json::from_value::<License>(self.get("getLicense", Query::with("", ""))?)
+            .map_err(|e| e.into())
+    }
+
     /// Starts a library scan.
     pub fn scan_library(&mut self) -> Result<()> {
         self.get("startScan", Query::with("", ""))?;
@@ -376,6 +381,14 @@ impl Sunk {
 
         Ok((artists, albums, songs))
     }
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(non_snake_case)]
+pub struct License {
+    valid: bool,
+    email: String,
+    licenseExpires: String
 }
 
 #[cfg(test)]
