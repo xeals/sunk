@@ -26,6 +26,33 @@ struct ArtistSerde {
     albumCount: u64,
 }
 
+#[derive(Debug)]
+pub struct ArtistInfo {
+    biography: String,
+    musicbrainz_id: String,
+    lastfm_url: String,
+    image_urls: (String, String, String),
+    similar_artists: Vec<(usize, String)>
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(non_snake_case)]
+struct ArtistInfoSerde {
+    biography: String,
+    musicBrainzId: String,
+    lastFmUrl: String,
+    smallImageUrl: String,
+    mediumImageUrl: String,
+    largeImageUrl: String,
+    similarArtist: Vec<SimilarArtistSerde>
+}
+
+#[derive(Debug, Deserialize)]
+struct SimilarArtistSerde {
+    id: String,
+    name: String,
+}
+
 impl Artist {
     /// Deserializes a JSON value into an artist.
     ///
@@ -60,6 +87,29 @@ impl Artist {
         } else {
             Ok(self.albums.clone())
         }
+    }
+
+    pub fn info(
+        &self,
+        sunk: &mut Sunk,
+        count: Option<usize>,
+        include_not_present: Option<bool>)
+        -> Result<ArtistInfo>
+    {
+        let args = Query::with("id", self.id.to_string())
+            .maybe_arg("count", map_str(count))
+            .maybe_arg("includeNotPresent", map_str(include_not_present))
+            .build();
+        let res = sunk.get("getArtistInfo", args)?;
+
+        let serde: ArtistInfoSerde = json::from_value(res)?;
+        Ok(ArtistInfo {
+            biography: serde.biography,
+            musicbrainz_id: serde.musicBrainzId,
+            lastfm_url: serde.lastFmUrl,
+            image_urls: (serde.smallImageUrl, serde.mediumImageUrl, serde.largeImageUrl),
+            similar_artists: serde.similarArtist.iter().map(|a| (a.id.parse().unwrap(), a.name.to_string())).collect(),
+        })
     }
 
     impl_cover_art!();
