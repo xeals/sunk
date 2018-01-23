@@ -9,6 +9,9 @@ use api::Api;
 use error::*;
 use query::Query;
 use library;
+use album;
+use artist;
+use song;
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
@@ -326,6 +329,53 @@ impl Sunk {
 
         Ok(genres)
     }
+
+    pub fn search(
+        &mut self,
+        query: &str,
+        artist_page: library::search::SearchPage,
+        album_page: library::search::SearchPage,
+        song_page: library::search::SearchPage,
+    ) -> Result<(Vec<artist::Artist>, Vec<album::Album>, Vec<song::Song>)>
+    {
+        // FIXME There has to be a way to make this nicer.
+        let mut args = Query::with("query", query.to_string())
+            .arg("artistCount", artist_page.count.to_string())
+            .arg("artistOffset", artist_page.offset.to_string())
+            .arg("albumCount", album_page.count.to_string())
+            .arg("albumOffset", album_page.offset.to_string())
+            .arg("songCount", song_page.count.to_string())
+            .arg("songOffset", song_page.offset.to_string())
+            .build();
+
+        // TODO `search` was deprecated in 1.4.0 in favour of `search2`, and
+        // `search3` organises using ID3 tags over `search2`, implemented in
+        // 1.8.0. `search` uses a different query set to to other two calls, and
+        // `search2` and `search3` return different fields for artists and
+        // albums. This should be supported eventually using a conditional
+        // compilation, probably on a search module.
+        let res = self.get("search3", args)?;
+
+        macro_rules! vec_of {
+            ($t:ident, $str:ident) => ({
+                let mut v = Vec::new();
+                if let Some(Some(list)) = res.get(stringify!($t))
+                    .map(|v| v.as_array())
+                {
+                    for item in list {
+                        v.push($t::$str::try_from(item.clone())?);
+                    }
+                }
+                v
+            })
+        };
+
+        let artists = vec_of!(artist, Artist);
+        let albums = vec_of!(album, Album);
+        let songs = vec_of!(song, Song);
+
+        Ok((artists, albums, songs))
+    }
 }
 
 #[cfg(test)]
@@ -358,5 +408,20 @@ mod tests {
         let (status, n) = srv.scan_status().unwrap();
         assert_eq!(status, false);
         assert_eq!(n, 5661);
+    }
+
+    #[test]
+    fn remote_search() {
+        use library::search;
+        let (site, user, pass) = load_credentials().unwrap();
+        let mut srv = Sunk::new(&site, &user, &pass).unwrap();
+        let s = search::SearchPage::new().with_size(5);
+        let (art, alb, son) = srv.search("end", s, s, s).unwrap();
+
+        println!("{:?}", art);
+        println!("{:?}", alb);
+        println!("{:?}", son);
+
+        assert!(true);
     }
 }
