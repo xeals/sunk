@@ -301,6 +301,37 @@ impl Sunk {
             unreachable!()
         }
     }
+
+    pub fn music_folders(&mut self) -> Result<Vec<MusicFolder>> {
+        let res = self.get("musicFolders", Query::with("", ""))?;
+        let mut folders = Vec::new();
+        if let Some(Some(list)) = res.get("musicFolder").map(|r| r.as_array()) {
+            for folder in list {
+                folders.push(MusicFolder::try_from(folder.clone())?);
+            }
+        }
+
+        Ok(folders)
+    }
+}
+
+#[derive(Debug)]
+pub struct MusicFolder {
+    pub id: usize,
+    pub name: String,
+}
+
+impl MusicFolder {
+    fn try_from(json: json::Value) -> Result<MusicFolder> {
+        Ok(MusicFolder {
+            id: json["id"].as_str().unwrap().parse()?,
+            name: json["name"].as_str().unwrap().to_string(),
+        })
+    }
+
+    fn from(id: usize, name: String) -> MusicFolder {
+        MusicFolder { id, name }
+    }
 }
 
 #[cfg(test)]
