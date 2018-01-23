@@ -8,6 +8,7 @@ use tokio;
 use api::Api;
 use error::*;
 use query::Query;
+use library;
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
@@ -302,35 +303,28 @@ impl Sunk {
         }
     }
 
-    pub fn music_folders(&mut self) -> Result<Vec<MusicFolder>> {
+    pub fn music_folders(&mut self) -> Result<Vec<library::MusicFolder>> {
         let res = self.get("musicFolders", Query::with("", ""))?;
         let mut folders = Vec::new();
         if let Some(Some(list)) = res.get("musicFolder").map(|r| r.as_array()) {
             for folder in list {
-                folders.push(MusicFolder::try_from(folder.clone())?);
+                folders.push(library::MusicFolder::try_from(folder.clone())?);
             }
         }
 
         Ok(folders)
     }
-}
 
-#[derive(Debug)]
-pub struct MusicFolder {
-    pub id: usize,
-    pub name: String,
-}
+    pub fn genres(&mut self) -> Result<Vec<library::Genre>> {
+        let res = self.get("getGenres", Query::with("", ""))?;
+        let mut genres = Vec::new();
+        if let Some(Some(list)) = res.get("genres").map(|r| r.as_array()) {
+            for genre in list {
+                genres.push(library::Genre::try_from(genre.clone())?);
+            }
+        }
 
-impl MusicFolder {
-    fn try_from(json: json::Value) -> Result<MusicFolder> {
-        Ok(MusicFolder {
-            id: json["id"].as_str().unwrap().parse()?,
-            name: json["name"].as_str().unwrap().to_string(),
-        })
-    }
-
-    fn from(id: usize, name: String) -> MusicFolder {
-        MusicFolder { id, name }
+        Ok(genres)
     }
 }
 
