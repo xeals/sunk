@@ -1,6 +1,7 @@
 use json;
 
 use sunk::Sunk;
+use song;
 use query::Query;
 use error::*;
 use util::*;
@@ -94,6 +95,29 @@ impl Album {
             songs,
         })
     }
+
+    pub fn songs(&self, sunk: &mut Sunk) -> Result<Vec<song::Song>> {
+        let mut song_list = Vec::new();
+
+        if self.songs.len() as u64 != self.song_count {
+            let songs = get_album(sunk, self.id)?.songs;
+
+            for id in &songs {
+                song_list.push(song::get_song(sunk, *id)?);
+            }
+        } else {
+            for id in &self.songs {
+                song_list.push(song::get_song(sunk, *id)?);
+            }
+        }
+
+        Ok(song_list)
+    }
+}
+
+pub fn get_album(sunk: &mut Sunk, id: u64) -> Result<Album> {
+    let res = sunk.get("getAlbum", Query::with("id", id))?;
+    Album::from_json(res)
 }
 
 pub fn get_albums(

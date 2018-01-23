@@ -125,6 +125,11 @@ impl Song {
     impl_cover_art!();
 }
 
+pub fn get_song(sunk: &mut Sunk, id: u64) -> Result<Song> {
+    let res = sunk.get("getSong", Query::with("id", id))?;
+    Song::from(&res)
+}
+
 /// Searches for lyrics matching the artist and title. Returns `None` if no
 /// lyrics are found.
 pub fn get_lyrics(sunk: &mut Sunk, artist: Option<&str>, title: Option<&str>) -> Result<Option<Lyrics>> {
