@@ -1,5 +1,7 @@
 use error::*;
 use serde_json;
+use serde::de::{Deserialize, Deserializer};
+use std::result;
 
 #[derive(Debug)]
 pub struct MusicFolder {
@@ -8,14 +10,23 @@ pub struct MusicFolder {
 }
 
 impl MusicFolder {
-    pub fn try_from(json: serde_json::Value) -> Result<MusicFolder> {
-        Ok(MusicFolder {
-            id: json["id"].as_str().unwrap().parse()?,
-            name: json["name"].as_str().unwrap().to_string(),
-        })
-    }
-
     fn from(id: usize, name: String) -> MusicFolder { MusicFolder { id, name } }
+}
+
+impl<'de> Deserialize<'de> for MusicFolder {
+    fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>
+    {
+        #[derive(Deserialize)]
+        struct MusicFolderSerde {
+            id: String,
+            name: String
+        }
+
+        let raw = MusicFolderSerde::deserialize(de)?;
+        Ok(MusicFolder { id: raw.id.parse().unwrap(), name: raw.name })
+    }
 }
 
 #[derive(Debug)]
@@ -33,13 +44,16 @@ struct GenreSerde {
     value: String,
 }
 
-impl Genre {
-    pub fn try_from(json: serde_json::Value) -> Result<Genre> {
-        let serde: GenreSerde = serde_json::from_value(json)?;
+impl<'de> Deserialize<'de> for Genre {
+    fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>
+    {
+        let raw = GenreSerde::deserialize(de)?;
         Ok(Genre {
-            name: serde.value,
-            song_count: serde.songCount,
-            album_count: serde.albumCount,
+            song_count: raw.songCount,
+            album_count: raw.albumCount,
+            name: raw.value
         })
     }
 }

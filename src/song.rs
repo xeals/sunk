@@ -84,25 +84,6 @@ struct SongSerde {
 }
 
 impl Song {
-    pub fn try_from(json: serde_json::Value) -> Result<Song> {
-        let serde: SongSerde = serde_json::from_value(json)?;
-        Ok(Song {
-            id: serde.id.parse()?,
-            title: serde.title,
-            album: serde.album,
-            album_id: serde.albumId.map(|i| i.parse().unwrap()),
-            artist: serde.artist,
-            artist_id: serde.artistId.map(|i| i.parse().unwrap()),
-            cover_id: serde.coverArt.map(|i| i.parse().unwrap()),
-            track: serde.track,
-            year: serde.year,
-            genre: serde.genre,
-            size: serde.size,
-            duration: serde.duration,
-            path: serde.path,
-        })
-    }
-
     /// Returns a constructed URL for streaming with desired arguments.
     ///
     /// This would be used in conjunction with a streaming library to directly

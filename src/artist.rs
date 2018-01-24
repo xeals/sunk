@@ -55,33 +55,6 @@ struct SimilarArtistSerde {
 }
 
 impl Artist {
-    /// Deserializes a JSON value into an artist.
-    ///
-    /// # Notes
-    ///
-    /// This is a temporary function until TryFrom is stabilised.
-    pub fn try_from(json: serde_json::Value) -> Result<Artist> {
-        let mut albums = Vec::new();
-        if let Some(Some(list)) = json.get("album").map(|a| a.as_array()) {
-            for album in list {
-                info!(
-                    "Found album {} for artist {}",
-                    album["name"], json["name"]
-                );
-                albums.push(album::Album::try_from(album.clone())?);
-            }
-        }
-
-        let serde: ArtistSerde = serde_json::from_value(json)?;
-        Ok(Artist {
-            id: serde.id.parse()?,
-            name: serde.name,
-            cover_id: serde.coverArt,
-            album_count: serde.albumCount,
-            albums,
-        })
-    }
-
     pub fn albums(&self, sunk: &mut Sunk) -> Result<Vec<album::Album>> {
         if self.albums.len() as u64 != self.album_count {
             Ok(get_artist(sunk, self.id)?.albums)

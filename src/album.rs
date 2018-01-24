@@ -68,35 +68,6 @@ struct AlbumSerde {
 }
 
 impl Album {
-    /// Deserialzises a JSON value into an album.
-    ///
-    /// # Notes
-    ///
-    /// This is a temporary function until TryFrom is stabilised.
-    pub fn try_from(json: serde_json::Value) -> Result<Album> {
-        let mut songs = Vec::new();
-        if let Some(Some(list)) = json.get("song").map(|v| v.as_array()) {
-            for song in list {
-                info!("Found song {} for album {}", song["name"], json["name"]);
-                songs.push(song::Song::try_from(song.clone())?);
-            }
-        }
-
-        let serde: AlbumSerde = serde_json::from_value(json)?;
-        Ok(Album {
-            id: serde.id.parse()?,
-            name: serde.name,
-            artist: serde.artist,
-            artist_id: serde.artistId.map(|i| i.parse().unwrap()),
-            cover_id: serde.coverArt,
-            duration: serde.duration,
-            year: serde.year,
-            genre: serde.genre,
-            song_count: serde.songCount,
-            songs,
-        })
-    }
-
     pub fn songs(&self, sunk: &mut Sunk) -> Result<Vec<song::Song>> {
         if self.songs.len() as u64 != self.song_count {
             Ok(get_album(sunk, self.id)?.songs)

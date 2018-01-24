@@ -315,7 +315,7 @@ impl Sunk {
         let mut folders = Vec::new();
         if let Some(Some(list)) = res.get("musicFolder").map(|r| r.as_array()) {
             for folder in list {
-                folders.push(library::MusicFolder::try_from(folder.clone())?);
+                folders.push(serde_json::from_value::<library::MusicFolder>(folder.clone())?);
             }
         }
 
@@ -327,7 +327,7 @@ impl Sunk {
         let mut genres = Vec::new();
         if let Some(Some(list)) = res.get("genres").map(|r| r.as_array()) {
             for genre in list {
-                genres.push(library::Genre::try_from(genre.clone())?);
+                genres.push(serde_json::from_value::<library::Genre>(genre.clone())?);
             }
         }
 
@@ -367,7 +367,7 @@ impl Sunk {
                     .map(|v| v.as_array())
                 {
                     for item in list {
-                        v.push($t::$str::try_from(item.clone())?);
+                        v.push(serde_json::from_value::<$t::$str>(item.clone())?);
                     }
                 }
                 v

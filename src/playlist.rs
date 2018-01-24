@@ -34,34 +34,6 @@ struct PlaylistSerde {
 }
 
 impl Playlist {
-    /// Deserialzises a JSON value into an artist.
-    ///
-    /// # Notes
-    ///
-    /// This is a temporary function until TryFrom is stabilised.
-    pub fn try_from(json: serde_json::Value) -> Result<Playlist> {
-        let mut songs = Vec::new();
-        if let Some(Some(list)) = json.get("entry").map(|e| e.as_array()) {
-            for song in list {
-                info!(
-                    "Found song {} for playlist {}",
-                    song["name"], json["name"]
-                );
-                songs.push(song::Song::try_from(song.clone())?);
-            }
-        }
-
-        let serde: PlaylistSerde = serde_json::from_value(json)?;
-        Ok(Playlist {
-            id: serde.id.parse()?,
-            name: serde.name,
-            duration: serde.duration,
-            cover_id: serde.coverArt,
-            song_count: serde.songCount,
-            songs,
-        })
-    }
-
     /// Fetches the songs contained in a playlist.
     pub fn songs(&self, sunk: &mut Sunk) -> Result<Vec<song::Song>> {
         if self.songs.len() as u64 != self.song_count {
@@ -101,7 +73,7 @@ fn get_playlists(
     let mut pls = vec![];
     if let Some(pl) = res["playlist"].as_array() {
         for p in pl.clone() {
-            pls.push(Playlist::try_from(p)?);
+            pls.push(serde_json::from_value::<Playlist>(p)?);
         }
     }
     Ok(pls)
@@ -109,7 +81,7 @@ fn get_playlists(
 
 fn get_playlist(sunk: &mut Sunk, id: u64) -> Result<Playlist> {
     let res = sunk.get("getPlaylist", Query::with("id", id))?;
-    Playlist::try_from(res)
+    Ok(serde_json::from_value::<Playlist>(res)?)
 }
 
 // fn get_playlist_songs(sunk: &mut Sunk, id: u64) -> Result<Vec<song::Song>> {
@@ -177,7 +149,7 @@ fn delete_playlist(sunk: &mut Sunk, id: u64) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test_util::*;
+    use test_util;
 
     #[test]
     fn remote_playlist_songs() {
@@ -195,9 +167,8 @@ mod tests {
             }
         );
 
-        let parsed = Playlist::try_from(raw).unwrap();
-        let auth = load_credentials().unwrap();
-        let mut srv = Sunk::new(&auth.0, &auth.1, &auth.2).unwrap();
+        let parsed = serde_json::from_value::<Playlist>(raw).unwrap();
+        let mut srv = test_util::demo_site().unwrap();
         let songs = parsed.songs(&mut srv).unwrap();
 
         println!("{:?}", songs);
