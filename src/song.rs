@@ -1,6 +1,6 @@
 use serde::de::{Deserialize, Deserializer};
 use error::*;
-use json;
+use serde_json;
 use sunk::Sunk;
 
 use query::Query;
@@ -84,8 +84,8 @@ struct SongSerde {
 }
 
 impl Song {
-    pub fn try_from(json: json::Value) -> Result<Song> {
-        let serde: SongSerde = json::from_value(json)?;
+    pub fn try_from(json: serde_json::Value) -> Result<Song> {
+        let serde: SongSerde = serde_json::from_value(json)?;
         Ok(Song {
             id: serde.id.parse()?,
             title: serde.title,
@@ -182,7 +182,7 @@ impl<'de> Deserialize<'de> for Song {
 
 pub fn get_song(sunk: &mut Sunk, id: u64) -> Result<Song> {
     let res = sunk.get("getSong", Query::with("id", id))?;
-    Ok(json::from_value(res)?)
+    Ok(serde_json::from_value(res)?)
 }
 
 pub fn get_random_songs(
@@ -236,7 +236,7 @@ pub fn get_lyrics(
         .build();
     let res = sunk.get("getLyrics", args)?;
     if res.get("value").is_some() {
-        Ok(Some(json::from_value(res)?))
+        Ok(Some(serde_json::from_value(res)?))
     } else {
         Ok(None)
     }
@@ -286,7 +286,7 @@ mod tests {
             }
         );
 
-        let parsed = json::from_value::<Song>(raw);
+        let parsed = serde_json::from_value::<Song>(raw);
         assert!(parsed.is_ok());
     }
 
@@ -294,7 +294,7 @@ mod tests {
     fn get_hls() {
         let (s, u, p) = load_credentials().unwrap();
         let mut srv = Sunk::new(&s, &u, &p).unwrap();
-        let song = json::from_value::<Song>(json!(
+        let song = serde_json::from_value::<Song>(json!(
             {
                 "id": "1633",
                 "parent": "1632",

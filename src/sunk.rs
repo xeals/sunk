@@ -1,7 +1,7 @@
 // use url;
 use hyper::{self, Client, Uri};
 use hyper_tls::HttpsConnector;
-use json;
+use serde_json;
 use log;
 use tokio;
 
@@ -168,7 +168,7 @@ impl Sunk {
         &mut self,
         query: &str,
         args: Query<'a, D>,
-    ) -> Result<json::Value>
+    ) -> Result<serde_json::Value>
     where
         D: ::std::fmt::Display,
     {
@@ -182,7 +182,7 @@ impl Sunk {
             info!("Received `{}` for request /{}?", status, query);
 
             res.body().concat2().and_then(move |body| {
-                let v: json::Value = json::from_slice(&body).map_err(|e| {
+                let v: serde_json::Value = serde_json::from_slice(&body).map_err(|e| {
                     use std::io;
                     io::Error::new(io::ErrorKind::Other, e)
                 })?;
@@ -190,14 +190,14 @@ impl Sunk {
             })
         });
 
-        let (status, res): (hyper::StatusCode, json::Value) =
+        let (status, res): (hyper::StatusCode, serde_json::Value) =
             self.core.run(work)?;
         if status.is_success() {
             if let Some(out) = res.get("subsonic-response") {
                 match out["status"].as_str() {
                     Some("ok") => {
                         if query == "ping" {
-                            return Ok(json::Value::Null)
+                            return Ok(serde_json::Value::Null)
                         }
 
                         let out = out.as_object().unwrap();
@@ -227,7 +227,7 @@ impl Sunk {
     /// Subsonic instance refuses the connection (i.e., returns a failure
     /// response).
     ///
-    /// Specifically, it will succeed if `json::from_slice()` fails due to not
+    /// Specifically, it will succeed if `serde_json::from_slice()` fails due to not
     /// receiving a valid JSON stream. It's assumed that the stream will be
     /// binary in this case.
     pub fn try_binary<'a, D>(
@@ -246,7 +246,7 @@ impl Sunk {
         info!("Connecting to {}", uri);
         let work = self.client.get(uri).and_then(|res| {
             res.body().concat2().and_then(move |b| {
-                let valid_json = json::from_slice::<json::Value>(&b).is_ok();
+                let valid_json = serde_json::from_slice::<serde_json::Value>(&b).is_ok();
                 if !valid_json {
                     Ok(raw_uri)
                 } else {
@@ -284,7 +284,7 @@ impl Sunk {
     }
 
     fn check_license(&mut self) -> Result<License> {
-        json::from_value::<License>(self.get("getLicense", Query::with("", ""))?)
+        serde_json::from_value::<License>(self.get("getLicense", Query::with("", ""))?)
             .map_err(|e| e.into())
     }
 

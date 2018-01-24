@@ -1,4 +1,5 @@
-use json;
+use serde_json;
+use serde::de::{Deserialize, Deserializer};
 
 use error::*;
 use query::Query;
@@ -59,7 +60,7 @@ impl Artist {
     /// # Notes
     ///
     /// This is a temporary function until TryFrom is stabilised.
-    pub fn try_from(json: json::Value) -> Result<Artist> {
+    pub fn try_from(json: serde_json::Value) -> Result<Artist> {
         let mut albums = Vec::new();
         if let Some(Some(list)) = json.get("album").map(|a| a.as_array()) {
             for album in list {
@@ -71,7 +72,7 @@ impl Artist {
             }
         }
 
-        let serde: ArtistSerde = json::from_value(json)?;
+        let serde: ArtistSerde = serde_json::from_value(json)?;
         Ok(Artist {
             id: serde.id.parse()?,
             name: serde.name,
@@ -102,7 +103,7 @@ impl Artist {
             .build();
         let res = sunk.get("getArtistInfo", args)?;
 
-        let serde: ArtistInfoSerde = json::from_value(res)?;
+        let serde: ArtistInfoSerde = serde_json::from_value(res)?;
         Ok(ArtistInfo {
             biography: serde.biography,
             musicbrainz_id: serde.musicBrainzId,
@@ -115,6 +116,25 @@ impl Artist {
     impl_cover_art!();
 }
 
+// impl<'de> Deserialize<'de> for Artist {
+//     fn deserialize<D>(de: D) -> std::result::Result<Self, D::Error>
+//     where
+//         D: Deserializer<'de>
+//     {
+//         let raw = ArtistSerde::deserialize(de)?;
+//         let album = raw["album"];
+//         let albums = get_list_as!(album, album::Album);
+
+//         Ok(Artist {
+//             id: raw.id.parse()?,
+//             name: raw.name,
+//             cover_id: raw.coverArt,
+//             album_count: raw.albumCount,
+//             albums,
+//         })
+//     }
+// }
+
 pub fn get_artist(sunk: &mut Sunk, id: u64) -> Result<Artist> {
     let res = sunk.get("getArtist", Query::with("id", id))?;
     Artist::try_from(res)
@@ -125,7 +145,7 @@ mod tests {
     use super::*;
     use test_util::*;
 
-    fn raw() -> json::Value {
+    fn raw() -> serde_json::Value {
         json!({
             "id" : "1",
             "name" : "Backstreet Boys",

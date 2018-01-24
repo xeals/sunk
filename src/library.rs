@@ -1,4 +1,4 @@
-use json;
+use serde_json;
 use error::*;
 
 #[derive(Debug)]
@@ -8,7 +8,7 @@ pub struct MusicFolder {
 }
 
 impl MusicFolder {
-    pub fn try_from(json: json::Value) -> Result<MusicFolder> {
+    pub fn try_from(json: serde_json::Value) -> Result<MusicFolder> {
         Ok(MusicFolder {
             id: json["id"].as_str().unwrap().parse()?,
             name: json["name"].as_str().unwrap().to_string(),
@@ -36,8 +36,8 @@ struct GenreSerde {
 }
 
 impl Genre {
-    pub fn try_from(json: json::Value) -> Result<Genre> {
-        let serde: GenreSerde = json::from_value(json)?;
+    pub fn try_from(json: serde_json::Value) -> Result<Genre> {
+        let serde: GenreSerde = serde_json::from_value(json)?;
         Ok(Genre {
             name: serde.value,
             song_count: serde.songCount,

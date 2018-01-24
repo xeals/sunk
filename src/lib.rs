@@ -11,7 +11,7 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
-extern crate serde_json as json;
+extern crate serde_json;
 extern crate tokio_core as tokio;
 
 extern crate md5;

@@ -1,4 +1,4 @@
-use json;
+use serde_json;
 
 use error::*;
 use query::Query;
@@ -37,7 +37,7 @@ impl Playlist {
     /// # Notes
     ///
     /// This is a temporary function until TryFrom is stabilised.
-    pub fn try_from(json: json::Value) -> Result<Playlist> {
+    pub fn try_from(json: serde_json::Value) -> Result<Playlist> {
         let mut songs = Vec::new();
         if let Some(Some(list)) = json.get("entry").map(|e| e.as_array()) {
             for song in list {
@@ -49,7 +49,7 @@ impl Playlist {
             }
         }
 
-        let serde: PlaylistSerde = json::from_value(json)?;
+        let serde: PlaylistSerde = serde_json::from_value(json)?;
         Ok(Playlist {
             id: serde.id.parse()?,
             name: serde.name,

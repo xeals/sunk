@@ -1,7 +1,7 @@
 #![macro_use]
 
-use json::Value;
-use json::value::{Index, Map};
+use serde_json::Value;
+use serde_json::value::{Index, Map};
 
 use error;
 macro_rules! impl_cover_art {
@@ -56,7 +56,7 @@ macro_rules! get_list_as {
         struct List {
             $f: Vec<$t>
         }
-        json::from_value::<List>($f)?.$f
+        serde_json::from_value::<List>($f)?.$f
     });
 }
 

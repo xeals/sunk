@@ -1,5 +1,5 @@
 use hyper;
-use json;
+use serde_json;
 use std::{fmt, io, num, result};
 use std::convert::From;
 
@@ -20,7 +20,7 @@ pub enum Error {
     #[fail(display = "Connection error: {}", _0)]
     HyperError(#[cause] hyper::Error),
     #[fail(display = "Error serialising: {}", _0)]
-    SerdeError(#[cause] json::Error),
+    SerdeError(#[cause] serde_json::Error),
 }
 
 #[derive(Debug, Fail)]
@@ -59,7 +59,7 @@ impl ApiError {
         }
     }
 
-    pub fn try_from(json: &json::Value) -> Result<ApiError> {
+    pub fn try_from(json: &serde_json::Value) -> Result<ApiError> {
         use self::ApiError::*;
         let code = json["code"].as_u64().unwrap();
         let message = json["message"].as_str().unwrap().to_string();
@@ -112,7 +112,7 @@ macro_rules! box_err {
 box_err!(hyper::Error, HyperError);
 box_err!(io::Error, Io);
 box_err!(num::ParseIntError, ParError);
-box_err!(json::Error, SerdeError);
+box_err!(serde_json::Error, SerdeError);
 
 impl From<hyper::error::UriError> for UriError {
     fn from(err: hyper::error::UriError) -> UriError { UriError::Hyper(err) }
