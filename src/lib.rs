@@ -31,6 +31,7 @@ pub mod api;
 pub mod library;
 pub mod query;
 mod sunk;
+pub mod response;
 
 #[cfg(test)]
 mod test_util;

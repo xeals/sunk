@@ -12,6 +12,7 @@ use library;
 use album;
 use artist;
 use song;
+use response;
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
@@ -23,10 +24,11 @@ const SALT_SIZE: usize = 36; // Minimum 6 characters.
 ///
 /// # Examples
 ///
-/// ```rust
-/// # use error::{Error};
-/// #
-/// # fn run() -> Result<(), Error> {
+/// Basic usage:
+///
+/// ```no_run
+/// use sunk::Sunk;
+/// # fn run() -> Result<(), sunk::error::Error> {
 /// # let site = "demo.subsonic.org";
 /// # let user = "guest3";
 /// # let password = "guest";
@@ -34,7 +36,7 @@ const SALT_SIZE: usize = 36; // Minimum 6 characters.
 /// server.check_connection()?;
 /// # Ok(())
 /// # }
-///
+/// ```
 #[derive(Debug)]
 pub struct Sunk {
     url: Uri,
@@ -187,29 +189,18 @@ impl Sunk {
 
         let (status, res): (hyper::StatusCode, serde_json::Value) =
             self.core.run(work)?;
-        if status.is_success() {
-            if let Some(out) = res.get("subsonic-response") {
-                match out["status"].as_str() {
-                    Some("ok") => {
-                        if query == "ping" {
-                            return Ok(serde_json::Value::Null)
-                        }
 
-                        let out = out.as_object().unwrap();
-                        for (k, v) in out {
-                            if k != "status" && k != "version" {
-                                return Ok(v.clone())
-                            }
-                        }
-                        unreachable!()
-                    }
-                    Some("failed") => {
-                        return Err(Error::Api(ApiError::try_from(out)?))
-                    }
-                    _ => panic!(),
+        let response = serde_json::from_value::<response::Root>(res)?.response;
+
+        if status.is_success() {
+            if response.is_ok() {
+                if query == "ping" {
+                    Ok(serde_json::Value::Null)
+                } else {
+                    Ok(response.into_value()?)
                 }
             } else {
-                panic!()
+                Err(response.into_error()?)
             }
         } else {
             Err(Error::ConnectionError(status))
@@ -345,20 +336,30 @@ impl Sunk {
     /// Returns albums, artists and songs matching the given search criteria.
     /// Supports paging through the result.
     ///
-    /// ```rust,norun
-    /// # use library::search;
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```no_run
+    /// use sunk::Sunk;
+    /// use sunk::library::search;
+    /// # fn run() -> Result<(), sunk::error::Error> {
     /// # let site = "demo.subsonic.org";
     /// # let user = "guest3";
     /// # let password = "guest";
+    /// #
     /// let mut server = Sunk::new(site, user, password)?;
     ///
     /// let search_size = search::SearchPage::new();
-    /// let ign = search::NONE;
+    /// let ignore = search::NONE;
     ///
-    /// let (_, _, song_results) = server.search("smile", ign, ign, search_size)?;
-    /// for song in song_results {
-    ///     song.download(&mut server)?;
+    /// let (artists, albums, songs) = server.search("smile", ignore, ignore, search_size)?;
+    /// for song in songs {
+    ///     let url = song.download_url(&mut server)?;
+    ///     // Download `url`.
     /// }
+    /// # Ok(())
+    /// # }
     /// ```
     ///
     /// # Notes
@@ -400,17 +401,17 @@ impl Sunk {
 
 /// A representation of a license associated with a server.
 #[derive(Debug, Deserialize)]
-#[allow(non_snake_case)]
+#[serde(rename_all = "camelCase")]
 pub struct License {
     /// Whether the license is valid or not.
     pub valid: bool,
     /// The email associated with the email.
     pub email: String,
     /// An ISO8601 timestamp of the server's trial expiry.
-    pub trialExpires: Option<String>,
+    pub trial_expires: Option<String>,
     /// An ISO8601 timestamp of the server's license expiry. Servers still in
     /// the trial phase typically will not have this field.
-    pub licenseExpires: Option<String>
+    pub license_expires: Option<String>
 }
 
 #[cfg(test)]

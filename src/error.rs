@@ -1,7 +1,10 @@
 use hyper;
 use serde_json;
+use serde::de::{Deserialize, Deserializer};
 use std::{fmt, io, num, result};
 use std::convert::From;
+
+use response;
 
 pub type Result<T> = result::Result<T, self::Error>;
 
@@ -58,18 +61,40 @@ impl ApiError {
             NotFound => 70,
         }
     }
+}
 
-    pub fn try_from(json: &serde_json::Value) -> Result<ApiError> {
+/// Deserializes a `serde_json::Value` into an `ApiError`.
+///
+/// Expects a Subsonic `error` response; for example:
+///
+/// ```ignore
+/// "error": {
+///   "code": 50,
+///   "message": "Permission denied for resource"
+///  }
+/// ```
+impl<'de> Deserialize<'de> for ApiError {
+    fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>
+    {
+        #[derive(Deserialize)]
+        struct _Error {
+            code: usize,
+            message: String,
+        }
+
+        let raw = _Error::deserialize(de)?;
+
         use self::ApiError::*;
-        let code = json["code"].as_u64().unwrap();
-        let message = json["message"].as_str().unwrap().to_string();
-        match code {
-            10 => Ok(Generic(message)),
+
+        match raw.code {
+            10 => Ok(Generic(raw.message)),
             20 => Ok(ClientMustUpgrade),
             30 => Ok(ServerMustUpgrade),
             40 => Ok(WrongAuth),
             41 => Ok(Ldap),
-            50 => Ok(NotAuthorized(message)),
+            50 => Ok(NotAuthorized(raw.message)),
             60 => Ok(TrialExpired),
             70 => Ok(NotFound),
             _ => unimplemented!(),
@@ -114,6 +139,7 @@ box_err!(io::Error, Io);
 box_err!(num::ParseIntError, ParError);
 box_err!(serde_json::Error, SerdeError);
 box_err!(UriError, Uri);
+box_err!(ApiError, Api);
 
 impl From<hyper::error::UriError> for UriError {
     fn from(err: hyper::error::UriError) -> UriError { UriError::Hyper(err) }
