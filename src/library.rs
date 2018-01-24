@@ -1,6 +1,6 @@
 use error::*;
-use serde_json;
 use serde::de::{Deserialize, Deserializer};
+use serde_json;
 use std::result;
 
 #[derive(Debug)]
@@ -16,16 +16,19 @@ impl MusicFolder {
 impl<'de> Deserialize<'de> for MusicFolder {
     fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         #[derive(Deserialize)]
         struct MusicFolderSerde {
             id: String,
-            name: String
+            name: String,
         }
 
         let raw = MusicFolderSerde::deserialize(de)?;
-        Ok(MusicFolder { id: raw.id.parse().unwrap(), name: raw.name })
+        Ok(MusicFolder {
+            id: raw.id.parse().unwrap(),
+            name: raw.name,
+        })
     }
 }
 
@@ -47,13 +50,13 @@ struct GenreSerde {
 impl<'de> Deserialize<'de> for Genre {
     fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         let raw = GenreSerde::deserialize(de)?;
         Ok(Genre {
             song_count: raw.songCount,
             album_count: raw.albumCount,
-            name: raw.value
+            name: raw.value,
         })
     }
 }

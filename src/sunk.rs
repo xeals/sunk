@@ -79,8 +79,7 @@ impl Sunk {
         use std::str::FromStr;
 
         let auth = SunkAuth::new(user, password);
-        let uri =
-            Uri::from_str(url).map_err(|e| Error::Uri(UriError::Hyper(e)))?;
+        let url = Uri::from_str(url)?;
         let api = Api::from("1.14.0");
 
         let core = tokio::reactor::Core::new()?;
@@ -90,13 +89,7 @@ impl Sunk {
                 .map_err(|_| Error::Other("Unable to use secure conection"))?)
             .build(&handle);
 
-        Ok(Sunk {
-            url: uri,
-            auth: auth,
-            client: client,
-            core: core,
-            api: api,
-        })
+        Ok(Sunk {url, auth, client, core, api})
     }
 
     /// Internal helper function to construct a URL when the actual fetching is

@@ -113,7 +113,12 @@ box_err!(hyper::Error, HyperError);
 box_err!(io::Error, Io);
 box_err!(num::ParseIntError, ParError);
 box_err!(serde_json::Error, SerdeError);
+box_err!(UriError, Uri);
 
 impl From<hyper::error::UriError> for UriError {
     fn from(err: hyper::error::UriError) -> UriError { UriError::Hyper(err) }
+}
+
+impl From<hyper::error::UriError> for Error {
+    fn from(err: hyper::error::UriError) -> Error { Error::Uri(err.into()) }
 }
