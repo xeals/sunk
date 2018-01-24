@@ -11,11 +11,11 @@ use song;
 
 #[derive(Debug)]
 pub struct Artist {
-    id: u64,
+    pub id: u64,
     pub name: String,
     cover_id: Option<String>,
     albums: Vec<album::Album>,
-    album_count: u64,
+    pub album_count: u64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -129,7 +129,7 @@ impl<'de> Deserialize<'de> for Artist {
             name: raw.name,
             cover_id: raw.coverArt,
             album_count: raw.albumCount,
-            albums: raw.albums.unwrap_or(Vec::new()),
+            albums: raw.albums.unwrap_or_default(),
         })
     }
 }

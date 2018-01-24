@@ -123,7 +123,7 @@ impl<'de> Deserialize<'de> for Album {
             year: raw.year,
             genre: raw.genre,
             song_count: raw.songCount,
-            songs: raw.songs.unwrap_or(Vec::new()),
+            songs: raw.songs.unwrap_or_default(),
         })
     }
 }

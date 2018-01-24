@@ -87,7 +87,7 @@ impl<'de> Deserialize<'de> for Playlist {
             duration: raw.duration,
             cover_id: raw.coverArt,
             song_count: raw.songCount,
-            songs: raw.songs.unwrap_or(Vec::new()),
+            songs: raw.songs.unwrap_or_default(),
         })
     }
 }
