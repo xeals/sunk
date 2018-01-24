@@ -1,11 +1,11 @@
-use serde::de::{Deserialize, Deserializer};
 use error::*;
+use serde::de::{Deserialize, Deserializer};
 use serde_json;
 use sunk::Sunk;
 
+use library::search;
 use query::Query;
 use util::*;
-use library::search;
 
 /// Audio encoding format.
 ///
@@ -159,7 +159,7 @@ impl Song {
 impl<'de> Deserialize<'de> for Song {
     fn deserialize<D>(de: D) -> ::std::result::Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         let raw = SongSerde::deserialize(de)?;
         Ok(Song {
@@ -192,8 +192,7 @@ pub fn get_random_songs(
     from_year: Option<usize>,
     to_year: Option<usize>,
     folder_id: Option<usize>,
-) -> Result<Vec<Song>>
-{
+) -> Result<Vec<Song>> {
     let args = Query::new()
         .arg("size", size.unwrap_or(10).to_string())
         .maybe_arg("genre", map_str(genre))
@@ -211,8 +210,7 @@ pub fn get_songs_in_genre(
     genre: &str,
     page: search::SearchPage,
     folder_id: Option<usize>,
-) -> Result<Vec<Song>>
-{
+) -> Result<Vec<Song>> {
     let args = Query::with("genre", genre.to_string())
         .arg("count", page.count.to_string())
         .arg("offset", page.offset.to_string())

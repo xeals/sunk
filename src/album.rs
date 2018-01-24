@@ -1,5 +1,5 @@
-use serde_json;
 use serde::de::{Deserialize, Deserializer};
+use serde_json;
 
 use error::*;
 use query::Query;
@@ -64,7 +64,7 @@ struct AlbumSerde {
     created: String,
     year: Option<u64>,
     genre: Option<String>,
-    song: Option<Vec<song::Song>>
+    song: Option<Vec<song::Song>>,
 }
 
 impl Album {
@@ -109,7 +109,7 @@ impl Album {
 impl<'de> Deserialize<'de> for Album {
     fn deserialize<D>(de: D) -> ::std::result::Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         let raw = AlbumSerde::deserialize(de)?;
 
@@ -191,7 +191,6 @@ mod tests {
         assert_eq!(parsed.songs[0].title, String::from("Bellevue Avenue"));
         assert_eq!(parsed.songs[0].duration, 198);
     }
-
 
     fn raw() -> serde_json::Value {
         json!({

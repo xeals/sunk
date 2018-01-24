@@ -1,5 +1,5 @@
-use serde_json;
 use serde::de::{Deserialize, Deserializer};
+use serde_json;
 
 use error::*;
 use query::Query;
@@ -24,7 +24,7 @@ struct ArtistSerde {
     name: String,
     coverArt: Option<String>,
     albumCount: u64,
-    album: Option<Vec<album::Album>>
+    album: Option<Vec<album::Album>>,
 }
 
 #[derive(Debug)]
@@ -33,7 +33,7 @@ pub struct ArtistInfo {
     musicbrainz_id: String,
     lastfm_url: String,
     image_urls: (String, String, String),
-    similar_artists: Vec<(usize, String)>
+    similar_artists: Vec<(usize, String)>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -45,7 +45,7 @@ struct ArtistInfoSerde {
     smallImageUrl: String,
     mediumImageUrl: String,
     largeImageUrl: String,
-    similarArtist: Vec<SimilarArtistSerde>
+    similarArtist: Vec<SimilarArtistSerde>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -94,9 +94,8 @@ impl Artist {
         &self,
         sunk: &mut Sunk,
         count: Option<usize>,
-        include_not_present: Option<bool>)
-        -> Result<ArtistInfo>
-    {
+        include_not_present: Option<bool>,
+    ) -> Result<ArtistInfo> {
         let args = Query::with("id", self.id.to_string())
             .maybe_arg("count", map_str(count))
             .maybe_arg("includeNotPresent", map_str(include_not_present))
@@ -108,8 +107,16 @@ impl Artist {
             biography: serde.biography,
             musicbrainz_id: serde.musicBrainzId,
             lastfm_url: serde.lastFmUrl,
-            image_urls: (serde.smallImageUrl, serde.mediumImageUrl, serde.largeImageUrl),
-            similar_artists: serde.similarArtist.iter().map(|a| (a.id.parse().unwrap(), a.name.to_string())).collect(),
+            image_urls: (
+                serde.smallImageUrl,
+                serde.mediumImageUrl,
+                serde.largeImageUrl,
+            ),
+            similar_artists: serde
+                .similarArtist
+                .iter()
+                .map(|a| (a.id.parse().unwrap(), a.name.to_string()))
+                .collect(),
         })
     }
 
@@ -119,7 +126,7 @@ impl Artist {
 impl<'de> Deserialize<'de> for Artist {
     fn deserialize<D>(de: D) -> ::std::result::Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         let raw = ArtistSerde::deserialize(de)?;
 
