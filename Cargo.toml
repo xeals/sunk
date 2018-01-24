@@ -1,25 +1,25 @@
 [package]
 name = "sunk"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["alex-smith <azphreal19@protonmail.com>"]
+description = "Rust bindings for the Subsonic music streaming API"
+homepage = "https://github.com/Azphreal/sunk"
+repository = "https://github.com/Azphreal/sunk"
+readme = "README.md"
+keywords = ["subsonic", "airsonic", "music", "api", "webapi"]
+categories = ["api-bindings", "multimedia::audio"]
+license = "Apache-2.0/MIT"
+publish = false
 
 [dependencies]
 failure = "0.1.1"
-hyper = "0.11.14"
 futures = "0.1.17"
-tokio-core = "0.1.12"
+hyper = "0.11.14"
+hyper-tls = "0.1"
+log = "0.4.1"
+md5 = "0.3.6"
+rand = "0.4.2"
 serde = "1.0.27"
 serde_derive = "1.0.27"
 serde_json = "1.0.9"
-md5 = "0.3.6"
-rand = "0.4.2"
-log = "0.4.1"
-hyper-tls = "0.1"
-
-# md5 = { version = "0.3.6", optional = true }
-# rand = { version = "0.4.2", optional = true }
-
-# [features]
-# default = ["secure"]
-
-# secure = ["md5", "rand"]
+tokio-core = "0.1.12"

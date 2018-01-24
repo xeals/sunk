@@ -33,9 +33,14 @@ TBA
 ## What needs work
 
 - ***Documentation***
-- Lesser API support (pre-1.4.0 mainly)
+- Reach full support for modern 1.14.0
+- Pre-1.14.0 support:
+  - XML parsing
+  - Alternatives for newer methods
+  - Cargo attribute for compile-time targeting?
 - Proper module splitting
 - Unit testing for methods that don't require a server, and manual get-and-verify for ones that do
+- Go through [checklist](https://rust-lang-nursery.github.io/api-guidelines/checklist.html) before stabilisation
 
 # License
 
