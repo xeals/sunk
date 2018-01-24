@@ -10,6 +10,7 @@ extern crate log;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+#[allow(unused_imports)]
 #[macro_use]
 extern crate serde_json;
 extern crate tokio_core as tokio;
@@ -18,18 +19,17 @@ extern crate md5;
 extern crate rand;
 
 mod util;
-pub mod error;
-pub mod sunk;
-pub mod song;
-pub mod playlist;
-pub mod api;
-pub mod query;
-pub mod artist;
+
 pub mod album;
+pub mod artist;
+pub mod error;
+pub mod playlist;
+pub mod song;
+
+pub mod api;
 pub mod library;
+pub mod query;
+pub mod sunk;
 
 #[cfg(test)]
 mod test_util;
-
-#[cfg(test)]
-mod tests {}
