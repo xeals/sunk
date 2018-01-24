@@ -50,6 +50,16 @@ where
 //         })
 //     }
 
+macro_rules! get_list_as {
+    ($f:ident, $t:ident) => ({
+        #[derive(Deserialize)]
+        struct List {
+            $f: Vec<$t>
+        }
+        json::from_value::<List>($f)?.$f
+    });
+}
+
 //     fn try_array(&self) -> error::Result<Vec<Value>> {
 //         self.as_array()
 //             .ok_or_else(|| {

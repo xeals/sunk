@@ -1,3 +1,4 @@
+use serde::de::{Deserialize, Deserializer};
 use error::*;
 use json;
 use sunk::Sunk;
@@ -155,9 +156,33 @@ impl Song {
     impl_cover_art!();
 }
 
+impl<'de> Deserialize<'de> for Song {
+    fn deserialize<D>(de: D) -> ::std::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>
+    {
+        let raw = SongSerde::deserialize(de)?;
+        Ok(Song {
+            id: raw.id.parse().unwrap(),
+            title: raw.title,
+            album: raw.album,
+            album_id: raw.albumId.map(|i| i.parse().unwrap()),
+            artist: raw.artist,
+            artist_id: raw.artistId.map(|i| i.parse().unwrap()),
+            cover_id: raw.coverArt.map(|i| i.parse().unwrap()),
+            track: raw.track,
+            year: raw.year,
+            genre: raw.genre,
+            size: raw.size,
+            duration: raw.duration,
+            path: raw.path,
+        })
+    }
+}
+
 pub fn get_song(sunk: &mut Sunk, id: u64) -> Result<Song> {
     let res = sunk.get("getSong", Query::with("id", id))?;
-    Song::try_from(res)
+    Ok(json::from_value(res)?)
 }
 
 pub fn get_random_songs(
@@ -177,15 +202,8 @@ pub fn get_random_songs(
         .maybe_arg("musicFolderId", map_str(folder_id))
         .build();
 
-    let res = sunk.get("getRandomSongs", args)?;
-
-    let mut song_list = Vec::new();
-    if let Some(Some(list)) = res.get("randomSongs").map(|r| r.as_array()) {
-        for song in list {
-            song_list.push(Song::try_from(song.clone())?);
-        }
-    }
-    Ok(song_list)
+    let song = sunk.get("getRandomSongs", args)?;
+    Ok(get_list_as!(song, Song))
 }
 
 pub fn get_songs_in_genre(
@@ -201,15 +219,8 @@ pub fn get_songs_in_genre(
         .maybe_arg("musicFolderId", map_str(folder_id))
         .build();
 
-    let res = sunk.get("getSongsByGenre", args)?;
-
-    let mut song_list = Vec::new();
-    if let Some(Some(list)) = res.get("songsByGenre").map(|r| r.as_array()) {
-        for song in list {
-            song_list.push(Song::try_from(song.clone())?);
-        }
-    }
-    Ok(song_list)
+    let song = sunk.get("getSongsByGenre", args)?;
+    Ok(get_list_as!(song, Song))
 }
 
 /// Searches for lyrics matching the artist and title. Returns `None` if no
@@ -275,7 +286,7 @@ mod tests {
             }
         );
 
-        let parsed = Song::try_from(raw);
+        let parsed = json::from_value::<Song>(raw);
         assert!(parsed.is_ok());
     }
 
@@ -283,12 +294,33 @@ mod tests {
     fn get_hls() {
         let (s, u, p) = load_credentials().unwrap();
         let mut srv = Sunk::new(&s, &u, &p).unwrap();
-        let song = Song::try_from(json!(
+        let song = json::from_value::<Song>(json!(
             {
                 "id": "1633",
+                "parent": "1632",
+                "isDir": false,
+                "title": "That Is How I Roll!",
+                "album": "That Is How I Roll!",
+                "artist": "Afterglow",
+                "track": 1,
+                "year": 2017,
+                "genre": "J-Pop",
+                "coverArt": "1632",
+                "size": 32345658,
+                "contentType": "audio/flac",
+                "suffix": "flac",
+                "transcodedContentType": "audio/mpeg",
+                "transcodedSuffix": "mp3",
                 "duration": 240,
-                "size": 1073,
-                "path": "A/Afterglow/That Is How I Roll!/01 That Is How I Roll!.flac"
+                "bitRate": 1073,
+                "path": "A/Afterglow/That Is How I Roll!/01 That Is How I Roll!.flac",
+                "isVideo": false,
+                "playCount": 16,
+                "discNumber": 1,
+                "created": "2018-01-01T10:30:04.000Z",
+                "albumId": "222",
+                "artistId": "138",
+                "type": "music"
             }
         )).unwrap();
 
