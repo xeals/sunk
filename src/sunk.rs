@@ -283,8 +283,8 @@ impl Sunk {
     }
 
     fn check_license(&mut self) -> Result<License> {
-        serde_json::from_value::<License>(self.get("getLicense", Query::with("", ""))?)
-            .map_err(|e| e.into())
+        let res = self.get("getLicense", Query::with("", ""))?;
+        Ok(serde_json::from_value::<License>(res)?)
     }
 
     /// Starts a library scan.
@@ -311,27 +311,18 @@ impl Sunk {
     }
 
     pub fn music_folders(&mut self) -> Result<Vec<library::MusicFolder>> {
-        let res = self.get("musicFolders", Query::with("", ""))?;
-        let mut folders = Vec::new();
-        if let Some(Some(list)) = res.get("musicFolder").map(|r| r.as_array()) {
-            for folder in list {
-                folders.push(serde_json::from_value::<library::MusicFolder>(folder.clone())?);
-            }
-        }
+        #[allow(non_snake_case)]
+        let musicFolder = self.get("musicFolders", Query::with("", ""))?;
 
-        Ok(folders)
+        use library::MusicFolder;
+        Ok(get_list_as!(musicFolder, MusicFolder))
     }
 
     pub fn genres(&mut self) -> Result<Vec<library::Genre>> {
-        let res = self.get("getGenres", Query::with("", ""))?;
-        let mut genres = Vec::new();
-        if let Some(Some(list)) = res.get("genres").map(|r| r.as_array()) {
-            for genre in list {
-                genres.push(serde_json::from_value::<library::Genre>(genre.clone())?);
-            }
-        }
+        let genre = self.get("getGenres", Query::with("", ""))?;
 
-        Ok(genres)
+        use library::Genre;
+        Ok(get_list_as!(genre, Genre))
     }
 
     pub fn search(
@@ -360,34 +351,25 @@ impl Sunk {
         // compilation, probably on a search module.
         let res = self.get("search3", args)?;
 
-        macro_rules! vec_of {
-            ($t:ident, $str:ident) => ({
-                let mut v = Vec::new();
-                if let Some(Some(list)) = res.get(stringify!($t))
-                    .map(|v| v.as_array())
-                {
-                    for item in list {
-                        v.push(serde_json::from_value::<$t::$str>(item.clone())?);
-                    }
-                }
-                v
-            })
-        };
+        #[derive(Deserialize)]
+        struct Output {
+            artist: Vec<artist::Artist>,
+            album: Vec<album::Album>,
+            song: Vec<song::Song>,
+        }
 
-        let artists = vec_of!(artist, Artist);
-        let albums = vec_of!(album, Album);
-        let songs = vec_of!(song, Song);
-
-        Ok((artists, albums, songs))
+        let result = serde_json::from_value::<Output>(res)?;
+        Ok((result.artist, result.album, result.song))
     }
 }
 
 #[derive(Debug, Deserialize)]
 #[allow(non_snake_case)]
 pub struct License {
-    valid: bool,
-    email: String,
-    licenseExpires: String
+    pub valid: bool,
+    pub email: String,
+    pub trialExpires: Option<String>,
+    pub licenseExpires: Option<String>
 }
 
 #[cfg(test)]
@@ -397,8 +379,17 @@ mod tests {
 
     #[test]
     fn demo_ping() {
-        let mut srv = ::test_util::demo_site().unwrap();
+        let mut srv = test_util::demo_site().unwrap();
         srv.check_connection().unwrap();
+    }
+
+    #[test]
+    fn demo_license() {
+        let mut srv = test_util::demo_site().unwrap();
+        let license = srv.check_license().unwrap();
+
+        assert!(license.valid);
+        assert_eq!(license.email, String::from("demo@subsonic.org"));
     }
 
     #[test]
