@@ -50,23 +50,6 @@ pub struct Album {
     songs: Vec<song::Song>,
 }
 
-/// Internal struct matching exactly what `serde` expects.
-#[derive(Debug, Deserialize)]
-#[allow(non_snake_case)]
-struct AlbumSerde {
-    id: String,
-    name: String,
-    artist: Option<String>,
-    artistId: Option<String>,
-    coverArt: Option<String>,
-    songCount: u64,
-    duration: u64,
-    created: String,
-    year: Option<u64>,
-    genre: Option<String>,
-    song: Option<Vec<song::Song>>,
-}
-
 impl Album {
     pub fn songs(&self, sunk: &mut Sunk) -> Result<Vec<song::Song>> {
         if self.songs.len() as u64 != self.song_count {
@@ -82,19 +65,36 @@ impl<'de> Deserialize<'de> for Album {
     where
         D: Deserializer<'de>,
     {
-        let raw = AlbumSerde::deserialize(de)?;
+        #[derive(Debug, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct _Album {
+            id: String,
+            name: String,
+            artist: Option<String>,
+            artist_id: Option<String>,
+            cover_art: Option<String>,
+            song_count: u64,
+            duration: u64,
+            created: String,
+            year: Option<u64>,
+            genre: Option<String>,
+            #[serde(default)]
+            song: Vec<song::Song>,
+        }
+
+        let raw = _Album::deserialize(de)?;
 
         Ok(Album {
             id: raw.id.parse().unwrap(),
             name: raw.name,
             artist: raw.artist,
-            artist_id: raw.artistId.map(|i| i.parse().unwrap()),
-            cover_id: raw.coverArt,
+            artist_id: raw.artist_id.map(|i| i.parse().unwrap()),
+            cover_id: raw.cover_art,
             duration: raw.duration,
             year: raw.year,
             genre: raw.genre,
-            song_count: raw.songCount,
-            songs: raw.song.unwrap_or_default(),
+            song_count: raw.song_count,
+            songs: raw.song,
         })
     }
 }

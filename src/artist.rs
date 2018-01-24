@@ -17,16 +17,6 @@ pub struct Artist {
     pub album_count: u64,
 }
 
-#[derive(Debug, Deserialize)]
-#[allow(non_snake_case)]
-struct ArtistSerde {
-    id: String,
-    name: String,
-    coverArt: Option<String>,
-    albumCount: u64,
-    album: Option<Vec<album::Album>>,
-}
-
 #[derive(Debug)]
 pub struct ArtistInfo {
     biography: String,
@@ -101,14 +91,25 @@ impl<'de> Deserialize<'de> for Artist {
     where
         D: Deserializer<'de>,
     {
-        let raw = ArtistSerde::deserialize(de)?;
+        #[derive(Debug, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct _Artist {
+            id: String,
+            name: String,
+            cover_art: Option<String>,
+            album_count: u64,
+            #[serde(default)]
+            album: Vec<album::Album>,
+        }
+
+        let raw = _Artist::deserialize(de)?;
 
         Ok(Artist {
             id: raw.id.parse().unwrap(),
             name: raw.name,
-            cover_id: raw.coverArt,
-            album_count: raw.albumCount,
-            albums: raw.album.unwrap_or_default(),
+            cover_id: raw.cover_art,
+            album_count: raw.album_count,
+            albums: raw.album,
         })
     }
 }

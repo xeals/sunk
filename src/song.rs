@@ -53,34 +53,7 @@ pub struct Song {
     pub size: u64,
     pub duration: u64,
     path: String,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(non_snake_case)]
-struct SongSerde {
-    id: String,
-    parent: String,
-    isDir: bool,
-    title: String,
-    album: Option<String>,
-    artist: Option<String>,
-    track: Option<u64>,
-    year: Option<u64>,
-    genre: Option<String>,
-    coverArt: Option<String>,
-    size: u64,
-    contentType: String,
-    suffix: String,
-    duration: u64,
-    bitRate: u64,
-    path: String,
-    isVideo: Option<bool>,
-    playCount: u64,
-    discNumber: Option<u64>,
-    created: String,
-    albumId: Option<String>,
-    artistId: Option<String>,
-    // type: String,
+    pub media_type: String,
 }
 
 impl Song {
@@ -142,21 +115,52 @@ impl<'de> Deserialize<'de> for Song {
     where
         D: Deserializer<'de>,
     {
-        let raw = SongSerde::deserialize(de)?;
+        #[derive(Debug, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct _Song {
+            id: String,
+            parent: String,
+            is_dir: bool,
+            title: String,
+            album: Option<String>,
+            artist: Option<String>,
+            track: Option<u64>,
+            year: Option<u64>,
+            genre: Option<String>,
+            cover_art: Option<String>,
+            size: u64,
+            content_type: String,
+            suffix: String,
+            duration: u64,
+            bit_rate: u64,
+            path: String,
+            is_video: Option<bool>,
+            play_count: u64,
+            disc_number: Option<u64>,
+            created: String,
+            album_id: Option<String>,
+            artist_id: Option<String>,
+            #[serde(rename = "type")]
+            media_type: String,
+        }
+
+        let raw = _Song::deserialize(de)?;
+
         Ok(Song {
             id: raw.id.parse().unwrap(),
             title: raw.title,
             album: raw.album,
-            album_id: raw.albumId.map(|i| i.parse().unwrap()),
+            album_id: raw.album_id.map(|i| i.parse().unwrap()),
             artist: raw.artist,
-            artist_id: raw.artistId.map(|i| i.parse().unwrap()),
-            cover_id: raw.coverArt.map(|i| i.parse().unwrap()),
+            artist_id: raw.artist_id.map(|i| i.parse().unwrap()),
+            cover_id: raw.cover_art.map(|i| i.parse().unwrap()),
             track: raw.track,
             year: raw.year,
             genre: raw.genre,
             size: raw.size,
             duration: raw.duration,
             path: raw.path,
+            media_type: raw.media_type,
         })
     }
 }

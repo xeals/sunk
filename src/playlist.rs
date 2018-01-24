@@ -18,21 +18,6 @@ pub struct Playlist {
     songs: Vec<song::Song>,
 }
 
-#[derive(Debug, Deserialize)]
-#[allow(non_snake_case)]
-struct PlaylistSerde {
-    id: String,
-    name: String,
-    comment: Option<String>,
-    owner: String,
-    songCount: u64,
-    duration: u64,
-    created: String,
-    changed: String,
-    coverArt: String,
-    songs: Option<Vec<song::Song>>,
-}
-
 impl Playlist {
     /// Fetches the songs contained in a playlist.
     pub fn songs(&self, sunk: &mut Sunk) -> Result<Vec<song::Song>> {
@@ -51,15 +36,32 @@ impl<'de> Deserialize<'de> for Playlist {
     where
         D: Deserializer<'de>,
     {
-        let raw = PlaylistSerde::deserialize(de)?;
+        #[derive(Debug, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct _Playlist {
+            id: String,
+            name: String,
+            #[serde(default)]
+            comment: String,
+            owner: String,
+            song_count: u64,
+            duration: u64,
+            created: String,
+            changed: String,
+            cover_art: String,
+            #[serde(default)]
+            songs: Vec<song::Song>,
+        }
+
+        let raw = _Playlist::deserialize(de)?;
 
         Ok(Playlist {
             id: raw.id.parse().unwrap(),
             name: raw.name,
             duration: raw.duration,
-            cover_id: raw.coverArt,
-            song_count: raw.songCount,
-            songs: raw.songs.unwrap_or_default(),
+            cover_id: raw.cover_art,
+            song_count: raw.song_count,
+            songs: raw.songs,
         })
     }
 }
