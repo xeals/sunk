@@ -1,9 +1,10 @@
 #![macro_use]
 
-use serde_json::Value;
-use serde_json::value::{Index, Map};
+use std::string;
 
+use serde_json::Value;
 use error;
+
 macro_rules! impl_cover_art {
     () => {
         pub fn cover_art(&self, sunk: &mut Sunk, size: Option<u64>) -> Result<String> {
@@ -16,9 +17,19 @@ macro_rules! impl_cover_art {
     }
 }
 
+macro_rules! get_list_as {
+    ($f:ident, $t:ident) => ({
+        #[derive(Deserialize)]
+        struct List {
+            $f: Vec<$t>
+        }
+        serde_json::from_value::<List>($f)?.$f
+    });
+}
+
 pub(crate) fn map_str<T>(v: Option<T>) -> Option<String>
 where
-    T: ::std::string::ToString,
+    T: string::ToString,
 {
     v.map(|v| v.to_string())
 }
@@ -32,47 +43,7 @@ where
 
 pub(crate) fn map_vec_string<T>(sv: Option<Vec<T>>) -> Option<Vec<String>>
 where
-    T: ::std::string::ToString,
+    T: string::ToString,
 {
     map_some_vec(sv, T::to_string)
 }
-
-// pub trait ValueExt {
-//     fn try_get<I: Index>(&self, index: I) -> error::Result<&Value>;
-//     fn try_array(&self) -> error::Result<Vec<Value>>;
-//     fn try_map(&self) -> error::Result<Map<String, Value>>;
-// }
-
-// impl ValueExt for Value {
-//     fn try_get<I: Index>(&self, index: I) -> error::Result<&Value> {
-//         self.get(index).ok_or_else(|| {
-//             error::Error::JsonError(format!("missing index in {}", self))
-//         })
-//     }
-
-macro_rules! get_list_as {
-    ($f:ident, $t:ident) => ({
-        #[derive(Deserialize)]
-        struct List {
-            $f: Vec<$t>
-        }
-        serde_json::from_value::<List>($f)?.$f
-    });
-}
-
-//     fn try_array(&self) -> error::Result<Vec<Value>> {
-//         self.as_array()
-//             .ok_or_else(|| {
-//                 error::Error::JsonError(format!("{} not an array", self))
-//             })
-//             .map(|a| a.clone())
-//     }
-
-//     fn try_map(&self) -> error::Result<Map<String, Value>> {
-//         self.as_object()
-//             .ok_or_else(|| {
-//                 error::Error::JsonError(format!("{} not a map", self))
-//             })
-//             .map(|m| m.clone())
-//     }
-// }

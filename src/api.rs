@@ -1,4 +1,3 @@
-use error::*;
 use std::{convert, fmt};
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Copy, Clone)]
