@@ -25,6 +25,7 @@ struct ArtistSerde {
     name: String,
     coverArt: Option<String>,
     albumCount: u64,
+    albums: Option<Vec<album::Album>>
 }
 
 #[derive(Debug)]
@@ -116,28 +117,26 @@ impl Artist {
     impl_cover_art!();
 }
 
-// impl<'de> Deserialize<'de> for Artist {
-//     fn deserialize<D>(de: D) -> std::result::Result<Self, D::Error>
-//     where
-//         D: Deserializer<'de>
-//     {
-//         let raw = ArtistSerde::deserialize(de)?;
-//         let album = raw["album"];
-//         let albums = get_list_as!(album, album::Album);
+impl<'de> Deserialize<'de> for Artist {
+    fn deserialize<D>(de: D) -> ::std::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>
+    {
+        let raw = ArtistSerde::deserialize(de)?;
 
-//         Ok(Artist {
-//             id: raw.id.parse()?,
-//             name: raw.name,
-//             cover_id: raw.coverArt,
-//             album_count: raw.albumCount,
-//             albums,
-//         })
-//     }
-// }
+        Ok(Artist {
+            id: raw.id.parse().unwrap(),
+            name: raw.name,
+            cover_id: raw.coverArt,
+            album_count: raw.albumCount,
+            albums: raw.albums.unwrap_or(Vec::new()),
+        })
+    }
+}
 
 pub fn get_artist(sunk: &mut Sunk, id: u64) -> Result<Artist> {
     let res = sunk.get("getArtist", Query::with("id", id))?;
-    Artist::try_from(res)
+    Ok(serde_json::from_value::<Artist>(res)?)
 }
 
 #[cfg(test)]
@@ -168,7 +167,7 @@ mod tests {
 
     #[test]
     fn parse_artist() {
-        let parsed = Artist::try_from(raw()).unwrap();
+        let parsed = serde_json::from_value::<Artist>(raw()).unwrap();
 
         assert_eq!(parsed.name, "Backstreet Boys".to_string());
         assert_eq!(parsed.albums.len(), 1);
@@ -178,7 +177,7 @@ mod tests {
     fn remote_artist_album_list() {
         let (s, u, p) = load_credentials().unwrap();
         let mut srv = Sunk::new(&s, &u, &p).unwrap();
-        let parsed = Artist::try_from(raw()).unwrap();
+        let parsed = serde_json::from_value::<Artist>(raw()).unwrap();
         let albums = parsed.albums(&mut srv).unwrap();
 
         println!("Parsed: {:?}", albums);
@@ -190,7 +189,7 @@ mod tests {
     fn remote_artist_cover_art() {
         let (s, u, p) = load_credentials().unwrap();
         let mut srv = Sunk::new(&s, &u, &p).unwrap();
-        let parsed = Artist::try_from(raw()).unwrap();
+        let parsed = serde_json::from_value::<Artist>(raw()).unwrap();
         let cover = parsed.cover_art(&mut srv, None).unwrap();
 
         println!("{:?}", cover);

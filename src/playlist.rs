@@ -1,4 +1,5 @@
 use serde_json;
+use serde::de::{Deserialize, Deserializer};
 
 use error::*;
 use query::Query;
@@ -29,6 +30,7 @@ struct PlaylistSerde {
     created: String,
     changed: String,
     coverArt: String,
+    songs: Option<Vec<song::Song>>
 }
 
 impl Playlist {
@@ -70,6 +72,24 @@ impl Playlist {
     }
 
     // impl_cover_art!();
+}
+
+impl<'de> Deserialize<'de> for Playlist {
+    fn deserialize<D>(de: D) -> ::std::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>
+    {
+        let raw = PlaylistSerde::deserialize(de)?;
+
+        Ok(Playlist {
+            id: raw.id.parse().unwrap(),
+            name: raw.name,
+            duration: raw.duration,
+            cover_id: raw.coverArt,
+            song_count: raw.songCount,
+            songs: raw.songs.unwrap_or(Vec::new()),
+        })
+    }
 }
 
 fn get_playlists(

@@ -1,4 +1,5 @@
 use serde_json;
+use serde::de::{Deserialize, Deserializer};
 
 use error::*;
 use query::Query;
@@ -63,6 +64,7 @@ struct AlbumSerde {
     created: String,
     year: Option<u64>,
     genre: Option<String>,
+    songs: Option<Vec<song::Song>>
 }
 
 impl Album {
@@ -104,9 +106,31 @@ impl Album {
     }
 }
 
+impl<'de> Deserialize<'de> for Album {
+    fn deserialize<D>(de: D) -> ::std::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>
+    {
+        let raw = AlbumSerde::deserialize(de)?;
+
+        Ok(Album {
+            id: raw.id.parse().unwrap(),
+            name: raw.name,
+            artist: raw.artist,
+            artist_id: raw.artistId.map(|i| i.parse().unwrap()),
+            cover_id: raw.coverArt,
+            duration: raw.duration,
+            year: raw.year,
+            genre: raw.genre,
+            song_count: raw.songCount,
+            songs: raw.songs.unwrap_or(Vec::new()),
+        })
+    }
+}
+
 pub fn get_album(sunk: &mut Sunk, id: u64) -> Result<Album> {
     let res = sunk.get("getAlbum", Query::with("id", id))?;
-    Album::try_from(res)
+    Ok(serde_json::from_value::<Album>(res)?)
 }
 
 pub fn get_albums(
@@ -128,7 +152,7 @@ pub fn get_albums(
     let mut albums = vec![];
     if let Some(album_arr) = res["album"].as_array() {
         for album in album_arr.clone() {
-            albums.push(Album::try_from(album)?);
+            albums.push(serde_json::from_value::<Album>(album)?);
         }
     }
     Ok(albums)
@@ -192,7 +216,7 @@ mod tests {
                 } ]
             }
         );
-        let alb = Album::try_from(json).unwrap();
+        let alb = serde_json::from_value::<Album>(json).unwrap();
 
         assert_eq!(alb.id, 18);
         assert_eq!(alb.cover_id, Some("al-18".to_string()));
@@ -216,7 +240,7 @@ mod tests {
                 "genre" : "Pop"
             }
         );
-        let alb = Album::try_from(json).unwrap();
+        let alb = serde_json::from_value::<Album>(json).unwrap();
 
         assert_eq!(alb.id, 314);
         assert_eq!(alb.name, "#3".to_string());
