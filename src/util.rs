@@ -2,9 +2,6 @@
 
 use std::string;
 
-use serde_json::Value;
-use error;
-
 macro_rules! impl_cover_art {
     () => {
         pub fn cover_art(&self, sunk: &mut Sunk, size: Option<u64>) -> Result<String> {

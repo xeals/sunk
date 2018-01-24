@@ -2,7 +2,6 @@
 use hyper::{self, Client, Uri};
 use hyper_tls::HttpsConnector;
 use serde_json;
-use log;
 use tokio;
 
 use api::Api;
@@ -106,18 +105,18 @@ impl Sunk {
     /// Formats arguments in a standard HTTP format, using information from the
     /// `Sunk`; for example:
     ///
-    /// ```rust
-    /// # use sunk::Sunk::*;
+    /// ```rust,norun
+    /// # use sunk::Sunk;
     /// # use error::*;
+    /// # use query::Query;
     ///
-    /// let sunk = Sunk::new("subsonic.example.com", "user", "password")?;
-    /// let url = sunk.build_url("stream", vec![("id", 1), ("bitrate", 96)])?;
+    /// let sunk = Sunk::new("demo.subsonic.com", "guest3", "guest")?;
+    /// let url = sunk.build_url("stream", Query::with("id", 222))?;
     ///
     /// assert_eq!(
-    ///     url,
-    ///     "https://subsonic.example.com/rest/stream \
-    ///         &u=user&p=password&v=1.14.0&id=1&bitrate=96".to_string()
-    /// )
+    ///     url.as_str(),
+    ///     "http://demo.subsonic.com/rest/stream \
+    ///         &u=guest3&t=XXXX&s=XXXXX&v=1.14.0&id=222"))
     /// ```
     ///
     /// Most usage of this function will be through `Sunk::get()`.

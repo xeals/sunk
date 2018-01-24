@@ -50,8 +50,8 @@ pub struct Song {
     pub year: Option<u64>,
     pub genre: Option<String>,
     cover_id: Option<u64>,
-    size: u64,
-    duration: u64,
+    pub size: u64,
+    pub duration: u64,
     path: String,
 }
 
@@ -252,79 +252,50 @@ pub struct Lyrics {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test_util::*;
+    use test_util;
 
     #[test]
-    fn parse_test() {
-        let raw = json!(
-            {
-                "id": "1633",
-                "parent": "1632",
-                "isDir": false,
-                "title": "That Is How I Roll!",
-                "album": "That Is How I Roll!",
-                "artist": "Afterglow",
-                "track": 1,
-                "year": 2017,
-                "genre": "J-Pop",
-                "coverArt": "1632",
-                "size": 32345658,
-                "contentType": "audio/flac",
-                "suffix": "flac",
-                "transcodedContentType": "audio/mpeg",
-                "transcodedSuffix": "mp3",
-                "duration": 240,
-                "bitRate": 1073,
-                "path": "A/Afterglow/That Is How I Roll!/01 That Is How I Roll!.flac",
-                "isVideo": false,
-                "playCount": 16,
-                "discNumber": 1,
-                "created": "2018-01-01T10:30:04.000Z",
-                "albumId": "222",
-                "artistId": "138",
-                "type": "music"
-            }
-        );
+    fn parse_song() {
+        let parsed = serde_json::from_value::<Song>(raw()).unwrap();
 
-        let parsed = serde_json::from_value::<Song>(raw);
-        assert!(parsed.is_ok());
+        assert_eq!(parsed.id, 27);
+        assert_eq!(parsed.title, String::from("Bellevue Avenue"));
+        assert_eq!(parsed.track, Some(1));
     }
 
     #[test]
     fn get_hls() {
-        let (s, u, p) = load_credentials().unwrap();
-        let mut srv = Sunk::new(&s, &u, &p).unwrap();
-        let song = serde_json::from_value::<Song>(json!(
-            {
-                "id": "1633",
-                "parent": "1632",
-                "isDir": false,
-                "title": "That Is How I Roll!",
-                "album": "That Is How I Roll!",
-                "artist": "Afterglow",
-                "track": 1,
-                "year": 2017,
-                "genre": "J-Pop",
-                "coverArt": "1632",
-                "size": 32345658,
-                "contentType": "audio/flac",
-                "suffix": "flac",
-                "transcodedContentType": "audio/mpeg",
-                "transcodedSuffix": "mp3",
-                "duration": 240,
-                "bitRate": 1073,
-                "path": "A/Afterglow/That Is How I Roll!/01 That Is How I Roll!.flac",
-                "isVideo": false,
-                "playCount": 16,
-                "discNumber": 1,
-                "created": "2018-01-01T10:30:04.000Z",
-                "albumId": "222",
-                "artistId": "138",
-                "type": "music"
-            }
-        )).unwrap();
+        let mut srv = test_util::demo_site().unwrap();
+        let song = serde_json::from_value::<Song>(raw()).unwrap();
 
         let hls = song.hls(&mut srv, None);
         assert!(hls.is_ok());
+    }
+
+    fn raw() -> serde_json::Value {
+        json!({
+            "id" : "27",
+            "parent" : "25",
+            "isDir" : false,
+            "title" : "Bellevue Avenue",
+            "album" : "Bellevue",
+            "artist" : "Misteur Valaire",
+            "track" : 1,
+            "genre" : "(255)",
+            "coverArt" : "25",
+            "size" : 5400185,
+            "contentType" : "audio/mpeg",
+            "suffix" : "mp3",
+            "duration" : 198,
+            "bitRate" : 216,
+            "path" : "Misteur Valaire/Bellevue/01 - Misteur Valaire - Bellevue Avenue.mp3",
+            "averageRating" : 3.0,
+            "playCount" : 706,
+            "created" : "2017-03-12T11:07:27.000Z",
+            "starred" : "2017-06-01T19:48:25.635Z",
+            "albumId" : "1",
+            "artistId" : "1",
+            "type" : "music"
+        })
     }
 }

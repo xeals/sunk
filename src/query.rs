@@ -1,4 +1,3 @@
-use error::*;
 use std::fmt::{self, Display};
 
 /// An expandable query set for a call.

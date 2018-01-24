@@ -7,7 +7,6 @@ use sunk::Sunk;
 use util::*;
 
 use album;
-use song;
 
 #[derive(Debug)]
 pub struct Artist {
@@ -25,7 +24,7 @@ struct ArtistSerde {
     name: String,
     coverArt: Option<String>,
     albumCount: u64,
-    albums: Option<Vec<album::Album>>
+    album: Option<Vec<album::Album>>
 }
 
 #[derive(Debug)]
@@ -129,7 +128,7 @@ impl<'de> Deserialize<'de> for Artist {
             name: raw.name,
             cover_id: raw.coverArt,
             album_count: raw.albumCount,
-            albums: raw.albums.unwrap_or_default(),
+            albums: raw.album.unwrap_or_default(),
         })
     }
 }
@@ -142,57 +141,68 @@ pub fn get_artist(sunk: &mut Sunk, id: u64) -> Result<Artist> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test_util::*;
-
-    fn raw() -> serde_json::Value {
-        json!({
-            "id" : "1",
-            "name" : "Backstreet Boys",
-            "coverArt" : "ar-1",
-            "albumCount" : 1,
-            "album" : [ {
-                "id" : "1",
-                "name" : "The Hits: Chapter One",
-                "artist" : "Backstreet Boys",
-                "artistId" : "1",
-                "coverArt" : "al-1",
-                "songCount" : 2,
-                "duration" : 499,
-                "created" : "2018-01-01T10:30:10.000Z",
-                "year" : 2001,
-                "genre" : "Pop"
-            } ]
-        })
-    }
+    use test_util;
 
     #[test]
     fn parse_artist() {
         let parsed = serde_json::from_value::<Artist>(raw()).unwrap();
 
-        assert_eq!(parsed.name, "Backstreet Boys".to_string());
-        assert_eq!(parsed.albums.len(), 1);
+        assert_eq!(parsed.id, 1);
+        assert_eq!(parsed.name, String::from("Misteur Valaire"));
+        assert_eq!(parsed.album_count, 1);
+    }
+
+    #[test]
+    fn parse_artist_deep() {
+        let parsed = serde_json::from_value::<Artist>(raw()).unwrap();
+
+        assert_eq!(parsed.albums.len() as u64, parsed.album_count);
+        assert_eq!(parsed.albums[0].id, 1);
+        assert_eq!(parsed.albums[0].name, String::from("Bellevue"));
+        assert_eq!(parsed.albums[0].song_count, 9);
     }
 
     #[test]
     fn remote_artist_album_list() {
-        let (s, u, p) = load_credentials().unwrap();
-        let mut srv = Sunk::new(&s, &u, &p).unwrap();
+        let mut srv = test_util::demo_site().unwrap();
         let parsed = serde_json::from_value::<Artist>(raw()).unwrap();
         let albums = parsed.albums(&mut srv).unwrap();
 
-        println!("Parsed: {:?}", albums);
-        assert_eq!(albums[0].name, "The Hits: Chapter One".to_string());
-        assert_eq!(albums[0].year, Some(2001));
+        assert_eq!(albums[0].id, 1);
+        assert_eq!(albums[0].name, String::from("Bellevue"));
+        assert_eq!(albums[0].song_count, 9);
     }
 
     #[test]
     fn remote_artist_cover_art() {
-        let (s, u, p) = load_credentials().unwrap();
-        let mut srv = Sunk::new(&s, &u, &p).unwrap();
+        let mut srv = test_util::demo_site().unwrap();
         let parsed = serde_json::from_value::<Artist>(raw()).unwrap();
-        let cover = parsed.cover_art(&mut srv, None).unwrap();
+        assert_eq!(parsed.cover_id, Some(String::from("ar-1")));
 
+        let cover = parsed.cover_art(&mut srv, None).unwrap();
         println!("{:?}", cover);
         assert!(!cover.is_empty())
     }
+
+    fn raw() -> serde_json::Value {
+        json!({
+            "id" : "1",
+            "name" : "Misteur Valaire",
+            "coverArt" : "ar-1",
+            "albumCount" : 1,
+            "album" : [ {
+                "id" : "1",
+                "name" : "Bellevue",
+                "artist" : "Misteur Valaire",
+                "artistId" : "1",
+                "coverArt" : "al-1",
+                "songCount" : 9,
+                "duration" : 1920,
+                "playCount" : 2223,
+                "created" : "2017-03-12T11:07:25.000Z",
+                "genre" : "(255)"
+            } ]
+        })
+    }
+
 }

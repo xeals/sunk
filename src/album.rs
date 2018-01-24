@@ -46,7 +46,7 @@ pub struct Album {
     pub duration: u64,
     pub year: Option<u64>,
     pub genre: Option<String>,
-    song_count: u64,
+    pub song_count: u64,
     songs: Vec<song::Song>,
 }
 
@@ -64,7 +64,7 @@ struct AlbumSerde {
     created: String,
     year: Option<u64>,
     genre: Option<String>,
-    songs: Option<Vec<song::Song>>
+    song: Option<Vec<song::Song>>
 }
 
 impl Album {
@@ -123,7 +123,7 @@ impl<'de> Deserialize<'de> for Album {
             year: raw.year,
             genre: raw.genre,
             song_count: raw.songCount,
-            songs: raw.songs.unwrap_or_default(),
+            songs: raw.song.unwrap_or_default(),
         })
     }
 }
@@ -161,12 +161,11 @@ pub fn get_albums(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test_util::*;
+    use test_util;
 
     #[test]
-    fn remote_get_albums() {
-        let (s, u, p) = load_credentials().unwrap();
-        let mut srv = Sunk::new(&s, &u, &p).unwrap();
+    fn demo_get_albums() {
+        let mut srv = test_util::demo_site().unwrap();
         let albums =
             get_albums(&mut srv, ListType::AlphaByArtist, None, None, None)
                 .unwrap();
@@ -176,74 +175,229 @@ mod tests {
     }
 
     #[test]
-    fn parse_from_get_album() {
-        let json = json!(
-            {
-                "id" : "18",
-                "name" : "Hooked on a Feeling",
-                "artist" : "Blue Swede",
-                "artistId" : "8",
-                "coverArt" : "al-18",
-                "songCount" : 1,
-                "duration" : 172,
-                "created" : "2018-01-01T10:30:15.000Z",
-                "year" : 1974,
-                "genre" : "Classic Rock",
-                "song" : [ {
-                    "id" : "201",
-                    "parent" : "200",
-                    "isDir" : false,
-                    "title" : "Hooked on a Feeling",
-                    "album" : "Hooked on a Feeling",
-                    "artist" : "Blue Swede",
-                    "track" : 1,
-                    "year" : 1974,
-                    "genre" : "Classic Rock",
-                    "coverArt" : "200",
-                    "size" : 7191717,
-                    "contentType" : "audio/mpeg",
-                    "suffix" : "mp3",
-                    "duration" : 172,
-                    "bitRate" : 320,
-                    "path" : "B/Blue Swede/Hooked on a Feeling/01 Hooked on a Feeling.mp3",
-                    "isVideo" : false,
-                    "playCount" : 0,
-                    "discNumber" : 1,
-                    "created" : "2018-01-01T10:30:15.000Z",
-                    "albumId" : "18",
-                    "artistId" : "8",
-                    "type" : "music"
-                } ]
-            }
-        );
-        let alb = serde_json::from_value::<Album>(json).unwrap();
+    fn parse_album() {
+        let parsed = serde_json::from_value::<Album>(raw()).unwrap();
 
-        assert_eq!(alb.id, 18);
-        assert_eq!(alb.cover_id, Some("al-18".to_string()));
-        assert_eq!(alb.songs.len(), 1);
-        assert_eq!(alb.songs[0].title, "Hooked on a Feeling".to_string())
+        assert_eq!(parsed.id, 1);
+        assert_eq!(parsed.name, String::from("Bellevue"));
+        assert_eq!(parsed.song_count, 9);
     }
 
     #[test]
-    fn parse_from_album_list() {
-        let json = json!(
-            {
-                "id" : "314",
-                "name" : "#3",
-                "artist" : "The Script",
-                "artistId" : "177",
-                "coverArt" : "al-314",
-                "songCount" : 7,
-                "duration" : 1736,
-                "created" : "2018-01-01T10:31:35.000Z",
-                "year" : 2012,
-                "genre" : "Pop"
-            }
-        );
-        let alb = serde_json::from_value::<Album>(json).unwrap();
+    fn parse_album_deep() {
+        let parsed = serde_json::from_value::<Album>(raw()).unwrap();
 
-        assert_eq!(alb.id, 314);
-        assert_eq!(alb.name, "#3".to_string());
-        assert!(alb.songs.is_empty());
+        assert_eq!(parsed.songs[0].id, 27);
+        assert_eq!(parsed.songs[0].title, String::from("Bellevue Avenue"));
+        assert_eq!(parsed.songs[0].duration, 198);
+    }
+
+
+    fn raw() -> serde_json::Value {
+        json!({
+         "id" : "1",
+         "name" : "Bellevue",
+         "artist" : "Misteur Valaire",
+         "artistId" : "1",
+         "coverArt" : "al-1",
+         "songCount" : 9,
+         "duration" : 1920,
+         "playCount" : 2223,
+         "created" : "2017-03-12T11:07:25.000Z",
+         "genre" : "(255)",
+         "song" : [ {
+            "id" : "27",
+            "parent" : "25",
+            "isDir" : false,
+            "title" : "Bellevue Avenue",
+            "album" : "Bellevue",
+            "artist" : "Misteur Valaire",
+            "track" : 1,
+            "genre" : "(255)",
+            "coverArt" : "25",
+            "size" : 5400185,
+            "contentType" : "audio/mpeg",
+            "suffix" : "mp3",
+            "duration" : 198,
+            "bitRate" : 216,
+            "path" : "Misteur Valaire/Bellevue/01 - Misteur Valaire - Bellevue Avenue.mp3",
+            "averageRating" : 3.0,
+            "playCount" : 706,
+            "created" : "2017-03-12T11:07:27.000Z",
+            "starred" : "2017-06-01T19:48:25.635Z",
+            "albumId" : "1",
+            "artistId" : "1",
+            "type" : "music"
+         }, {
+            "id" : "31",
+            "parent" : "25",
+            "isDir" : false,
+            "title" : "Don't Get Là",
+            "album" : "Bellevue",
+            "artist" : "Misteur Valaire",
+            "track" : 2,
+            "genre" : "(255)",
+            "coverArt" : "25",
+            "size" : 4866004,
+            "contentType" : "audio/mpeg",
+            "suffix" : "mp3",
+            "duration" : 172,
+            "bitRate" : 224,
+            "path" : "Misteur Valaire/Bellevue/02 - Misteur Valaire - Don_t Get L.mp3",
+            "playCount" : 310,
+            "created" : "2017-03-12T11:07:28.000Z",
+            "starred" : "2017-08-27T07:52:23.926Z",
+            "albumId" : "1",
+            "artistId" : "1",
+            "type" : "music"
+         }, {
+            "id" : "29",
+            "parent" : "25",
+            "isDir" : false,
+            "title" : "Space Food",
+            "album" : "Bellevue",
+            "artist" : "Misteur Valaire",
+            "track" : 3,
+            "genre" : "(255)",
+            "coverArt" : "25",
+            "size" : 8954200,
+            "contentType" : "audio/mpeg",
+            "suffix" : "mp3",
+            "duration" : 303,
+            "bitRate" : 235,
+            "path" : "Misteur Valaire/Bellevue/03 - Misteur Valaire - Space Food.mp3",
+            "playCount" : 233,
+            "created" : "2017-03-12T11:07:26.000Z",
+            "albumId" : "1",
+            "artistId" : "1",
+            "type" : "music"
+         }, {
+            "id" : "32",
+            "parent" : "25",
+            "isDir" : false,
+            "title" : "Known By Sight (feat. Milk & Bone)",
+            "album" : "Bellevue",
+            "artist" : "Misteur Valaire",
+            "track" : 4,
+            "genre" : "(255)",
+            "coverArt" : "25",
+            "size" : 6219273,
+            "contentType" : "audio/mpeg",
+            "suffix" : "mp3",
+            "duration" : 231,
+            "bitRate" : 214,
+            "path" : "Misteur Valaire/Bellevue/04 - Misteur Valaire - Known By Sight _feat. Milk _ Bone_.mp3",
+            "playCount" : 216,
+            "created" : "2017-03-12T11:07:27.000Z",
+            "albumId" : "1",
+            "artistId" : "1",
+            "type" : "music"
+         }, {
+            "id" : "33",
+            "parent" : "25",
+            "isDir" : false,
+            "title" : "La Nature à Son Meilleur",
+            "album" : "Bellevue",
+            "artist" : "Misteur Valaire",
+            "track" : 5,
+            "genre" : "(255)",
+            "coverArt" : "25",
+            "size" : 5169929,
+            "contentType" : "audio/mpeg",
+            "suffix" : "mp3",
+            "duration" : 187,
+            "bitRate" : 220,
+            "path" : "Misteur Valaire/Bellevue/05 - Misteur Valaire - La Nature  Son Meilleur.mp3",
+            "playCount" : 190,
+            "created" : "2017-03-12T11:07:26.000Z",
+            "albumId" : "1",
+            "artistId" : "1",
+            "type" : "music"
+         }, {
+            "id" : "34",
+            "parent" : "25",
+            "isDir" : false,
+            "title" : "Interlude",
+            "album" : "Bellevue",
+            "artist" : "Misteur Valaire",
+            "track" : 6,
+            "genre" : "(255)",
+            "coverArt" : "25",
+            "size" : 2403983,
+            "contentType" : "audio/mpeg",
+            "suffix" : "mp3",
+            "duration" : 99,
+            "bitRate" : 191,
+            "path" : "Misteur Valaire/Bellevue/06 - Misteur Valaire - Interlude.mp3",
+            "playCount" : 149,
+            "created" : "2017-03-12T11:07:28.000Z",
+            "albumId" : "1",
+            "artistId" : "1",
+            "type" : "music"
+         }, {
+            "id" : "28",
+            "parent" : "25",
+            "isDir" : false,
+            "title" : "Old Orford",
+            "album" : "Bellevue",
+            "artist" : "Misteur Valaire",
+            "track" : 7,
+            "genre" : "(255)",
+            "coverArt" : "25",
+            "size" : 6403652,
+            "contentType" : "audio/mpeg",
+            "suffix" : "mp3",
+            "duration" : 223,
+            "bitRate" : 228,
+            "path" : "Misteur Valaire/Bellevue/07 - Misteur Valaire - Old Orford.mp3",
+            "playCount" : 160,
+            "created" : "2017-03-12T11:07:25.000Z",
+            "albumId" : "1",
+            "artistId" : "1",
+            "type" : "music"
+         }, {
+            "id" : "30",
+            "parent" : "25",
+            "isDir" : false,
+            "title" : "El Kid",
+            "album" : "Bellevue",
+            "artist" : "Misteur Valaire",
+            "track" : 8,
+            "genre" : "(255)",
+            "coverArt" : "25",
+            "size" : 6506923,
+            "contentType" : "audio/mpeg",
+            "suffix" : "mp3",
+            "duration" : 234,
+            "bitRate" : 221,
+            "path" : "Misteur Valaire/Bellevue/08 - Misteur Valaire - El Kid.mp3",
+            "playCount" : 134,
+            "created" : "2017-03-12T11:07:28.000Z",
+            "albumId" : "1",
+            "artistId" : "1",
+            "type" : "music"
+         }, {
+            "id" : "26",
+            "parent" : "25",
+            "isDir" : false,
+            "title" : "Banana Land",
+            "album" : "Bellevue",
+            "artist" : "Misteur Valaire",
+            "track" : 9,
+            "genre" : "(255)",
+            "coverArt" : "25",
+            "size" : 6870947,
+            "contentType" : "audio/mpeg",
+            "suffix" : "mp3",
+            "duration" : 273,
+            "bitRate" : 200,
+            "path" : "Misteur Valaire/Bellevue/09 - Misteur Valaire - Banana Land.mp3",
+            "playCount" : 125,
+            "created" : "2017-03-12T11:07:25.000Z",
+            "albumId" : "1",
+            "artistId" : "1",
+            "type" : "music"
+         } ]
+      })
     }
 }
