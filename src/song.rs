@@ -74,7 +74,7 @@ struct SongSerde {
     duration: u64,
     bitRate: u64,
     path: String,
-    isVideo: bool,
+    isVideo: Option<bool>,
     playCount: u64,
     discNumber: Option<u64>,
     created: String,

@@ -255,7 +255,7 @@ impl Sunk {
             })
         });
 
-        self.core.run(work).map_err(|e| Error::HyperError(e))
+        Ok(self.core.run(work)?)
     }
 
     pub fn get_raw<'a, D>(
@@ -344,7 +344,7 @@ impl Sunk {
     ) -> Result<(Vec<artist::Artist>, Vec<album::Album>, Vec<song::Song>)>
     {
         // FIXME There has to be a way to make this nicer.
-        let mut args = Query::with("query", query.to_string())
+        let args = Query::with("query", query.to_string())
             .arg("artistCount", artist_page.count.to_string())
             .arg("artistOffset", artist_page.offset.to_string())
             .arg("albumCount", album_page.count.to_string())
@@ -393,48 +393,47 @@ pub struct License {
 
 #[cfg(test)]
 mod tests {
-    use std::io;
     use sunk::*;
-    use test_util::*;
+    use test_util;
 
     #[test]
-    fn remote_try_binary() {
-        let (site, user, pass) = load_credentials().unwrap();
-        let mut srv = Sunk::new(&site, &user, &pass).unwrap();
-        let resp = srv.try_binary("stream", Query::with("id", 125));
-        assert!(resp.is_ok())
-    }
-
-    #[test]
-    fn remote_ping() {
-        let (site, user, pass) = load_credentials().unwrap();
-        let mut srv = Sunk::new(&site, &user, &pass).unwrap();
-        debug!("{:?}", srv);
+    fn demo_ping() {
+        let mut srv = ::test_util::demo_site().unwrap();
         srv.check_connection().unwrap();
-        assert!(srv.check_connection().is_ok())
     }
 
     #[test]
-    fn remote_scan_status() {
-        let (site, user, pass) = load_credentials().unwrap();
-        let mut srv = Sunk::new(&site, &user, &pass).unwrap();
+    fn demo_try_binary() {
+        let mut srv = test_util::demo_site().unwrap();
+        let res = srv.try_binary("stream", Query::with("id", 189));
+        assert!(res.is_ok())
+    }
+
+    #[test]
+    fn demo_scan_status() {
+        let mut srv = test_util::demo_site().unwrap();
         let (status, n) = srv.scan_status().unwrap();
         assert_eq!(status, false);
-        assert_eq!(n, 5661);
+        assert_eq!(n, 521);
     }
 
     #[test]
-    fn remote_search() {
+    fn demo_search() {
         use library::search;
-        let (site, user, pass) = load_credentials().unwrap();
-        let mut srv = Sunk::new(&site, &user, &pass).unwrap();
-        let s = search::SearchPage::new().with_size(5);
-        let (art, alb, son) = srv.search("end", s, s, s).unwrap();
 
-        println!("{:?}", art);
-        println!("{:?}", alb);
-        println!("{:?}", son);
+        let mut srv = test_util::demo_site().unwrap();
+        let s = search::SearchPage::new().with_size(1);
+        let (art, alb, son) = srv.search("dada", s, s, s).unwrap();
 
-        assert!(true);
+        assert_eq!(art[0].id, 14);
+        assert_eq!(art[0].name, String::from("The Dada Weatherman"));
+        assert_eq!(art[0].album_count, 4);
+
+        assert_eq!(alb[0].id, 23);
+        assert_eq!(alb[0].name, String::from("The Green Waltz"));
+
+        assert_eq!(son[0].id, 222);
+
+        // etc.
     }
 }
