@@ -1,4 +1,5 @@
-// use url;
+#![warn(missing_docs)]
+
 use hyper::{self, Client, Uri};
 use hyper_tls::HttpsConnector;
 use serde_json;
@@ -14,6 +15,26 @@ use song;
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
+/// A client to make requests to a Subsonic instance.
+///
+/// The `Sunk` holds an internal connection pool and stores authentication
+/// details. It is highly recommended to re-use a `Sunk` where possible rather
+/// than creating a new one each time it is required.
+///
+/// # Examples
+///
+/// ```rust
+/// # use error::{Error};
+/// #
+/// # fn run() -> Result<(), Error> {
+/// # let site = "demo.subsonic.org";
+/// # let user = "guest3";
+/// # let password = "guest";
+/// let mut server = Sunk::new(site, user, password)?;
+/// server.check_connection()?;
+/// # Ok(())
+/// # }
+///
 #[derive(Debug)]
 pub struct Sunk {
     url: Uri,
@@ -75,6 +96,7 @@ impl SunkAuth {
 }
 
 impl Sunk {
+    /// Constructs a client to interact with a Subsonic instance.
     pub fn new(url: &str, user: &str, password: &str) -> Result<Sunk> {
         use std::str::FromStr;
 
@@ -94,25 +116,6 @@ impl Sunk {
 
     /// Internal helper function to construct a URL when the actual fetching is
     /// not required.
-    ///
-    /// Formats arguments in a standard HTTP format, using information from the
-    /// `Sunk`; for example:
-    ///
-    /// ```rust,norun
-    /// # use sunk::Sunk;
-    /// # use error::*;
-    /// # use query::Query;
-    ///
-    /// let sunk = Sunk::new("demo.subsonic.com", "guest3", "guest")?;
-    /// let url = sunk.build_url("stream", Query::with("id", 222))?;
-    ///
-    /// assert_eq!(
-    ///     url.as_str(),
-    ///     "http://demo.subsonic.com/rest/stream \
-    ///         &u=guest3&t=XXXX&s=XXXXX&v=1.14.0&id=222"))
-    /// ```
-    ///
-    /// Most usage of this function will be through `Sunk::get()`.
     #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
     fn build_url<'a, D>(
         &self,
@@ -143,7 +146,7 @@ impl Sunk {
         Ok(url)
     }
 
-    /// Issues a request to the `sunk` server.
+    /// Issues a request to the `Sunk` server.
     ///
     /// A query should be one documented in the [official API].
     ///
@@ -153,10 +156,10 @@ impl Sunk {
     ///
     /// Will return an error if any of the following occurs:
     ///
-    /// - server is build with an incomplete URL
+    /// - server is built with an incomplete URL
     /// - connecting to the server fails
     /// - the server returns an API error
-    pub fn get<'a, D>(
+    pub(crate) fn get<'a, D>(
         &mut self,
         query: &str,
         args: Query<'a, D>,
@@ -250,6 +253,8 @@ impl Sunk {
         Ok(self.core.run(work)?)
     }
 
+    /// Fetches an unprocessed response from the server rather than a JSON- or
+    /// XML-parsed one.
     pub fn get_raw<'a, D>(
         &mut self,
         query: &str,
@@ -270,24 +275,41 @@ impl Sunk {
             .map_err(|_| Error::Other("Unable to parse stream as UTF-8"))
     }
 
-    /// Attempts to connect to the server with the provided credentials.
-    fn check_connection(&mut self) -> Result<()> {
+    /// Used to test connectivity with the server.
+    pub fn check_connection(&mut self) -> Result<()> {
         self.get("ping", Query::with("", "")).map(|_| ())
     }
 
-    fn check_license(&mut self) -> Result<License> {
+    /// Get details about the software license. Note that access to the REST API
+    /// requires that the server has a valid license (after a 30-day trial
+    /// period). To get a license key you must upgrade to Subsonic Premium.
+    ///
+    /// Forks of Subsonic (Libresonic, Airsonic, etc.) do not require licenses;
+    /// this method will always return a valid license and trial when attempting
+    /// to connect to these services.
+    pub fn check_license(&mut self) -> Result<License> {
         let res = self.get("getLicense", Query::with("", ""))?;
         Ok(serde_json::from_value::<License>(res)?)
     }
 
-    /// Starts a library scan.
+    /// Initiates a rescan of the media libraries.
+    ///
+    /// # Note
+    ///
+    /// This method was introduced in version 1.15.0. It will not be supported
+    /// on servers with earlier versions of the Subsonic API.
     pub fn scan_library(&mut self) -> Result<()> {
         self.get("startScan", Query::with("", ""))?;
         Ok(())
     }
 
-    /// Gets the status of a scan. Returns whether or not the scan is currently
-    /// running, and the number of media items found.
+    /// Gets the status of a scan. Returns the current status for media library
+    /// scanning.
+    ///
+    /// # Note
+    ///
+    /// This method was introduced in version 1.15.0. It will not be supported
+    /// on servers with earlier versions of the Subsonic API.
     pub fn scan_status(&mut self) -> Result<(bool, u64)> {
         let res = self.get("getScanStatus", Query::with("", ""))?;
 
@@ -303,6 +325,7 @@ impl Sunk {
         }
     }
 
+    /// Returns all configured top-level music folders.
     pub fn music_folders(&mut self) -> Result<Vec<library::MusicFolder>> {
         #[allow(non_snake_case)]
         let musicFolder = self.get("musicFolders", Query::with("", ""))?;
@@ -311,6 +334,7 @@ impl Sunk {
         Ok(get_list_as!(musicFolder, MusicFolder))
     }
 
+    /// Returns all genres.
     pub fn genres(&mut self) -> Result<Vec<library::Genre>> {
         let genre = self.get("getGenres", Query::with("", ""))?;
 
@@ -318,6 +342,30 @@ impl Sunk {
         Ok(get_list_as!(genre, Genre))
     }
 
+    /// Returns albums, artists and songs matching the given search criteria.
+    /// Supports paging through the result.
+    ///
+    /// ```rust,norun
+    /// # use library::search;
+    /// # let site = "demo.subsonic.org";
+    /// # let user = "guest3";
+    /// # let password = "guest";
+    /// let mut server = Sunk::new(site, user, password)?;
+    ///
+    /// let search_size = search::SearchPage::new();
+    /// let ign = search::NONE;
+    ///
+    /// let (_, _, song_results) = server.search("smile", ign, ign, search_size)?;
+    /// for song in song_results {
+    ///     song.download(&mut server)?;
+    /// }
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// The current implementation uses the `search3` method, introduced in
+    /// version 1.8.0. This supports organising results by their ID3 tags,
+    /// and paging through results.
     pub fn search(
         &mut self,
         query: &str,
@@ -336,12 +384,6 @@ impl Sunk {
             .arg("songOffset", song_page.offset.to_string())
             .build();
 
-        // TODO `search` was deprecated in 1.4.0 in favour of `search2`, and
-        // `search3` organises using ID3 tags over `search2`, implemented in
-        // 1.8.0. `search` uses a different query set to to other two calls, and
-        // `search2` and `search3` return different fields for artists and
-        // albums. This should be supported eventually using a conditional
-        // compilation, probably on a search module.
         let res = self.get("search3", args)?;
 
         #[derive(Deserialize)]
@@ -356,12 +398,18 @@ impl Sunk {
     }
 }
 
+/// A representation of a license associated with a server.
 #[derive(Debug, Deserialize)]
 #[allow(non_snake_case)]
 pub struct License {
+    /// Whether the license is valid or not.
     pub valid: bool,
+    /// The email associated with the email.
     pub email: String,
+    /// An ISO8601 timestamp of the server's trial expiry.
     pub trialExpires: Option<String>,
+    /// An ISO8601 timestamp of the server's license expiry. Servers still in
+    /// the trial phase typically will not have this field.
     pub licenseExpires: Option<String>
 }
 

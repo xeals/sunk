@@ -19,6 +19,8 @@ extern crate rand;
 
 mod util;
 
+pub use sunk::{Sunk, License};
+
 pub mod album;
 pub mod artist;
 pub mod error;
@@ -28,7 +30,7 @@ pub mod song;
 pub mod api;
 pub mod library;
 pub mod query;
-pub mod sunk;
+mod sunk;
 
 #[cfg(test)]
 mod test_util;

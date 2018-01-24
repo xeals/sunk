@@ -7,7 +7,7 @@ homepage = "https://github.com/Azphreal/sunk"
 repository = "https://github.com/Azphreal/sunk"
 readme = "README.md"
 keywords = ["subsonic", "airsonic", "music", "api", "webapi"]
-categories = ["api-bindings", "multimedia::audio"]
+categories = ["api-bindings"]
 license = "Apache-2.0/MIT"
 publish = false
 

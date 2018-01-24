@@ -69,6 +69,11 @@ pub mod search {
         offset: 0,
     };
 
+    pub const NONE: SearchPage = SearchPage {
+        count: 0,
+        offset: 0,
+    };
+
     #[derive(Debug, Copy, Clone)]
     pub struct SearchPage {
         pub count: usize,
