@@ -99,7 +99,7 @@ impl Song {
             .maybe_arg("maxBitRate", map_str(bitrate))
             .maybe_arg("format", map_str(format))
             .build();
-        sunk.try_binary("stream", args)
+        sunk.build_url("stream", args)
     }
 
     /// Returns a constructed URL for downloading the song.
@@ -107,7 +107,7 @@ impl Song {
     /// `download_url()` does not support transcoding, while `stream_url()`
     /// does.
     pub fn download_url(&self, sunk: &mut Sunk) -> Result<String> {
-        self.stream_url(sunk, None, None)
+        sunk.build_url("download", Query::with("id", self.id))
     }
 
     /// Creates an HLS (HTTP Live Streaming) playlist used for streaming video

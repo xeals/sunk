@@ -9,7 +9,7 @@ macro_rules! impl_cover_art {
                 .arg("id", self.id)
                 .maybe_arg("size", size)
                 .build();
-            sunk.try_binary("getCoverArt", args)
+            sunk.build_url("getCoverArt", args)
         }
     }
 }

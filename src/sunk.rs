@@ -117,7 +117,7 @@ impl Sunk {
     /// Internal helper function to construct a URL when the actual fetching is
     /// not required.
     #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
-    fn build_url<'a, D>(
+    pub(crate) fn build_url<'a, D>(
         &self,
         query: &str,
         args: Query<'a, D>,
