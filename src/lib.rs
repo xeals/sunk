@@ -32,6 +32,7 @@ pub mod library;
 pub mod query;
 mod sunk;
 pub mod response;
+pub mod user;
 
 #[cfg(test)]
 mod test_util;
