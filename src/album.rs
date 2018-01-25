@@ -118,15 +118,8 @@ pub fn get_albums(
         .maybe_arg("musicFolderId", map_str(folder_id))
         .build();
 
-    let res = sunk.get("getAlbumList2", args)?;
-
-    let mut albums = vec![];
-    if let Some(album_arr) = res["album"].as_array() {
-        for album in album_arr.clone() {
-            albums.push(serde_json::from_value::<Album>(album)?);
-        }
-    }
-    Ok(albums)
+    let album = sunk.get("getAlbumList2", args)?;
+    Ok(get_list_as!(album, Album))
 }
 
 #[cfg(test)]

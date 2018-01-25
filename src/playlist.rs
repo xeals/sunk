@@ -70,33 +70,14 @@ fn get_playlists(
     sunk: &mut Sunk,
     user: Option<String>,
 ) -> Result<Vec<Playlist>> {
-    let res = sunk.get("getPlaylists", Query::maybe_with("username", user))?;
-
-    let mut pls = vec![];
-    if let Some(pl) = res["playlist"].as_array() {
-        for p in pl.clone() {
-            pls.push(serde_json::from_value::<Playlist>(p)?);
-        }
-    }
-    Ok(pls)
+    let playlist = sunk.get("getPlaylists", Query::maybe_with("username", user))?;
+    Ok(get_list_as!(playlist, Playlist))
 }
 
 fn get_playlist(sunk: &mut Sunk, id: u64) -> Result<Playlist> {
     let res = sunk.get("getPlaylist", Query::with("id", id))?;
     Ok(serde_json::from_value::<Playlist>(res)?)
 }
-
-// fn get_playlist_songs(sunk: &mut Sunk, id: u64) -> Result<Vec<song::Song>> {
-//     let res = sunk.get("getPlaylist", Query::with("id", id))?;
-
-//     let mut list = Vec::new();
-//     if let Some(songs) = res["entry"].as_array() {
-//         for song in songs {
-//             list.push(song::Song::from(song)?);
-//         }
-//     }
-//     Ok(list)
-// }
 
 /// Creates a playlist with the given name.
 ///
@@ -137,15 +118,11 @@ fn update_playlist(
         .maybe_arg_list("songIndexToRemove", map_vec_string(to_remove))
         .build();
 
-    sunk.get("updatePlaylist", args)?;
-
-    Ok(())
+    sunk.get("updatePlaylist", args).map(|_| ())
 }
 
 fn delete_playlist(sunk: &mut Sunk, id: u64) -> Result<()> {
-    sunk.get("deletePlaylist", Query::with("id", id))?;
-
-    Ok(())
+    sunk.get("deletePlaylist", Query::with("id", id)).map(|_| ())
 }
 
 #[cfg(test)]
@@ -155,7 +132,16 @@ mod tests {
 
     #[test]
     fn remote_playlist_songs() {
-        let raw = json!(
+        let parsed = serde_json::from_value::<Playlist>(raw()).unwrap();
+        let mut srv = test_util::demo_site().unwrap();
+        let songs = parsed.songs(&mut srv).unwrap();
+
+        println!("{:?}", songs);
+        assert!(!songs.is_empty())
+    }
+
+    fn raw() -> serde_json::Value {
+        json!(
             {
                 "id" : "1",
                 "name" : "Sleep Hits",
@@ -167,13 +153,6 @@ mod tests {
                 "changed" : "2018-01-01T14:45:07.478Z",
                 "coverArt" : "pl-2"
             }
-        );
-
-        let parsed = serde_json::from_value::<Playlist>(raw).unwrap();
-        let mut srv = test_util::demo_site().unwrap();
-        let songs = parsed.songs(&mut srv).unwrap();
-
-        println!("{:?}", songs);
-        assert!(!songs.is_empty())
+        )
     }
 }
