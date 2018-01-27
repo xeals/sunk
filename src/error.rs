@@ -1,8 +1,8 @@
-use hyper;
 use serde_json;
 use serde::de::{Deserialize, Deserializer};
 use std::{fmt, io, num, result};
 use std::convert::From;
+use reqwest;
 
 use response;
 
@@ -12,7 +12,7 @@ pub type Result<T> = result::Result<T, self::Error>;
 pub enum Error {
     #[fail(display = "Invalid URL: {}", _0)] Uri(UriError),
     #[fail(display = "Unable to connect to server: received {}", _0)]
-    ConnectionError(hyper::StatusCode),
+    ConnectionError(reqwest::StatusCode),
     #[fail(display = "{}", _0)] Other(&'static str),
 
     #[fail(display = "{}", _0)] Api(#[cause] ApiError),
@@ -21,14 +21,14 @@ pub enum Error {
     ParError(#[cause] num::ParseIntError),
     #[fail(display = "IO error: {}", _0)] Io(#[cause] io::Error),
     #[fail(display = "Connection error: {}", _0)]
-    HyperError(#[cause] hyper::Error),
+    ReqwestError(#[cause] reqwest::Error),
     #[fail(display = "Error serialising: {}", _0)]
     SerdeError(#[cause] serde_json::Error),
 }
 
 #[derive(Debug, Fail)]
 pub enum UriError {
-    #[fail(display = "{}", _0)] Hyper(#[cause] hyper::error::UriError),
+    #[fail(display = "{}", _0)] Reqwest(#[cause] reqwest::UrlError ),
     #[fail(display = "Unable to determine scheme")] Scheme,
     #[fail(display = "Missing server address")] Address,
 }
@@ -134,17 +134,17 @@ macro_rules! box_err {
     }
 }
 
-box_err!(hyper::Error, HyperError);
+box_err!(reqwest::Error, ReqwestError);
 box_err!(io::Error, Io);
 box_err!(num::ParseIntError, ParError);
 box_err!(serde_json::Error, SerdeError);
 box_err!(UriError, Uri);
 box_err!(ApiError, Api);
 
-impl From<hyper::error::UriError> for UriError {
-    fn from(err: hyper::error::UriError) -> UriError { UriError::Hyper(err) }
+impl From<reqwest::UrlError> for UriError {
+    fn from(err: reqwest::UrlError) -> UriError { UriError::Reqwest(err) }
 }
 
-impl From<hyper::error::UriError> for Error {
-    fn from(err: hyper::error::UriError) -> Error { Error::Uri(err.into()) }
+impl From<reqwest::UrlError> for Error {
+    fn from(err: reqwest::UrlError) -> Error { Error::Uri(err.into()) }
 }

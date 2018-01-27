@@ -2,9 +2,7 @@
 
 #[macro_use]
 extern crate failure;
-extern crate futures;
-extern crate hyper;
-extern crate hyper_tls;
+extern crate reqwest;
 #[macro_use]
 extern crate log;
 extern crate serde;
@@ -12,7 +10,6 @@ extern crate serde;
 extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
-extern crate tokio_core as tokio;
 
 extern crate md5;
 extern crate rand;

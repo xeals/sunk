@@ -66,6 +66,10 @@ impl<'a, D: Display> Query<'a, D> {
             inner: self.inner.drain(..).collect(),
         }
     }
+
+    pub fn into_inner(self) -> Vec<(&'a str, D)> {
+        self.inner
+    }
 }
 
 impl<'a, D: Display> Display for Query<'a, D> {

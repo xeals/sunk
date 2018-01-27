@@ -51,7 +51,7 @@ pub struct Song {
     pub genre: Option<String>,
     cover_id: Option<u64>,
     pub size: u64,
-    pub duration: u64,
+    pub duration: Option<u64>,
     path: String,
     pub media_type: String,
 }
@@ -73,6 +73,20 @@ impl Song {
             .maybe_arg("format", map_str(format))
             .build();
         sunk.build_url("stream", args)
+    }
+
+    pub fn stream(
+        &self,
+        sunk: &mut Sunk,
+        bitrate: Option<u64>,
+        format: Option<AudioFormat>,
+    ) -> Result<Vec<u8>> {
+        let args = Query::new()
+            .arg("id", self.id.to_string())
+            .maybe_arg("maxBitRate", map_str(bitrate))
+            .maybe_arg("format", map_str(format))
+            .build();
+        sunk.get_bytes("stream", args)
     }
 
     /// Returns a constructed URL for downloading the song.
@@ -131,7 +145,7 @@ impl<'de> Deserialize<'de> for Song {
             size: u64,
             content_type: String,
             suffix: String,
-            duration: u64,
+            duration: Option<u64>,
             bit_rate: u64,
             path: String,
             is_video: Option<bool>,

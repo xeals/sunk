@@ -1,9 +1,7 @@
 #![warn(missing_docs)]
 
-use hyper::{self, Client, Uri};
-use hyper_tls::HttpsConnector;
 use serde_json;
-use tokio;
+use reqwest::{Url, Client};
 
 use api::Api;
 use error::*;
@@ -39,10 +37,9 @@ const SALT_SIZE: usize = 36; // Minimum 6 characters.
 /// ```
 #[derive(Debug)]
 pub struct Sunk {
-    url: Uri,
+    url: Url,
     auth: SunkAuth,
-    client: Client<HttpsConnector<hyper::client::HttpConnector>>,
-    core: tokio::reactor::Core,
+    client: Client,
     api: Api,
 }
 
@@ -100,20 +97,13 @@ impl SunkAuth {
 impl Sunk {
     /// Constructs a client to interact with a Subsonic instance.
     pub fn new(url: &str, user: &str, password: &str) -> Result<Sunk> {
-        use std::str::FromStr;
-
         let auth = SunkAuth::new(user, password);
-        let url = Uri::from_str(url)?;
+        let url = url.parse::<Url>()?;
         let api = Api::from("1.14.0");
 
-        let core = tokio::reactor::Core::new()?;
-        let handle = core.handle();
-        let client = Client::configure()
-            .connector(HttpsConnector::new(4, &handle)
-                .map_err(|_| Error::Other("Unable to use secure conection"))?)
-            .build(&handle);
+        let client = Client::builder().build()?;
 
-        Ok(Sunk {url, auth, client, core, api})
+        Ok(Sunk {url, auth, client, api})
     }
 
     /// Internal helper function to construct a URL when the actual fetching is
@@ -127,15 +117,9 @@ impl Sunk {
     where
         D: ::std::fmt::Display,
     {
-        let scheme = self.url
-            .scheme()
-            .or_else(|| {
-                warn!("No scheme provided; falling back to http");
-                Some("http")
-            })
-            .ok_or_else(|| Error::Uri(UriError::Scheme))?;
+        let scheme = self.url.scheme();
         let addr = self.url
-            .authority()
+            .host_str()
             .ok_or_else(|| Error::Uri(UriError::Address))?;
 
         let mut url = [scheme, "://", addr, "/rest/"].concat();
@@ -169,30 +153,13 @@ impl Sunk {
     where
         D: ::std::fmt::Display,
     {
-        use futures::{Future, Stream};
-
-        let uri = self.build_url(query, args)?.parse().unwrap();
+        let uri: Url = self.build_url(query, args)?.parse().unwrap();
 
         info!("Connecting to {}", uri);
-        let work = self.client.get(uri).and_then(|res| {
-            let status = res.status();
-            info!("Received `{}` for request /{}?", status, query);
+        let mut res = self.client.get(uri).send()?;
 
-            res.body().concat2().and_then(move |body| {
-                let v: serde_json::Value = serde_json::from_slice(&body).map_err(|e| {
-                    use std::io;
-                    io::Error::new(io::ErrorKind::Other, e)
-                })?;
-                Ok((status, v))
-            })
-        });
-
-        let (status, res): (hyper::StatusCode, serde_json::Value) =
-            self.core.run(work)?;
-
-        let response = serde_json::from_value::<response::Root>(res)?.response;
-
-        if status.is_success() {
+        if res.status().is_success() {
+            let response = res.json::<response::Root>()?.response;
             if response.is_ok() {
                 if query == "ping" {
                     Ok(serde_json::Value::Null)
@@ -203,7 +170,7 @@ impl Sunk {
                 Err(response.into_error()?)
             }
         } else {
-            Err(Error::ConnectionError(status))
+            Err(Error::ConnectionError(res.status()))
         }
     }
 
@@ -224,24 +191,15 @@ impl Sunk {
     where
         D: ::std::fmt::Display,
     {
-        use futures::{Future, Stream};
-
         let raw_uri = self.build_url(query, args)?;
-        let uri = raw_uri.parse().unwrap();
+        let uri: Url = raw_uri.parse().unwrap();
 
         info!("Connecting to {}", uri);
-        let work = self.client.get(uri).and_then(|res| {
-            res.body().concat2().and_then(move |b| {
-                let valid_json = serde_json::from_slice::<serde_json::Value>(&b).is_ok();
-                if !valid_json {
-                    Ok(raw_uri)
-                } else {
-                    Err(hyper::Error::Method)
-                }
-            })
-        });
-
-        Ok(self.core.run(work)?)
+        let mut res = self.client.get(uri).send()?;
+        match res.json::<serde_json::Value>() {
+            Ok(_) => Err(Error::Other("Found valid JSON")),
+            Err(_) => Ok(raw_uri)
+        }
     }
 
     /// Fetches an unprocessed response from the server rather than a JSON- or
@@ -254,16 +212,23 @@ impl Sunk {
     where
         D: ::std::fmt::Display,
     {
-        use futures::{Future, Stream};
+        let uri: Url = self.build_url(query, args)?.parse().unwrap();
+        let mut res = self.client.get(uri).send()?;
+        Ok(res.text()?)
+    }
 
-        let uri = self.build_url(query, args)?.parse().unwrap();
-
-        info!("Connecting to {}", uri);
-        let work = self.client.get(uri).and_then(|res| res.body().concat2());
-
-        let get = self.core.run(work)?;
-        String::from_utf8(get.to_vec())
-            .map_err(|_| Error::Other("Unable to parse stream as UTF-8"))
+    pub fn get_bytes<'a, D>(
+        &mut self,
+        query: &str,
+        args: Query<'a, D>,
+    ) -> Result<Vec<u8>>
+    where
+        D: ::std::fmt::Display,
+    {
+        use std::io::Read;
+        let uri: Url = self.build_url(query, args)?.parse().unwrap();
+        let mut res = self.client.get(uri).send()?;
+        Ok(res.bytes().map(|b| b.unwrap()).collect())
     }
 
     /// Used to test connectivity with the server.
