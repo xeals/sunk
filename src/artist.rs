@@ -59,9 +59,9 @@ impl Artist {
         count: Option<usize>,
         include_not_present: Option<bool>,
     ) -> Result<ArtistInfo> {
-        let args = Query::with("id", self.id.to_string())
-            .maybe_arg("count", map_str(count))
-            .maybe_arg("includeNotPresent", map_str(include_not_present))
+        let args = Query::with("id", self.id)
+            .arg("count", count)
+            .arg("includeNotPresent", include_not_present)
             .build();
         let res = sunk.get("getArtistInfo", args)?;
 

@@ -6,7 +6,7 @@ use error::{ApiError, Error, Result};
 #[derive(Debug, Deserialize)]
 pub struct Root {
     #[serde(rename = "subsonic-response")]
-    pub response: Response
+    pub response: Response,
 }
 
 /// A struct containing the possible responses of the Subsonic API.
@@ -181,17 +181,13 @@ impl Response {
     pub fn into_error(self) -> Result<Error> {
         match self.error {
             Some(e) => Ok(e.into()),
-            None => Err(Error::Other("WIP"))
+            None => Err(Error::Other("WIP")),
         }
     }
 
     /// Returns `true` if the response is `"ok"`.
-    pub fn is_ok(&self) -> bool {
-        self.status == String::from("ok")
-    }
+    pub fn is_ok(&self) -> bool { self.status == String::from("ok") }
 
     /// Returns `true` if the response is `"failed"`.
-    pub fn is_err(&self) -> bool {
-        self.status == String::from("failed")
-    }
+    pub fn is_err(&self) -> bool { self.status == String::from("failed") }
 }

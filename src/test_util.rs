@@ -1,5 +1,5 @@
-use sunk;
 use error;
+use sunk;
 
 pub fn demo_site() -> error::Result<sunk::Sunk> {
     let site = "http://demo.subsonic.org";

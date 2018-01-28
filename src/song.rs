@@ -3,44 +3,14 @@ use serde::de::{Deserialize, Deserializer};
 use serde_json;
 use sunk::Sunk;
 
+use format::AudioFormat;
 use library::search;
 use query::Query;
 use util::*;
 
-/// Audio encoding format.
-///
-/// Recognises all of Subsonic's default transcoding formats.
-#[derive(Debug)]
-pub enum AudioFormat {
-    Aac,
-    Aif,
-    Aiff,
-    Ape,
-    Flac,
-    Flv,
-    M4a,
-    Mp3,
-    Mpc,
-    Oga,
-    Ogg,
-    Ogx,
-    Opus,
-    Shn,
-    Wav,
-    Wma,
-    Raw,
-}
-
-impl ::std::fmt::Display for AudioFormat {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Song {
     pub id: u64,
-    // parent: u64,
     pub title: String,
     pub album: Option<String>,
     album_id: Option<u64>,
@@ -68,9 +38,9 @@ impl Song {
         format: Option<AudioFormat>,
     ) -> Result<String> {
         let args = Query::new()
-            .arg("id", self.id.to_string())
-            .maybe_arg("maxBitRate", map_str(bitrate))
-            .maybe_arg("format", map_str(format))
+            .arg("id", self.id)
+            .arg("maxBitRate", bitrate)
+            .arg("format", format)
             .build();
         sunk.build_url("stream", args)
     }
@@ -82,9 +52,9 @@ impl Song {
         format: Option<AudioFormat>,
     ) -> Result<Vec<u8>> {
         let args = Query::new()
-            .arg("id", self.id.to_string())
-            .maybe_arg("maxBitRate", map_str(bitrate))
-            .maybe_arg("format", map_str(format))
+            .arg("id", self.id)
+            .arg("maxBitRate", bitrate)
+            .arg("format", format)
             .build();
         sunk.get_bytes("stream", args)
     }
@@ -106,14 +76,10 @@ impl Song {
     ///
     ///  Returns an M3U8 playlist on success (content type
     ///  "application/vnd.apple.mpegurl").
-    pub fn hls(
-        &self,
-        sunk: &mut Sunk,
-        bitrates: Option<Vec<u64>>,
-    ) -> Result<String> {
+    pub fn hls(&self, sunk: &mut Sunk, bitrates: Vec<u64>) -> Result<String> {
         let args = Query::new()
             .arg("id", self.id)
-            .maybe_arg_list("bitrate", bitrates)
+            .arg_list("bitrate", bitrates)
             .build();
 
         sunk.get_raw("hls", args)
@@ -193,11 +159,11 @@ pub fn get_random_songs(
     folder_id: Option<usize>,
 ) -> Result<Vec<Song>> {
     let args = Query::new()
-        .arg("size", size.unwrap_or(10).to_string())
-        .maybe_arg("genre", map_str(genre))
-        .maybe_arg("fromYear", map_str(from_year))
-        .maybe_arg("toYear", map_str(to_year))
-        .maybe_arg("musicFolderId", map_str(folder_id))
+        .arg("size", size.unwrap_or(10))
+        .arg("genre", genre)
+        .arg("fromYear", from_year)
+        .arg("toYear", to_year)
+        .arg("musicFolderId", folder_id)
         .build();
 
     let song = sunk.get("getRandomSongs", args)?;
@@ -210,10 +176,10 @@ pub fn get_songs_in_genre(
     page: search::SearchPage,
     folder_id: Option<usize>,
 ) -> Result<Vec<Song>> {
-    let args = Query::with("genre", genre.to_string())
-        .arg("count", page.count.to_string())
-        .arg("offset", page.offset.to_string())
-        .maybe_arg("musicFolderId", map_str(folder_id))
+    let args = Query::with("genre", genre)
+        .arg("count", page.count)
+        .arg("offset", page.offset)
+        .arg("musicFolderId", folder_id)
         .build();
 
     let song = sunk.get("getSongsByGenre", args)?;
@@ -228,8 +194,8 @@ pub fn get_lyrics(
     title: Option<&str>,
 ) -> Result<Option<Lyrics>> {
     let args = Query::new()
-        .maybe_arg("artist", artist)
-        .maybe_arg("title", title)
+        .arg("artist", artist)
+        .arg("title", title)
         .build();
     let res = sunk.get("getLyrics", args)?;
     if res.get("value").is_some() {
@@ -265,7 +231,7 @@ mod tests {
         let mut srv = test_util::demo_site().unwrap();
         let song = serde_json::from_value::<Song>(raw()).unwrap();
 
-        let hls = song.hls(&mut srv, None);
+        let hls = song.hls(&mut srv, vec![]);
         assert!(hls.is_ok());
     }
 

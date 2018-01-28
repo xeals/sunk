@@ -2,9 +2,9 @@
 
 #[macro_use]
 extern crate failure;
-extern crate reqwest;
 #[macro_use]
 extern crate log;
+extern crate reqwest;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -15,12 +15,12 @@ extern crate md5;
 extern crate rand;
 
 mod util;
+mod error;
 
-pub use sunk::{Sunk, License};
+pub use sunk::{License, Sunk};
 
 pub mod album;
 pub mod artist;
-pub mod error;
 pub mod playlist;
 pub mod song;
 
@@ -30,6 +30,7 @@ pub mod query;
 mod sunk;
 pub mod response;
 pub mod user;
+pub mod format;
 
 #[cfg(test)]
 mod test_util;

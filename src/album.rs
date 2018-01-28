@@ -2,7 +2,7 @@ use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
 use error::*;
-use query::Query;
+use query::{Arg, IntoArg, Query};
 use song;
 use sunk::Sunk;
 use util::*;
@@ -34,6 +34,10 @@ impl ::std::fmt::Display for ListType {
         };
         write!(f, "{}", fmt)
     }
+}
+
+impl IntoArg for ListType {
+    fn into_arg(self) -> Arg { self.to_string().into_arg() }
 }
 
 #[derive(Debug, Clone)]
@@ -112,10 +116,10 @@ pub fn get_albums(
     folder_id: Option<u64>,
 ) -> Result<Vec<Album>> {
     let args = Query::new()
-        .arg("type", list_type.to_string())
-        .maybe_arg("size", map_str(size))
-        .maybe_arg("offset", map_str(offset))
-        .maybe_arg("musicFolderId", map_str(folder_id))
+        .arg("type", list_type)
+        .arg("size", size)
+        .arg("offset", offset)
+        .arg("musicFolderId", folder_id)
         .build();
 
     let album = sunk.get("getAlbumList2", args)?;
@@ -153,7 +157,7 @@ mod tests {
 
         assert_eq!(parsed.songs[0].id, 27);
         assert_eq!(parsed.songs[0].title, String::from("Bellevue Avenue"));
-        assert_eq!(parsed.songs[0].duration, 198);
+        assert_eq!(parsed.songs[0].duration, Some(198));
     }
 
     fn raw() -> serde_json::Value {

@@ -1,8 +1,8 @@
-use serde_json;
+use reqwest;
 use serde::de::{Deserialize, Deserializer};
+use serde_json;
 use std::{fmt, io, num, result};
 use std::convert::From;
-use reqwest;
 
 use response;
 
@@ -28,7 +28,7 @@ pub enum Error {
 
 #[derive(Debug, Fail)]
 pub enum UriError {
-    #[fail(display = "{}", _0)] Reqwest(#[cause] reqwest::UrlError ),
+    #[fail(display = "{}", _0)] Reqwest(#[cause] reqwest::UrlError),
     #[fail(display = "Unable to determine scheme")] Scheme,
     #[fail(display = "Missing server address")] Address,
 }
@@ -76,7 +76,7 @@ impl ApiError {
 impl<'de> Deserialize<'de> for ApiError {
     fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         #[derive(Deserialize)]
         struct _Error {

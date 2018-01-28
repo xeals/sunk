@@ -1,16 +1,16 @@
 #![warn(missing_docs)]
 
+use reqwest::{Client, Url};
 use serde_json;
-use reqwest::{Url, Client};
 
-use api::Api;
-use error::*;
-use query::Query;
-use library;
 use album;
+use api::Api;
 use artist;
-use song;
+use error::*;
+use library;
+use query::Query;
 use response;
+use song::Song;
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
@@ -103,20 +103,18 @@ impl Sunk {
 
         let client = Client::builder().build()?;
 
-        Ok(Sunk {url, auth, client, api})
+        Ok(Sunk {
+            url,
+            auth,
+            client,
+            api,
+        })
     }
 
     /// Internal helper function to construct a URL when the actual fetching is
     /// not required.
     #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
-    pub(crate) fn build_url<'a, D>(
-        &self,
-        query: &str,
-        args: Query<'a, D>,
-    ) -> Result<String>
-    where
-        D: ::std::fmt::Display,
-    {
+    pub(crate) fn build_url(&self, query: &str, args: Query) -> Result<String> {
         let scheme = self.url.scheme();
         let addr = self.url
             .host_str()
@@ -145,14 +143,11 @@ impl Sunk {
     /// - server is built with an incomplete URL
     /// - connecting to the server fails
     /// - the server returns an API error
-    pub(crate) fn get<'a, D>(
+    pub(crate) fn get(
         &mut self,
         query: &str,
-        args: Query<'a, D>,
-    ) -> Result<serde_json::Value>
-    where
-        D: ::std::fmt::Display,
-    {
+        args: Query,
+    ) -> Result<serde_json::Value> {
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
 
         info!("Connecting to {}", uri);
@@ -180,17 +175,10 @@ impl Sunk {
     /// Subsonic instance refuses the connection (i.e., returns a failure
     /// response).
     ///
-    /// Specifically, it will succeed if `serde_json::from_slice()` fails due to not
-    /// receiving a valid JSON stream. It's assumed that the stream will be
-    /// binary in this case.
-    pub fn try_binary<'a, D>(
-        &mut self,
-        query: &str,
-        args: Query<'a, D>,
-    ) -> Result<String>
-    where
-        D: ::std::fmt::Display,
-    {
+    /// Specifically, it will succeed if `serde_json::from_slice()` fails due
+    /// to not receiving a valid JSON stream. It's assumed that the stream
+    /// will be binary in this case.
+    pub fn try_binary(&mut self, query: &str, args: Query) -> Result<String> {
         let raw_uri = self.build_url(query, args)?;
         let uri: Url = raw_uri.parse().unwrap();
 
@@ -198,33 +186,19 @@ impl Sunk {
         let mut res = self.client.get(uri).send()?;
         match res.json::<serde_json::Value>() {
             Ok(_) => Err(Error::Other("Found valid JSON")),
-            Err(_) => Ok(raw_uri)
+            Err(_) => Ok(raw_uri),
         }
     }
 
     /// Fetches an unprocessed response from the server rather than a JSON- or
     /// XML-parsed one.
-    pub fn get_raw<'a, D>(
-        &mut self,
-        query: &str,
-        args: Query<'a, D>,
-    ) -> Result<String>
-    where
-        D: ::std::fmt::Display,
-    {
+    pub fn get_raw(&mut self, query: &str, args: Query) -> Result<String> {
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
         let mut res = self.client.get(uri).send()?;
         Ok(res.text()?)
     }
 
-    pub fn get_bytes<'a, D>(
-        &mut self,
-        query: &str,
-        args: Query<'a, D>,
-    ) -> Result<Vec<u8>>
-    where
-        D: ::std::fmt::Display,
-    {
+    pub fn get_bytes(&mut self, query: &str, args: Query) -> Result<Vec<u8>> {
         use std::io::Read;
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
         let mut res = self.client.get(uri).send()?;
@@ -233,7 +207,7 @@ impl Sunk {
 
     /// Used to test connectivity with the server.
     pub fn check_connection(&mut self) -> Result<()> {
-        self.get("ping", Query::with("", "")).map(|_| ())
+        self.get("ping", Query::none()).map(|_| ())
     }
 
     /// Get details about the software license. Note that access to the REST API
@@ -244,7 +218,7 @@ impl Sunk {
     /// this method will always return a valid license and trial when attempting
     /// to connect to these services.
     pub fn check_license(&mut self) -> Result<License> {
-        let res = self.get("getLicense", Query::with("", ""))?;
+        let res = self.get("getLicense", Query::none())?;
         Ok(serde_json::from_value::<License>(res)?)
     }
 
@@ -255,7 +229,7 @@ impl Sunk {
     /// This method was introduced in version 1.15.0. It will not be supported
     /// on servers with earlier versions of the Subsonic API.
     pub fn scan_library(&mut self) -> Result<()> {
-        self.get("startScan", Query::with("", ""))?;
+        self.get("startScan", Query::none())?;
         Ok(())
     }
 
@@ -267,7 +241,7 @@ impl Sunk {
     /// This method was introduced in version 1.15.0. It will not be supported
     /// on servers with earlier versions of the Subsonic API.
     pub fn scan_status(&mut self) -> Result<(bool, u64)> {
-        let res = self.get("getScanStatus", Query::with("", ""))?;
+        let res = self.get("getScanStatus", Query::none())?;
 
         println!("{}", res);
         if let Some(status) = res["scanning"].as_bool() {
@@ -284,7 +258,7 @@ impl Sunk {
     /// Returns all configured top-level music folders.
     pub fn music_folders(&mut self) -> Result<Vec<library::MusicFolder>> {
         #[allow(non_snake_case)]
-        let musicFolder = self.get("musicFolders", Query::with("", ""))?;
+        let musicFolder = self.get("musicFolders", Query::none())?;
 
         use library::MusicFolder;
         Ok(get_list_as!(musicFolder, MusicFolder))
@@ -292,7 +266,7 @@ impl Sunk {
 
     /// Returns all genres.
     pub fn genres(&mut self) -> Result<Vec<library::Genre>> {
-        let genre = self.get("getGenres", Query::with("", ""))?;
+        let genre = self.get("getGenres", Query::none())?;
 
         use library::Genre;
         Ok(get_list_as!(genre, Genre))
@@ -338,8 +312,7 @@ impl Sunk {
         artist_page: library::search::SearchPage,
         album_page: library::search::SearchPage,
         song_page: library::search::SearchPage,
-    ) -> Result<(Vec<artist::Artist>, Vec<album::Album>, Vec<song::Song>)>
-    {
+    ) -> Result<(Vec<artist::Artist>, Vec<album::Album>, Vec<Song>)> {
         // FIXME There has to be a way to make this nicer.
         let args = Query::with("query", query.to_string())
             .arg("artistCount", artist_page.count.to_string())
@@ -356,7 +329,7 @@ impl Sunk {
         struct Output {
             artist: Vec<artist::Artist>,
             album: Vec<album::Album>,
-            song: Vec<song::Song>,
+            song: Vec<Song>,
         }
 
         let result = serde_json::from_value::<Output>(res)?;
@@ -376,7 +349,7 @@ pub struct License {
     pub trial_expires: Option<String>,
     /// An ISO8601 timestamp of the server's license expiry. Servers still in
     /// the trial phase typically will not have this field.
-    pub license_expires: Option<String>
+    pub license_expires: Option<String>,
 }
 
 #[cfg(test)]

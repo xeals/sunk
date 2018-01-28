@@ -70,7 +70,7 @@ fn get_playlists(
     sunk: &mut Sunk,
     user: Option<String>,
 ) -> Result<Vec<Playlist>> {
-    let playlist = sunk.get("getPlaylists", Query::maybe_with("username", user))?;
+    let playlist = sunk.get("getPlaylists", Query::with("username", user))?;
     Ok(get_list_as!(playlist, Playlist))
 }
 
@@ -86,11 +86,11 @@ fn get_playlist(sunk: &mut Sunk, id: u64) -> Result<Playlist> {
 fn create_playlist(
     sunk: &mut Sunk,
     name: String,
-    songs: Option<Vec<u64>>,
+    songs: Vec<u64>,
 ) -> Result<Option<Playlist>> {
     let args = Query::new()
         .arg("name", name)
-        .maybe_arg_list("songId", map_vec_string(songs))
+        .arg_list("songId", songs)
         .build();
 
     let res = sunk.get("createPlaylist", args)?;
@@ -106,23 +106,24 @@ fn update_playlist(
     name: Option<String>,
     comment: Option<String>,
     public: Option<bool>,
-    to_add: Option<Vec<u64>>,
-    to_remove: Option<Vec<u64>>,
+    to_add: Vec<u64>,
+    to_remove: Vec<u64>,
 ) -> Result<()> {
     let args = Query::new()
         .arg("id", id.to_string())
-        .maybe_arg("name", name)
-        .maybe_arg("comment", comment)
-        .maybe_arg("public", map_str(public))
-        .maybe_arg_list("songIdToAdd", map_vec_string(to_add))
-        .maybe_arg_list("songIndexToRemove", map_vec_string(to_remove))
+        .arg("name", name)
+        .arg("comment", comment)
+        .arg("public", public)
+        .arg_list("songIdToAdd", to_add)
+        .arg_list("songIndexToRemove", to_remove)
         .build();
 
     sunk.get("updatePlaylist", args).map(|_| ())
 }
 
 fn delete_playlist(sunk: &mut Sunk, id: u64) -> Result<()> {
-    sunk.get("deletePlaylist", Query::with("id", id)).map(|_| ())
+    sunk.get("deletePlaylist", Query::with("id", id))
+        .map(|_| ())
 }
 
 #[cfg(test)]
