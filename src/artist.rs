@@ -7,7 +7,6 @@ use client::Client;
 use error::*;
 use media::song::Song;
 use query::Query;
-use util::*;
 
 use album::Album;
 

@@ -5,7 +5,6 @@ use client::Client;
 use error::*;
 use media::song::Song;
 use query::{Arg, IntoArg, Query};
-use util::*;
 
 #[derive(Debug, Clone, Copy)]
 pub enum ListType {

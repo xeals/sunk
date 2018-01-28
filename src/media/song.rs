@@ -7,7 +7,6 @@ use library::search;
 use media::{Media, MusicStreamArgs, StreamArgs};
 use media::format::AudioFormat;
 use query::Query;
-use util::*;
 
 #[derive(Debug, Clone)]
 pub struct Song {

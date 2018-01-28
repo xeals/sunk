@@ -4,7 +4,6 @@ use serde_json;
 use client::Client;
 use error::*;
 use query::Query;
-use util::*;
 
 use media::song;
 
