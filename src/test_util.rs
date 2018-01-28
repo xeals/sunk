@@ -1,9 +1,9 @@
 use error;
-use sunk;
+use client;
 
-pub fn demo_site() -> error::Result<sunk::Sunk> {
+pub fn demo_site() -> error::Result<client::Client> {
     let site = "http://demo.subsonic.org";
     let user = "guest3";
     let password = "guest";
-    sunk::Sunk::new(site, user, password)
+    client::Client::new(site, user, password)
 }

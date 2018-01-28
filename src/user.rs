@@ -1,7 +1,7 @@
 use error::*;
 use query::Query;
 use serde_json;
-use sunk::Sunk;
+use client::Client;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -45,26 +45,26 @@ impl User {
 
     pub fn change_password(
         &self,
-        sunk: &mut Sunk,
+        client: &mut Client,
         password: &str,
     ) -> Result<()> {
-        self::change_password(sunk, &self.username, password)
+        self::change_password(client, &self.username, password)
     }
 }
 
-pub fn get_user(sunk: &mut Sunk, username: &str) -> Result<User> {
-    let res = sunk.get("getUser", Query::with("username", username))?;
+pub fn get_user(client: &mut Client, username: &str) -> Result<User> {
+    let res = client.get("getUser", Query::with("username", username))?;
     Ok(serde_json::from_value::<User>(res)?)
 }
 
-pub fn get_users(sunk: &mut Sunk) -> Result<Vec<User>> {
-    let user = sunk.get("getUsers", Query::with("", ""))?;
+pub fn get_users(client: &mut Client) -> Result<Vec<User>> {
+    let user = client.get("getUsers", Query::with("", ""))?;
     Ok(get_list_as!(user, User))
 }
 
 // TODO: Figure out how to pass fifteen possible permissions cleanly.
 pub fn create_user(
-    sunk: &mut Sunk,
+    client: &mut Client,
     username: &str,
     password: &str,
     email: &str,
@@ -73,29 +73,29 @@ pub fn create_user(
         .arg("password", password)
         .arg("email", email)
         .build();
-    sunk.get("createUser", args).map(|_| ())
+    client.get("createUser", args).map(|_| ())
 }
 
 // TODO: Figure out how to pass fifteen possible permissions cleanly.
-pub fn update_user(sunk: &mut Sunk, username: &str) -> Result<()> {
+pub fn update_user(client: &mut Client, username: &str) -> Result<()> {
     let args = Query::with("username", username);
-    sunk.get("updateUser", args).map(|_| ())
+    client.get("updateUser", args).map(|_| ())
 }
 
-pub fn delete_user(sunk: &mut Sunk, username: &str) -> Result<()> {
-    sunk.get("deleteUser", Query::with("username", username))
+pub fn delete_user(client: &mut Client, username: &str) -> Result<()> {
+    client.get("deleteUser", Query::with("username", username))
         .map(|_| ())
 }
 
 pub fn change_password(
-    sunk: &mut Sunk,
+    client: &mut Client,
     username: &str,
     password: &str,
 ) -> Result<()> {
     let args = Query::with("username", username)
         .arg("password", password)
         .build();
-    sunk.get("changePassword", args).map(|_| ())
+    client.get("changePassword", args).map(|_| ())
 }
 
 #[cfg(test)]

@@ -1,7 +1,7 @@
 use error::*;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
-use sunk::Sunk;
+use client::Client;
 
 use media::format::AudioFormat;
 use media::{Media, MusicStreamArgs, StreamArgs};
@@ -37,16 +37,16 @@ impl Song {
     ///
     ///  Returns an M3U8 playlist on success (content type
     ///  "application/vnd.apple.mpegurl").
-    pub fn hls(&self, sunk: &mut Sunk, bitrates: Vec<u64>) -> Result<String> {
+    pub fn hls(&self, client: &mut Client, bitrates: Vec<u64>) -> Result<String> {
         let args = Query::new()
             .arg("id", self.id)
             .arg_list("bitrate", bitrates)
             .build();
 
-        sunk.get_raw("hls", args)
+        client.get_raw("hls", args)
     }
 
-    pub fn similar<U>(&self, sunk: &mut Sunk, count: U) -> Result<Vec<Song>>
+    pub fn similar<U>(&self, client: &mut Client, count: U) -> Result<Vec<Song>>
     where
         U: Into<Option<usize>>,
     {
@@ -54,7 +54,7 @@ impl Song {
             .arg("count", count.into())
             .build();
 
-        let song = sunk.get("getSimilarSongs2", args)?;
+        let song = client.get("getSimilarSongs2", args)?;
         Ok(get_list_as!(song, Song))
     }
 
@@ -64,30 +64,30 @@ impl Song {
 }
 
 impl Media for Song {
-    fn stream<A>(&self, sunk: &mut Sunk, args: A) -> Result<Vec<u8>>
+    fn stream<A>(&self, client: &mut Client, args: A) -> Result<Vec<u8>>
     where
         A: StreamArgs,
     {
         let mut q = Query::with("id", self.id);
         q.extend(args.into_arg_set());
-        sunk.get_bytes("stream", q)
+        client.get_bytes("stream", q)
     }
 
-    fn stream_url<A>(&self, sunk: &mut Sunk, args: A) -> Result<String>
+    fn stream_url<A>(&self, client: &mut Client, args: A) -> Result<String>
     where
         A: StreamArgs,
     {
         let mut q = Query::with("id", self.id);
         q.extend(args.into_arg_set());
-        sunk.build_url("stream", q)
+        client.build_url("stream", q)
     }
 
-    fn download(&self, sunk: &mut Sunk) -> Result<Vec<u8>> {
-        sunk.get_bytes("download", Query::with("id", self.id))
+    fn download(&self, client: &mut Client) -> Result<Vec<u8>> {
+        client.get_bytes("download", Query::with("id", self.id))
     }
 
-    fn download_url(&self, sunk: &mut Sunk) -> Result<String> {
-        sunk.build_url("download", Query::with("id", self.id))
+    fn download_url(&self, client: &mut Client) -> Result<String> {
+        client.build_url("download", Query::with("id", self.id))
     }
 
 }
@@ -147,13 +147,13 @@ impl<'de> Deserialize<'de> for Song {
     }
 }
 
-pub fn get_song(sunk: &mut Sunk, id: u64) -> Result<Song> {
-    let res = sunk.get("getSong", Query::with("id", id))?;
+pub fn get_song(client: &mut Client, id: u64) -> Result<Song> {
+    let res = client.get("getSong", Query::with("id", id))?;
     Ok(serde_json::from_value(res)?)
 }
 
 pub fn get_random_songs<'a, S, U>(
-    sunk: &mut Sunk,
+    client: &mut Client,
     size: U,
     genre: S,
     from_year: U,
@@ -172,12 +172,12 @@ where
         .arg("musicFolderId", folder_id.into())
         .build();
 
-    let song = sunk.get("getRandomSongs", args)?;
+    let song = client.get("getRandomSongs", args)?;
     Ok(get_list_as!(song, Song))
 }
 
 pub fn get_songs_in_genre<U>(
-    sunk: &mut Sunk,
+    client: &mut Client,
     genre: &str,
     page: search::SearchPage,
     folder_id: U,
@@ -191,14 +191,14 @@ where
         .arg("musicFolderId", folder_id.into())
         .build();
 
-    let song = sunk.get("getSongsByGenre", args)?;
+    let song = client.get("getSongsByGenre", args)?;
     Ok(get_list_as!(song, Song))
 }
 
 /// Searches for lyrics matching the artist and title. Returns `None` if no
 /// lyrics are found.
 pub fn get_lyrics<'a, S>(
-    sunk: &mut Sunk,
+    client: &mut Client,
     artist: S,
     title: S,
 ) -> Result<Option<Lyrics>>
@@ -209,7 +209,7 @@ where
         .arg("artist", artist.into())
         .arg("title", title.into())
         .build();
-    let res = sunk.get("getLyrics", args)?;
+    let res = client.get("getLyrics", args)?;
     if res.get("value").is_some() {
         Ok(Some(serde_json::from_value(res)?))
     } else {

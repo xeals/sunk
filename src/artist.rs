@@ -5,7 +5,7 @@ use serde_json;
 
 use error::*;
 use query::Query;
-use sunk::Sunk;
+use client::Client;
 use util::*;
 use media::song::Song;
 
@@ -63,9 +63,9 @@ impl<'de> Deserialize<'de> for SimilarArtist {
 }
 
 impl Artist {
-    pub fn albums(&self, sunk: &mut Sunk) -> Result<Vec<Album>> {
+    pub fn albums(&self, client: &mut Client) -> Result<Vec<Album>> {
         if self.albums.len() as u64 != self.album_count {
-            Ok(get_artist(sunk, self.id)?.albums)
+            Ok(get_artist(client, self.id)?.albums)
         } else {
             Ok(self.albums.clone())
         }
@@ -73,7 +73,7 @@ impl Artist {
 
     pub fn info<B, U>(
         &self,
-        sunk: &mut Sunk,
+        client: &mut Client,
         count: U,
         include_not_present: B,
     ) -> Result<ArtistInfo>
@@ -85,7 +85,7 @@ impl Artist {
             .arg("count", count.into())
             .arg("includeNotPresent", include_not_present.into())
             .build();
-        let res = sunk.get("getArtistInfo", args)?;
+        let res = client.get("getArtistInfo", args)?;
 
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
@@ -116,7 +116,7 @@ impl Artist {
 
     pub fn top_songs<U>(
         &self,
-        sunk: &mut Sunk,
+        client: &mut Client,
         count: U
     ) -> Result<Vec<Song>>
     where
@@ -126,7 +126,7 @@ impl Artist {
             .arg("count", count.into())
             .build();
 
-        let song = sunk.get("getTopSongs", args)?;
+        let song = client.get("getTopSongs", args)?;
         Ok(get_list_as!(song, Song))
     }
 
@@ -161,8 +161,8 @@ impl<'de> Deserialize<'de> for Artist {
     }
 }
 
-pub fn get_artist(sunk: &mut Sunk, id: u64) -> Result<Artist> {
-    let res = sunk.get("getArtist", Query::with("id", id))?;
+pub fn get_artist(client: &mut Client, id: u64) -> Result<Artist> {
+    let res = client.get("getArtist", Query::with("id", id))?;
     Ok(serde_json::from_value::<Artist>(res)?)
 }
 

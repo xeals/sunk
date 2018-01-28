@@ -4,7 +4,7 @@ use serde_json;
 use error::*;
 use query::{Arg, IntoArg, Query};
 use media::song;
-use sunk::Sunk;
+use client::Client;
 use util::*;
 
 #[derive(Debug, Clone, Copy)]
@@ -55,16 +55,16 @@ pub struct Album {
 }
 
 impl Album {
-    pub fn songs(&self, sunk: &mut Sunk) -> Result<Vec<song::Song>> {
+    pub fn songs(&self, client: &mut Client) -> Result<Vec<song::Song>> {
         if self.songs.len() as u64 != self.song_count {
-            Ok(get_album(sunk, self.id)?.songs)
+            Ok(get_album(client, self.id)?.songs)
         } else {
             Ok(self.songs.clone())
         }
     }
 
-    pub fn info(&self, sunk: &mut Sunk) -> Result<AlbumInfo> {
-        let res = sunk.get("getArtistInfo", Query::with("id", self.id))?;
+    pub fn info(&self, client: &mut Client) -> Result<AlbumInfo> {
+        let res = client.get("getArtistInfo", Query::with("id", self.id))?;
 
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
@@ -139,13 +139,13 @@ pub struct AlbumInfo {
     pub image_urls: (String, String, String),
 }
 
-pub fn get_album(sunk: &mut Sunk, id: u64) -> Result<Album> {
-    let res = sunk.get("getAlbum", Query::with("id", id))?;
+pub fn get_album(client: &mut Client, id: u64) -> Result<Album> {
+    let res = client.get("getAlbum", Query::with("id", id))?;
     Ok(serde_json::from_value::<Album>(res)?)
 }
 
 pub fn get_albums<U>(
-    sunk: &mut Sunk,
+    client: &mut Client,
     list_type: ListType,
     size: U,
     offset: U,
@@ -161,7 +161,7 @@ where
         .arg("musicFolderId", folder_id.into())
         .build();
 
-    let album = sunk.get("getAlbumList2", args)?;
+    let album = client.get("getAlbumList2", args)?;
     Ok(get_list_as!(album, Album))
 }
 

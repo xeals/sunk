@@ -17,7 +17,7 @@ extern crate rand;
 mod util;
 mod error;
 
-pub use sunk::{License, Sunk};
+pub use client::{License, Client};
 
 pub mod album;
 pub mod artist;
@@ -27,7 +27,7 @@ pub mod media;
 pub mod api;
 pub mod library;
 pub mod query;
-mod sunk;
+mod client;
 pub mod response;
 pub mod user;
 

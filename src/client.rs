@@ -1,6 +1,7 @@
 #![warn(missing_docs)]
 
-use reqwest::{Client, Url};
+use reqwest::Url;
+use reqwest::Client as ReqwestClient;
 use serde_json;
 
 use album;
@@ -17,8 +18,8 @@ const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
 /// A client to make requests to a Subsonic instance.
 ///
-/// The `Sunk` holds an internal connection pool and stores authentication
-/// details. It is highly recommended to re-use a `Sunk` where possible rather
+/// The `Client` holds an internal connection pool and stores authentication
+/// details. It is highly recommended to re-use a `Client` where possible rather
 /// than creating a new one each time it is required.
 ///
 /// # Examples
@@ -26,33 +27,33 @@ const SALT_SIZE: usize = 36; // Minimum 6 characters.
 /// Basic usage:
 ///
 /// ```no_run
-/// use sunk::Sunk;
+/// use sunk::Client;
 /// # fn run() -> Result<(), sunk::error::Error> {
-/// # let site = "demo.subsonic.org";
+/// # let site = "http://demo.subsonic.org";
 /// # let user = "guest3";
 /// # let password = "guest";
-/// let mut server = Sunk::new(site, user, password)?;
+/// let mut server = Client::new(site, user, password)?;
 /// server.check_connection()?;
 /// # Ok(())
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct Sunk {
+pub struct Client {
     url: Url,
-    auth: SunkAuth,
-    client: Client,
+    auth: SubsonicAuth,
+    reqclient: ReqwestClient,
     api: Api,
 }
 
 #[derive(Debug)]
-struct SunkAuth {
+struct SubsonicAuth {
     user: String,
     password: String,
 }
 
-impl SunkAuth {
-    fn new(user: &str, password: &str) -> SunkAuth {
-        SunkAuth {
+impl SubsonicAuth {
+    fn new(user: &str, password: &str) -> SubsonicAuth {
+        SubsonicAuth {
             user: user.into(),
             password: password.into(),
         }
@@ -95,19 +96,19 @@ impl SunkAuth {
     }
 }
 
-impl Sunk {
+impl Client {
     /// Constructs a client to interact with a Subsonic instance.
-    pub fn new(url: &str, user: &str, password: &str) -> Result<Sunk> {
-        let auth = SunkAuth::new(user, password);
+    pub fn new(url: &str, user: &str, password: &str) -> Result<Client> {
+        let auth = SubsonicAuth::new(user, password);
         let url = url.parse::<Url>()?;
         let api = Api::from("1.14.0");
 
-        let client = Client::builder().build()?;
+        let reqclient = ReqwestClient::builder().build()?;
 
-        Ok(Sunk {
+        Ok(Client {
             url,
             auth,
-            client,
+            reqclient,
             api,
         })
     }
@@ -131,7 +132,7 @@ impl Sunk {
         Ok(url)
     }
 
-    /// Issues a request to the `Sunk` server.
+    /// Issues a request to the Subsonic server.
     ///
     /// A query should be one documented in the [official API].
     ///
@@ -152,7 +153,7 @@ impl Sunk {
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
 
         info!("Connecting to {}", uri);
-        let mut res = self.client.get(uri).send()?;
+        let mut res = self.reqclient.get(uri).send()?;
 
         if res.status().is_success() {
             let response = res.json::<response::Root>()?.response;
@@ -170,7 +171,7 @@ impl Sunk {
         }
     }
 
-    /// Attempts to connect to the `Sunk` with the provided query and args.
+    /// Attempts to connect to the `Client` with the provided query and args.
     ///
     /// Returns the constructed, attempted URL on success, or an error if the
     /// Subsonic instance refuses the connection (i.e., returns a failure
@@ -184,7 +185,7 @@ impl Sunk {
         let uri: Url = raw_uri.parse().unwrap();
 
         info!("Connecting to {}", uri);
-        let mut res = self.client.get(uri).send()?;
+        let mut res = self.reqclient.get(uri).send()?;
         match res.json::<serde_json::Value>() {
             Ok(_) => Err(Error::Other("Found valid JSON")),
             Err(_) => Ok(raw_uri),
@@ -195,14 +196,14 @@ impl Sunk {
     /// XML-parsed one.
     pub fn get_raw(&mut self, query: &str, args: Query) -> Result<String> {
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
-        let mut res = self.client.get(uri).send()?;
+        let mut res = self.reqclient.get(uri).send()?;
         Ok(res.text()?)
     }
 
     pub fn get_bytes(&mut self, query: &str, args: Query) -> Result<Vec<u8>> {
         use std::io::Read;
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
-        let mut res = self.client.get(uri).send()?;
+        let mut res = self.reqclient.get(uri).send()?;
         Ok(res.bytes().map(|b| b.unwrap()).collect())
     }
 
@@ -286,14 +287,14 @@ impl Sunk {
     /// Basic usage:
     ///
     /// ```no_run
-    /// use sunk::Sunk;
+    /// use sunk::Client;
     /// use sunk::library::search;
     /// # fn run() -> Result<(), sunk::error::Error> {
-    /// # let site = "demo.subsonic.org";
+    /// # let site = "http://demo.subsonic.org";
     /// # let user = "guest3";
     /// # let password = "guest";
     /// #
-    /// let mut server = Sunk::new(site, user, password)?;
+    /// let mut server = Client::new(site, user, password)?;
     ///
     /// let search_size = search::SearchPage::new();
     /// let ignore = search::NONE;
@@ -360,7 +361,7 @@ pub struct License {
 
 #[cfg(test)]
 mod tests {
-    use sunk::*;
+    use client::*;
     use test_util;
 
     #[test]

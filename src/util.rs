@@ -4,12 +4,12 @@ use std::string;
 
 macro_rules! impl_cover_art {
     () => {
-        pub fn cover_art(&self, sunk: &mut Sunk, size: Option<u64>) -> Result<String> {
+        pub fn cover_art(&self, client: &mut Client, size: Option<u64>) -> Result<String> {
             let args = Query::new()
                 .arg("id", self.id)
                 .arg("size", size)
                 .build();
-            sunk.build_url("getCoverArt", args)
+            client.build_url("getCoverArt", args)
         }
     }
 }

@@ -3,7 +3,7 @@ use serde_json;
 
 use error::*;
 use query::Query;
-use sunk::Sunk;
+use client::Client;
 use util::*;
 
 use media::song;
@@ -20,9 +20,9 @@ pub struct Playlist {
 
 impl Playlist {
     /// Fetches the songs contained in a playlist.
-    pub fn songs(&self, sunk: &mut Sunk) -> Result<Vec<song::Song>> {
+    pub fn songs(&self, client: &mut Client) -> Result<Vec<song::Song>> {
         if self.songs.len() as u64 != self.song_count {
-            Ok(get_playlist(sunk, self.id)?.songs)
+            Ok(get_playlist(client, self.id)?.songs)
         } else {
             Ok(self.songs.clone())
         }
@@ -67,15 +67,15 @@ impl<'de> Deserialize<'de> for Playlist {
 }
 
 fn get_playlists(
-    sunk: &mut Sunk,
+    client: &mut Client,
     user: Option<String>,
 ) -> Result<Vec<Playlist>> {
-    let playlist = sunk.get("getPlaylists", Query::with("username", user))?;
+    let playlist = client.get("getPlaylists", Query::with("username", user))?;
     Ok(get_list_as!(playlist, Playlist))
 }
 
-fn get_playlist(sunk: &mut Sunk, id: u64) -> Result<Playlist> {
-    let res = sunk.get("getPlaylist", Query::with("id", id))?;
+fn get_playlist(client: &mut Client, id: u64) -> Result<Playlist> {
+    let res = client.get("getPlaylist", Query::with("id", id))?;
     Ok(serde_json::from_value::<Playlist>(res)?)
 }
 
@@ -84,7 +84,7 @@ fn get_playlist(sunk: &mut Sunk, id: u64) -> Result<Playlist> {
 /// Since API version 1.14.0, the newly created playlist is returned. In earlier
 /// versions, an empty response is returned.
 fn create_playlist(
-    sunk: &mut Sunk,
+    client: &mut Client,
     name: String,
     songs: Vec<u64>,
 ) -> Result<Option<Playlist>> {
@@ -93,7 +93,7 @@ fn create_playlist(
         .arg_list("songId", songs)
         .build();
 
-    let res = sunk.get("createPlaylist", args)?;
+    let res = client.get("createPlaylist", args)?;
     // TODO Match the API and return the playlist on new versions.
 
     Ok(None)
@@ -101,7 +101,7 @@ fn create_playlist(
 
 /// Updates a playlist. Only the owner of the playlist is privileged to do so.
 fn update_playlist<'a, B, S>(
-    sunk: &mut Sunk,
+    client: &mut Client,
     id: u64,
     name: S,
     comment: S,
@@ -122,11 +122,11 @@ where
         .arg_list("songIndexToRemove", to_remove)
         .build();
 
-    sunk.get("updatePlaylist", args).map(|_| ())
+    client.get("updatePlaylist", args).map(|_| ())
 }
 
-fn delete_playlist(sunk: &mut Sunk, id: u64) -> Result<()> {
-    sunk.get("deletePlaylist", Query::with("id", id))
+fn delete_playlist(client: &mut Client, id: u64) -> Result<()> {
+    client.get("deletePlaylist", Query::with("id", id))
         .map(|_| ())
 }
 

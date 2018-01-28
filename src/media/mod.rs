@@ -1,7 +1,7 @@
 use serde::de::{Deserialize, Deserializer};
 use std::result;
 
-use sunk::Sunk;
+use client::Client;
 
 pub mod song;
 pub mod format;
@@ -13,21 +13,21 @@ use query::{Arg, IntoArg};
 use self::song::Song;
 
 pub trait Media {
-    fn stream<A: StreamArgs>(&self, &mut Sunk, A) -> Result<Vec<u8>>;
+    fn stream<A: StreamArgs>(&self, &mut Client, A) -> Result<Vec<u8>>;
 
     /// Returns a constructed URL for streaming with desired arguments.
     ///
     /// This would be used in conjunction with a streaming library to directly
     /// take the URI and stream it.
-    fn stream_url<A: StreamArgs>(&self, &mut Sunk, A) -> Result<String>;
+    fn stream_url<A: StreamArgs>(&self, &mut Client, A) -> Result<String>;
 
-    fn download(&self, &mut Sunk) -> Result<Vec<u8>>;
+    fn download(&self, &mut Client) -> Result<Vec<u8>>;
 
     /// Returns a constructed URL for downloading the song.
     ///
     /// `download_url()` does not support transcoding, while `stream_url()`
     /// does.
-    fn download_url(&self, &mut Sunk) -> Result<String>;
+    fn download_url(&self, &mut Client) -> Result<String>;
 }
 
 pub trait StreamArgs {
@@ -99,16 +99,16 @@ pub struct NowPlaying {
 impl NowPlaying {
     /// # Errors
     ///
-    /// Aside from the inherent errors from the [`Sunk`], the method will error
+    /// Aside from the inherent errors from the [`Client`], the method will error
     /// if the `NowPlaying` is not a song.
     ///
-    /// [`Sunk`]: ../struct.sunk.html
-    pub fn song_info<M>(&self, sunk: &mut Sunk) -> Result<Song>
+    /// [`Client`]: ../client/struct.Client.html
+    pub fn song_info<M>(&self, client: &mut Client) -> Result<Song>
     {
         if self.is_video {
             Err(Error::Other("Now Playing info is not a song"))
         } else {
-            song::get_song(sunk, self.id as u64)
+            song::get_song(client, self.id as u64)
         }
     }
 }
