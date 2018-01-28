@@ -14,7 +14,8 @@ extern crate serde_json;
 extern crate md5;
 extern crate rand;
 
-mod util;
+#[macro_use]
+mod macros;
 mod error;
 
 pub use client::{License, Client};
