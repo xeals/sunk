@@ -4,7 +4,7 @@ use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
 use client::Client;
-use error::*;
+use error::Result;
 use media::song::Song;
 use query::Query;
 
@@ -85,32 +85,7 @@ impl Artist {
             .arg("includeNotPresent", include_not_present.into())
             .build();
         let res = client.get("getArtistInfo", args)?;
-
-        #[derive(Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct _ArtistInfo {
-            biography: String,
-            music_brainz_id: String,
-            last_fm_url: String,
-            small_image_url: String,
-            medium_image_url: String,
-            large_image_url: String,
-            similar_artist: Vec<SimilarArtist>,
-        }
-
-        let raw: _ArtistInfo = serde_json::from_value(res)?;
-
-        Ok(ArtistInfo {
-            biography: raw.biography,
-            musicbrainz_id: raw.music_brainz_id,
-            lastfm_url: raw.last_fm_url,
-            image_urls: (
-                raw.small_image_url,
-                raw.medium_image_url,
-                raw.large_image_url,
-            ),
-            similar_artists: raw.similar_artist,
-        })
+        Ok(serde_json::from_value(res)?)
     }
 
     pub fn top_songs<U>(
@@ -156,6 +131,39 @@ impl<'de> Deserialize<'de> for Artist {
             cover_id: raw.cover_art,
             album_count: raw.album_count,
             albums: raw.album,
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for ArtistInfo {
+    fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>
+    {
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct _ArtistInfo {
+            biography: String,
+            music_brainz_id: String,
+            last_fm_url: String,
+            small_image_url: String,
+            medium_image_url: String,
+            large_image_url: String,
+            similar_artist: Vec<SimilarArtist>,
+        }
+
+        let raw = _ArtistInfo::deserialize(de)?;
+
+        Ok(ArtistInfo {
+            biography: raw.biography,
+            musicbrainz_id: raw.music_brainz_id,
+            lastfm_url: raw.last_fm_url,
+            image_urls: (
+                raw.small_image_url,
+                raw.medium_image_url,
+                raw.large_image_url,
+            ),
+            similar_artists: raw.similar_artist,
         })
     }
 }

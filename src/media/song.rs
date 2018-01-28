@@ -1,5 +1,5 @@
 use client::Client;
-use error::*;
+use error::Result;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
@@ -41,8 +41,7 @@ impl Song {
         client: &mut Client,
         bitrates: Vec<u64>,
     ) -> Result<String> {
-        let args = Query::new()
-            .arg("id", self.id)
+        let args = Query::with("id", self.id)
             .arg_list("bitrate", bitrates)
             .build();
 
@@ -166,8 +165,7 @@ where
     S: Into<Option<&'a str>>,
     U: Into<Option<u64>>,
 {
-    let args = Query::new()
-        .arg("size", size.into().unwrap_or(10))
+    let args = Query::with("size", size.into().unwrap_or(10))
         .arg("genre", genre.into())
         .arg("fromYear", from_year.into())
         .arg("toYear", to_year.into())
@@ -207,11 +205,11 @@ pub fn get_lyrics<'a, S>(
 where
     S: Into<Option<&'a str>>,
 {
-    let args = Query::new()
-        .arg("artist", artist.into())
+    let args = Query::with("artist", artist.into())
         .arg("title", title.into())
         .build();
     let res = client.get("getLyrics", args)?;
+
     if res.get("value").is_some() {
         Ok(Some(serde_json::from_value(res)?))
     } else {

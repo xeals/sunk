@@ -2,9 +2,10 @@ use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
 use client::Client;
-use error::*;
+use error::Result;
 use media::song::Song;
 use query::{Arg, IntoArg, Query};
+use std::result;
 
 #[derive(Debug, Clone, Copy)]
 pub enum ListType {
@@ -64,35 +65,12 @@ impl Album {
 
     pub fn info(&self, client: &mut Client) -> Result<AlbumInfo> {
         let res = client.get("getArtistInfo", Query::with("id", self.id))?;
-
-        #[derive(Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct _AlbumInfo {
-            notes: String,
-            music_brainz_id: String,
-            last_fm_url: String,
-            small_image_url: String,
-            medium_image_url: String,
-            large_image_url: String,
-        }
-
-        let raw: _AlbumInfo = serde_json::from_value(res)?;
-
-        Ok(AlbumInfo {
-            notes: raw.notes,
-            musicbrainz_id: raw.music_brainz_id,
-            lastfm_url: raw.last_fm_url,
-            image_urls: (
-                raw.small_image_url,
-                raw.medium_image_url,
-                raw.large_image_url,
-            ),
-        })
+        Ok(serde_json::from_value(res)?)
     }
 }
 
 impl<'de> Deserialize<'de> for Album {
-    fn deserialize<D>(de: D) -> ::std::result::Result<Self, D::Error>
+    fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -136,6 +114,37 @@ pub struct AlbumInfo {
     pub lastfm_url: String,
     pub musicbrainz_id: String,
     pub image_urls: (String, String, String),
+}
+
+impl<'de> Deserialize<'de> for AlbumInfo {
+    fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>
+    {
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct _AlbumInfo {
+            notes: String,
+            music_brainz_id: String,
+            last_fm_url: String,
+            small_image_url: String,
+            medium_image_url: String,
+            large_image_url: String,
+        }
+
+        let raw = _AlbumInfo::deserialize(de)?;
+
+        Ok(AlbumInfo {
+            notes: raw.notes,
+            musicbrainz_id: raw.music_brainz_id,
+            lastfm_url: raw.last_fm_url,
+            image_urls: (
+                raw.small_image_url,
+                raw.medium_image_url,
+                raw.large_image_url,
+            ),
+        })
+    }
 }
 
 pub fn get_album(client: &mut Client, id: u64) -> Result<Album> {

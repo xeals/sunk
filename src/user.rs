@@ -1,5 +1,5 @@
 use client::Client;
-use error::*;
+use error::Result;
 use query::Query;
 use serde_json;
 
@@ -58,7 +58,7 @@ pub fn get_user(client: &mut Client, username: &str) -> Result<User> {
 }
 
 pub fn get_users(client: &mut Client) -> Result<Vec<User>> {
-    let user = client.get("getUsers", Query::with("", ""))?;
+    let user = client.get("getUsers", Query::none())?;
     Ok(get_list_as!(user, User))
 }
 
@@ -73,19 +73,20 @@ pub fn create_user(
         .arg("password", password)
         .arg("email", email)
         .build();
-    client.get("createUser", args).map(|_| ())
+    warn!("Full permission set not yet supported");
+    client.get("createUser", args)?;
+    Ok(())
 }
 
 // TODO: Figure out how to pass fifteen possible permissions cleanly.
 pub fn update_user(client: &mut Client, username: &str) -> Result<()> {
-    let args = Query::with("username", username);
-    client.get("updateUser", args).map(|_| ())
+    client.get("updateUser", Query::with("username", username))?;
+    Ok(())
 }
 
 pub fn delete_user(client: &mut Client, username: &str) -> Result<()> {
-    client
-        .get("deleteUser", Query::with("username", username))
-        .map(|_| ())
+    client.get("deleteUser", Query::with("username", username))?;
+    Ok(())
 }
 
 pub fn change_password(
@@ -96,7 +97,8 @@ pub fn change_password(
     let args = Query::with("username", username)
         .arg("password", password)
         .build();
-    client.get("changePassword", args).map(|_| ())
+    client.get("changePassword", args)?;
+    Ok(())
 }
 
 #[cfg(test)]

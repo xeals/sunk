@@ -7,8 +7,9 @@ use serde_json;
 use album;
 use api::Api;
 use artist;
-use error::*;
-use library;
+use error::{Result, Error, UriError};
+use library::{Genre, MusicFolder};
+use library::search::SearchPage;
 use media::NowPlaying;
 use media::song::Song;
 use query::Query;
@@ -209,7 +210,8 @@ impl Client {
 
     /// Used to test connectivity with the server.
     pub fn check_connection(&mut self) -> Result<()> {
-        self.get("ping", Query::none()).map(|_| ())
+        self.get("ping", Query::none())?;
+        Ok(())
     }
 
     /// Get details about the software license. Note that access to the REST API
@@ -245,32 +247,28 @@ impl Client {
     pub fn scan_status(&mut self) -> Result<(bool, u64)> {
         let res = self.get("getScanStatus", Query::none())?;
 
-        println!("{}", res);
-        if let Some(status) = res["scanning"].as_bool() {
-            if let Some(count) = res["count"].as_u64() {
-                Ok((status, count))
-            } else {
-                unreachable!()
-            }
-        } else {
-            unreachable!()
+        #[derive(Deserialize)]
+        struct ScanStatus {
+            count: u64,
+            scanning: bool,
         }
+        let sc = serde_json::from_value::<ScanStatus>(res)?;
+
+        Ok((sc.scanning, sc.count))
     }
 
     /// Returns all configured top-level music folders.
-    pub fn music_folders(&mut self) -> Result<Vec<library::MusicFolder>> {
+    pub fn music_folders(&mut self) -> Result<Vec<MusicFolder>> {
         #[allow(non_snake_case)]
         let musicFolder = self.get("getMusicFolders", Query::none())?;
 
-        use library::MusicFolder;
         Ok(get_list_as!(musicFolder, MusicFolder))
     }
 
     /// Returns all genres.
-    pub fn genres(&mut self) -> Result<Vec<library::Genre>> {
+    pub fn genres(&mut self) -> Result<Vec<Genre>> {
         let genre = self.get("getGenres", Query::none())?;
 
-        use library::Genre;
         Ok(get_list_as!(genre, Genre))
     }
 
@@ -316,18 +314,18 @@ impl Client {
     pub fn search(
         &mut self,
         query: &str,
-        artist_page: library::search::SearchPage,
-        album_page: library::search::SearchPage,
-        song_page: library::search::SearchPage,
+        artist_page: SearchPage,
+        album_page: SearchPage,
+        song_page: SearchPage,
     ) -> Result<(Vec<artist::Artist>, Vec<album::Album>, Vec<Song>)> {
         // FIXME There has to be a way to make this nicer.
-        let args = Query::with("query", query.to_string())
-            .arg("artistCount", artist_page.count.to_string())
-            .arg("artistOffset", artist_page.offset.to_string())
-            .arg("albumCount", album_page.count.to_string())
-            .arg("albumOffset", album_page.offset.to_string())
-            .arg("songCount", song_page.count.to_string())
-            .arg("songOffset", song_page.offset.to_string())
+        let args = Query::with("query", query)
+            .arg("artistCount", artist_page.count)
+            .arg("artistOffset", artist_page.offset)
+            .arg("albumCount", album_page.count)
+            .arg("albumOffset", album_page.offset)
+            .arg("songCount", song_page.count)
+            .arg("songOffset", song_page.offset)
             .build();
 
         let res = self.get("search3", args)?;
