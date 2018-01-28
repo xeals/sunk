@@ -11,11 +11,15 @@ by ID3 tags.
 
 ## System
 
+|              |                            |
+|--------------|----------------------------|
 | `ping`       | `Sunk::check_connection()` |
 | `getLicense` | `Sunk::check_license()`    |
 
 ## Browsing
 
+|                     |                                |
+|---------------------|--------------------------------|
 | `getMusicFolders`   | `Sunk::music_folders()`        |
 | `getIndexes`        | unsupported (in favour of ID3) |
 | `getMusicDirectory` | unsupported (in favour of ID3) |
@@ -36,6 +40,8 @@ by ID3 tags.
 
 ## Album/song lists
 
+|                   |                              |
+|-------------------|------------------------------|
 | `getAlbumList`    | does not use ID3             |
 | `getAlbumList2`   | `album::get_albums()`        |
 | `getRandomSongs`  | `song::get_random_songs()`   |
@@ -46,12 +52,16 @@ by ID3 tags.
 
 ## Searching
 
+|           |                        |
+|-----------|------------------------|
 | `search`  | deprecated since 1.4.0 |
 | `search2` | does not use ID3       |
 | `search3` | `Sunk::search()`       |
 
 ## Playlists
 
+|                  |                               |
+|------------------|-------------------------------|
 | `getPlaylists`   | `playlist::get_playlists()`   |
 | `getPlaylist`    | `playlist::get_playlist()`    |
 | `createPlaylist` | `playlist::create_playlist()` |
@@ -60,6 +70,8 @@ by ID3 tags.
 
 ## Media retrieval
 
+|               |                                                 |
+|---------------|-------------------------------------------------|
 | `stream`      | `Media::stream()` and `Media::stream_url()`     |
 | `download`    | `Media::download()` and `Media::download_url()` |
 | `hls`         | `Song::hls()`                                   |
@@ -70,6 +82,8 @@ by ID3 tags.
 
 ## Media annotation
 
+|             |   |
+|-------------|---|
 | `star`      |   |
 | `unstar`    |   |
 | `setRating` |   |
@@ -77,6 +91,8 @@ by ID3 tags.
 
 ## Sharing
 
+|               |   |
+|---------------|---|
 | `getShares`   |   |
 | `createShare` |   |
 | `updateShare` |   |
@@ -84,6 +100,8 @@ by ID3 tags.
 
 ## Podcast
 
+|                          |   |
+|--------------------------|---|
 | `getPodcasts`            |   |
 | `getNewestPodcasts`      |   |
 | `refreshPodcasts`        |   |
@@ -94,10 +112,14 @@ by ID3 tags.
 
 ## Jukebox
 
-| `jukeboxControl` | |
+|                  |   |
+|------------------|---|
+| `jukeboxControl` |   |
 
 ## Internet radio
 
+|                              |   |
+|------------------------------|---|
 | `getInternetRadioStations`   |   |
 | `createInternetRadioStation` |   |
 | `updateInternetRadioStation` |   |
@@ -105,20 +127,26 @@ by ID3 tags.
     
 ## Chat
 
+|                   |   |
+|-------------------|---|
 | `getChatMessages` |   |
 | `addChatMessage`  |   |
     
 ## User management
 
-| `getUser`    | `user::get_user()`    |
-| `getUsers`   | `user::get_users()`   |
-| `createUser` |                       |
-| `updateUser` | `user::update_user()` |
-| `deleteUser` | `user::delete_user()` |
-changePassword
+|                  |                           |
+|------------------|---------------------------|
+| `getUser`        | `user::get_user()`        |
+| `getUsers`       | `user::get_users()`       |
+| `createUser`     |                           |
+| `updateUser`     | `user::update_user()`     |
+| `deleteUser`     | `user::delete_user()`     |
+| `changePassword` | `user::change_password()` |
 
 ## Bookmarks
 
+|                  |   |
+|------------------|---|
 | `getBookmarks`   |   |
 | `createBookmark` |   |
 | `deleteBookmark` |   |
@@ -127,5 +155,7 @@ changePassword
     
 ## Media library scanning
 
+|                 |                        |
+|-----------------|------------------------|
 | `getScanStatus` | `Sunk::scan_status()`  |
 | `startScan`     | `Sunk::scan_library()` |
