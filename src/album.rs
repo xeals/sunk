@@ -108,18 +108,21 @@ pub fn get_album(sunk: &mut Sunk, id: u64) -> Result<Album> {
     Ok(serde_json::from_value::<Album>(res)?)
 }
 
-pub fn get_albums(
+pub fn get_albums<U>(
     sunk: &mut Sunk,
     list_type: ListType,
-    size: Option<u64>,
-    offset: Option<u64>,
-    folder_id: Option<u64>,
-) -> Result<Vec<Album>> {
+    size: U,
+    offset: U,
+    folder_id: U,
+) -> Result<Vec<Album>>
+where
+    U: Into<Option<usize>>,
+{
     let args = Query::new()
         .arg("type", list_type)
-        .arg("size", size)
-        .arg("offset", offset)
-        .arg("musicFolderId", folder_id)
+        .arg("size", size.into())
+        .arg("offset", offset.into())
+        .arg("musicFolderId", folder_id.into())
         .build();
 
     let album = sunk.get("getAlbumList2", args)?;

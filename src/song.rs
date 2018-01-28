@@ -31,30 +31,38 @@ impl Song {
     ///
     /// This would be used in conjunction with a streaming library to directly
     /// take the URI and stream it.
-    pub fn stream_url(
+    pub fn stream_url<A, U>(
         &self,
         sunk: &mut Sunk,
-        bitrate: Option<u64>,
-        format: Option<AudioFormat>,
-    ) -> Result<String> {
+        bitrate: U,
+        format: A,
+    ) -> Result<String>
+    where
+        A: Into<Option<AudioFormat>>,
+        U: Into<Option<u64>>,
+    {
         let args = Query::new()
             .arg("id", self.id)
-            .arg("maxBitRate", bitrate)
-            .arg("format", format)
+            .arg("maxBitRate", bitrate.into())
+            .arg("format", format.into())
             .build();
         sunk.build_url("stream", args)
     }
 
-    pub fn stream(
+    pub fn stream<A, U>(
         &self,
         sunk: &mut Sunk,
-        bitrate: Option<u64>,
-        format: Option<AudioFormat>,
-    ) -> Result<Vec<u8>> {
+        bitrate: U,
+        format: A,
+    ) -> Result<Vec<u8>>
+    where
+        A: Into<Option<AudioFormat>>,
+        U: Into<Option<u64>>,
+    {
         let args = Query::new()
             .arg("id", self.id)
-            .arg("maxBitRate", bitrate)
-            .arg("format", format)
+            .arg("maxBitRate", bitrate.into())
+            .arg("format", format.into())
             .build();
         sunk.get_bytes("stream", args)
     }
@@ -150,36 +158,43 @@ pub fn get_song(sunk: &mut Sunk, id: u64) -> Result<Song> {
     Ok(serde_json::from_value(res)?)
 }
 
-pub fn get_random_songs(
+pub fn get_random_songs<'a, S, U>(
     sunk: &mut Sunk,
-    size: Option<u64>,
-    genre: Option<&str>,
-    from_year: Option<usize>,
-    to_year: Option<usize>,
-    folder_id: Option<usize>,
-) -> Result<Vec<Song>> {
+    size: U,
+    genre: S,
+    from_year: U,
+    to_year: U,
+    folder_id: U,
+) -> Result<Vec<Song>>
+where
+    S: Into<Option<&'a str>>,
+    U: Into<Option<u64>>,
+{
     let args = Query::new()
-        .arg("size", size.unwrap_or(10))
-        .arg("genre", genre)
-        .arg("fromYear", from_year)
-        .arg("toYear", to_year)
-        .arg("musicFolderId", folder_id)
+        .arg("size", size.into().unwrap_or(10))
+        .arg("genre", genre.into())
+        .arg("fromYear", from_year.into())
+        .arg("toYear", to_year.into())
+        .arg("musicFolderId", folder_id.into())
         .build();
 
     let song = sunk.get("getRandomSongs", args)?;
     Ok(get_list_as!(song, Song))
 }
 
-pub fn get_songs_in_genre(
+pub fn get_songs_in_genre<U>(
     sunk: &mut Sunk,
     genre: &str,
     page: search::SearchPage,
-    folder_id: Option<usize>,
-) -> Result<Vec<Song>> {
+    folder_id: U,
+) -> Result<Vec<Song>>
+where
+    U: Into<Option<u64>>,
+{
     let args = Query::with("genre", genre)
         .arg("count", page.count)
         .arg("offset", page.offset)
-        .arg("musicFolderId", folder_id)
+        .arg("musicFolderId", folder_id.into())
         .build();
 
     let song = sunk.get("getSongsByGenre", args)?;
@@ -188,14 +203,17 @@ pub fn get_songs_in_genre(
 
 /// Searches for lyrics matching the artist and title. Returns `None` if no
 /// lyrics are found.
-pub fn get_lyrics(
+pub fn get_lyrics<'a, S>(
     sunk: &mut Sunk,
-    artist: Option<&str>,
-    title: Option<&str>,
-) -> Result<Option<Lyrics>> {
+    artist: S,
+    title: S,
+) -> Result<Option<Lyrics>>
+where
+    S: Into<Option<&'a str>>,
+{
     let args = Query::new()
-        .arg("artist", artist)
-        .arg("title", title)
+        .arg("artist", artist.into())
+        .arg("title", title.into())
         .build();
     let res = sunk.get("getLyrics", args)?;
     if res.get("value").is_some() {

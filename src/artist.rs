@@ -53,15 +53,19 @@ impl Artist {
         }
     }
 
-    pub fn info(
+    pub fn info<B, U>(
         &self,
         sunk: &mut Sunk,
-        count: Option<usize>,
-        include_not_present: Option<bool>,
-    ) -> Result<ArtistInfo> {
+        count: U,
+        include_not_present: B,
+    ) -> Result<ArtistInfo>
+    where
+        B: Into<Option<bool>>,
+        U: Into<Option<usize>>,
+    {
         let args = Query::with("id", self.id)
-            .arg("count", count)
-            .arg("includeNotPresent", include_not_present)
+            .arg("count", count.into())
+            .arg("includeNotPresent", include_not_present.into())
             .build();
         let res = sunk.get("getArtistInfo", args)?;
 

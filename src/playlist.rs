@@ -100,20 +100,24 @@ fn create_playlist(
 }
 
 /// Updates a playlist. Only the owner of the playlist is privileged to do so.
-fn update_playlist(
+fn update_playlist<'a, B, S>(
     sunk: &mut Sunk,
     id: u64,
-    name: Option<String>,
-    comment: Option<String>,
-    public: Option<bool>,
+    name: S,
+    comment: S,
+    public: B,
     to_add: Vec<u64>,
     to_remove: Vec<u64>,
-) -> Result<()> {
+) -> Result<()>
+where
+    S: Into<Option<&'a str>>,
+    B: Into<Option<bool>>,
+{
     let args = Query::new()
-        .arg("id", id.to_string())
-        .arg("name", name)
-        .arg("comment", comment)
-        .arg("public", public)
+        .arg("id", id)
+        .arg("name", name.into())
+        .arg("comment", comment.into())
+        .arg("public", public.into())
         .arg_list("songIdToAdd", to_add)
         .arg_list("songIndexToRemove", to_remove)
         .build();
