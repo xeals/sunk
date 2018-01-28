@@ -16,23 +16,23 @@ by ID3 tags.
 
 ## Browsing
 
-| `getMusicFolders`   | `Sunk::music_folders()`    |
-| `getIndexes`        |                            |
-| `getMusicDirectory` |                            |
-| `getGenres`         | `Sunk::genres`             |
-| `getArtists`        | `artist::get_artists()`    |
-| `getArtist`         | `artist::get_artist()`     |
-| `getAlbum`          | `album::get_album()`       |
-| `getSong`           | `song::get_song()`         |
-| `getVideos`         |                            |
-| `getVideoInfo`      |                            |
-| `getArtistInfo`     | `Artist::info()`           |
-| `getArtistInfo2`    | planned to deprecate above |
-| `getAlbumInfo`      |                            |
-| `getAlbumInfo2`     |                            |
-| `getSimilarSongs`   |                            |
-| `getSimilarSongs2`  |                            |
-| `getTopSongs`       |                            |
+| `getMusicFolders`   | `Sunk::music_folders()`  |
+| `getIndexes`        |                          |
+| `getMusicDirectory` |                          |
+| `getGenres`         | `Sunk::genres`           |
+| `getArtists`        | `artist::get_artists()`  |
+| `getArtist`         | `artist::get_artist()`   |
+| `getAlbum`          | `album::get_album()`     |
+| `getSong`           | `song::get_song()`       |
+| `getVideos`         |                          |
+| `getVideoInfo`      |                          |
+| `getArtistInfo`     | alternative since 1.11.0 |
+| `getArtistInfo2`    | `Artist::info()`         |
+| `getAlbumInfo`      | alternative since 1.14.0 |
+| `getAlbumInfo2`     | `Album::info()`          |
+| `getSimilarSongs`   |                          |
+| `getSimilarSongs2`  |                          |
+| `getTopSongs`       |                          |
 
 ## Album/song lists
 

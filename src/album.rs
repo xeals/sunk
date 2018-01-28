@@ -62,6 +62,34 @@ impl Album {
             Ok(self.songs.clone())
         }
     }
+
+    pub fn info(&self, sunk: &mut Sunk) -> Result<AlbumInfo> {
+        let res = sunk.get("getArtistInfo", Query::with("id", self.id))?;
+
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct _AlbumInfo {
+            notes: String,
+            music_brainz_id: String,
+            last_fm_url: String,
+            small_image_url: String,
+            medium_image_url: String,
+            large_image_url: String,
+        }
+
+        let raw: _AlbumInfo = serde_json::from_value(res)?;
+
+        Ok(AlbumInfo {
+            notes: raw.notes,
+            musicbrainz_id: raw.music_brainz_id,
+            lastfm_url: raw.last_fm_url,
+            image_urls: (
+                raw.small_image_url,
+                raw.medium_image_url,
+                raw.large_image_url,
+            ),
+        })
+    }
 }
 
 impl<'de> Deserialize<'de> for Album {
@@ -101,6 +129,14 @@ impl<'de> Deserialize<'de> for Album {
             songs: raw.song,
         })
     }
+}
+
+#[derive(Debug)]
+pub struct AlbumInfo {
+    pub notes: String,
+    pub lastfm_url: String,
+    pub musicbrainz_id: String,
+    pub image_urls: (String, String, String),
 }
 
 pub fn get_album(sunk: &mut Sunk, id: u64) -> Result<Album> {

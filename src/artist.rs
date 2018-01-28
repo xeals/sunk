@@ -1,3 +1,5 @@
+use std::result;
+
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
@@ -23,25 +25,40 @@ pub struct ArtistInfo {
     musicbrainz_id: String,
     lastfm_url: String,
     image_urls: (String, String, String),
-    similar_artists: Vec<(usize, String)>,
+    similar_artists: Vec<SimilarArtist>,
 }
 
-#[derive(Debug, Deserialize)]
-#[allow(non_snake_case)]
-struct ArtistInfoSerde {
-    biography: String,
-    musicBrainzId: String,
-    lastFmUrl: String,
-    smallImageUrl: String,
-    mediumImageUrl: String,
-    largeImageUrl: String,
-    similarArtist: Vec<SimilarArtistSerde>,
-}
-
-#[derive(Debug, Deserialize)]
-struct SimilarArtistSerde {
-    id: String,
+#[derive(Debug)]
+struct SimilarArtist {
+    id: u64,
     name: String,
+    cover_art: Option<String>,
+    album_count: u64
+}
+
+impl<'de> Deserialize<'de> for SimilarArtist {
+    fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Debug, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct _SimilarArtist {
+            id: String,
+            name: String,
+            cover_art: Option<String>,
+            album_count: String,
+        }
+
+        let raw = _SimilarArtist::deserialize(de)?;
+
+        Ok(SimilarArtist {
+            id: raw.id.parse().unwrap(),
+            name: raw.name,
+            cover_art: raw.cover_art,
+            album_count: raw.album_count.parse().unwrap(),
+        })
+    }
 }
 
 impl Artist {
@@ -69,21 +86,30 @@ impl Artist {
             .build();
         let res = sunk.get("getArtistInfo", args)?;
 
-        let serde: ArtistInfoSerde = serde_json::from_value(res)?;
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct _ArtistInfo {
+            biography: String,
+            music_brainz_id: String,
+            last_fm_url: String,
+            small_image_url: String,
+            medium_image_url: String,
+            large_image_url: String,
+            similar_artist: Vec<SimilarArtist>,
+        }
+
+        let raw: _ArtistInfo = serde_json::from_value(res)?;
+
         Ok(ArtistInfo {
-            biography: serde.biography,
-            musicbrainz_id: serde.musicBrainzId,
-            lastfm_url: serde.lastFmUrl,
+            biography: raw.biography,
+            musicbrainz_id: raw.music_brainz_id,
+            lastfm_url: raw.last_fm_url,
             image_urls: (
-                serde.smallImageUrl,
-                serde.mediumImageUrl,
-                serde.largeImageUrl,
+                raw.small_image_url,
+                raw.medium_image_url,
+                raw.large_image_url,
             ),
-            similar_artists: serde
-                .similarArtist
-                .iter()
-                .map(|a| (a.id.parse().unwrap(), a.name.to_string()))
-                .collect(),
+            similar_artists: raw.similar_artist,
         })
     }
 
