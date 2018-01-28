@@ -3,7 +3,7 @@ use serde_json;
 
 use error::*;
 use query::{Arg, IntoArg, Query};
-use media::song;
+use media::song::Song;
 use client::Client;
 use util::*;
 
@@ -51,11 +51,11 @@ pub struct Album {
     pub year: Option<u64>,
     pub genre: Option<String>,
     pub song_count: u64,
-    songs: Vec<song::Song>,
+    songs: Vec<Song>,
 }
 
 impl Album {
-    pub fn songs(&self, client: &mut Client) -> Result<Vec<song::Song>> {
+    pub fn songs(&self, client: &mut Client) -> Result<Vec<Song>> {
         if self.songs.len() as u64 != self.song_count {
             Ok(get_album(client, self.id)?.songs)
         } else {
@@ -111,7 +111,7 @@ impl<'de> Deserialize<'de> for Album {
             year: Option<u64>,
             genre: Option<String>,
             #[serde(default)]
-            song: Vec<song::Song>,
+            song: Vec<Song>,
         }
 
         let raw = _Album::deserialize(de)?;
