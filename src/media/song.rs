@@ -4,6 +4,7 @@ use serde_json;
 use sunk::Sunk;
 
 use media::format::AudioFormat;
+use media::{Media, MusicStreamArgs, StreamArgs};
 use library::search;
 use query::Query;
 use util::*;
@@ -27,54 +28,6 @@ pub struct Song {
 }
 
 impl Song {
-    /// Returns a constructed URL for streaming with desired arguments.
-    ///
-    /// This would be used in conjunction with a streaming library to directly
-    /// take the URI and stream it.
-    pub fn stream_url<A, U>(
-        &self,
-        sunk: &mut Sunk,
-        bitrate: U,
-        format: A,
-    ) -> Result<String>
-    where
-        A: Into<Option<AudioFormat>>,
-        U: Into<Option<u64>>,
-    {
-        let args = Query::new()
-            .arg("id", self.id)
-            .arg("maxBitRate", bitrate.into())
-            .arg("format", format.into())
-            .build();
-        sunk.build_url("stream", args)
-    }
-
-    pub fn stream<A, U>(
-        &self,
-        sunk: &mut Sunk,
-        bitrate: U,
-        format: A,
-    ) -> Result<Vec<u8>>
-    where
-        A: Into<Option<AudioFormat>>,
-        U: Into<Option<u64>>,
-    {
-        let args = Query::new()
-            .arg("id", self.id)
-            .arg("maxBitRate", bitrate.into())
-            .arg("format", format.into())
-            .build();
-        sunk.get_bytes("stream", args)
-    }
-
-    /// Returns a constructed URL for downloading the song.
-    ///
-    /// `download_url()` does not support transcoding, while `stream_url()`
-    /// does.
-    pub fn download_url(&self, sunk: &mut Sunk) -> Result<String> {
-        sunk.build_url("download", Query::with("id", self.id))
-    }
-
     /// Creates an HLS (HTTP Live Streaming) playlist used for streaming video
     /// or audio. HLS is a streaming protocol implemented by Apple and works by
     /// breaking the overall stream into a sequence of small HTTP-based file
@@ -108,6 +61,35 @@ impl Song {
     /// Returns the URL of the cover art. Size is a single parameter and the
     /// image will be scaled on its longest edge.
     impl_cover_art!();
+}
+
+impl Media for Song {
+    fn stream<A>(&self, sunk: &mut Sunk, args: A) -> Result<Vec<u8>>
+    where
+        A: StreamArgs,
+    {
+        let mut q = Query::with("id", self.id);
+        q.extend(args.into_arg_set());
+        sunk.get_bytes("stream", q)
+    }
+
+    fn stream_url<A>(&self, sunk: &mut Sunk, args: A) -> Result<String>
+    where
+        A: StreamArgs,
+    {
+        let mut q = Query::with("id", self.id);
+        q.extend(args.into_arg_set());
+        sunk.build_url("stream", q)
+    }
+
+    fn download(&self, sunk: &mut Sunk) -> Result<Vec<u8>> {
+        sunk.get_bytes("download", Query::with("id", self.id))
+    }
+
+    fn download_url(&self, sunk: &mut Sunk) -> Result<String> {
+        sunk.build_url("download", Query::with("id", self.id))
+    }
+
 }
 
 impl<'de> Deserialize<'de> for Song {
