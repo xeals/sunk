@@ -3,11 +3,11 @@ use std::result;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
-use error::*;
-use query::Query;
 use client::Client;
-use util::*;
+use error::*;
 use media::song::Song;
+use query::Query;
+use util::*;
 
 use album::Album;
 
@@ -117,7 +117,7 @@ impl Artist {
     pub fn top_songs<U>(
         &self,
         client: &mut Client,
-        count: U
+        count: U,
     ) -> Result<Vec<Song>>
     where
         U: Into<Option<usize>>,

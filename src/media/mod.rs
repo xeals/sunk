@@ -9,9 +9,9 @@ pub mod podcast;
 
 // use format::{AudioFormat, VideoFormat};
 use self::format::AudioFormat;
+use self::song::Song;
 use error::{Error, Result};
 use query::{Arg, IntoArg};
-use self::song::Song;
 
 pub trait Media {
     fn stream<A: StreamArgs>(&self, &mut Client, A) -> Result<Vec<u8>>;
@@ -66,7 +66,10 @@ impl StreamArgs for MusicStreamArgs {
         vec![
             ("maxBitRate".to_string(), self.max_bit_rate.into_arg()),
             ("format".to_string(), self.format.into_arg()),
-            ("estimateContentLength".to_string(), self.estimate_content_length.into_arg())
+            (
+                "estimateContentLength".to_string(),
+                self.estimate_content_length.into_arg(),
+            ),
         ]
     }
 }
@@ -100,12 +103,11 @@ pub struct NowPlaying {
 impl NowPlaying {
     /// # Errors
     ///
-    /// Aside from the inherent errors from the [`Client`], the method will error
-    /// if the `NowPlaying` is not a song.
+    /// Aside from the inherent errors from the [`Client`], the method will
+    /// error if the `NowPlaying` is not a song.
     ///
     /// [`Client`]: ../client/struct.Client.html
-    pub fn song_info<M>(&self, client: &mut Client) -> Result<Song>
-    {
+    pub fn song_info<M>(&self, client: &mut Client) -> Result<Song> {
         if self.is_video {
             Err(Error::Other("Now Playing info is not a song"))
         } else {
@@ -117,7 +119,7 @@ impl NowPlaying {
 impl<'de> Deserialize<'de> for NowPlaying {
     fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
@@ -137,7 +139,7 @@ impl<'de> Deserialize<'de> for NowPlaying {
             is_video: bool,
             created: String,
             #[serde(rename = "type")]
-            media_type: String
+            media_type: String,
         }
 
         let raw = _NowPlaying::deserialize(de)?;

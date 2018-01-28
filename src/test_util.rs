@@ -1,5 +1,5 @@
-use error;
 use client;
+use error;
 
 pub fn demo_site() -> error::Result<client::Client> {
     let site = "http://demo.subsonic.org";

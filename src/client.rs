@@ -1,7 +1,7 @@
 #![warn(missing_docs)]
 
-use reqwest::Url;
 use reqwest::Client as ReqwestClient;
+use reqwest::Url;
 use serde_json;
 
 use album;
@@ -9,10 +9,10 @@ use api::Api;
 use artist;
 use error::*;
 use library;
+use media::NowPlaying;
+use media::song::Song;
 use query::Query;
 use response;
-use media::song::Song;
-use media::NowPlaying;
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 

@@ -1,10 +1,10 @@
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
-use error::*;
-use query::{Arg, IntoArg, Query};
-use media::song::Song;
 use client::Client;
+use error::*;
+use media::song::Song;
+use query::{Arg, IntoArg, Query};
 use util::*;
 
 #[derive(Debug, Clone, Copy)]

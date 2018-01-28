@@ -1,11 +1,11 @@
+use client::Client;
 use error::*;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
-use client::Client;
 
-use media::format::AudioFormat;
-use media::{Media, MusicStreamArgs, StreamArgs};
 use library::search;
+use media::{Media, MusicStreamArgs, StreamArgs};
+use media::format::AudioFormat;
 use query::Query;
 use util::*;
 
@@ -37,7 +37,11 @@ impl Song {
     ///
     ///  Returns an M3U8 playlist on success (content type
     ///  "application/vnd.apple.mpegurl").
-    pub fn hls(&self, client: &mut Client, bitrates: Vec<u64>) -> Result<String> {
+    pub fn hls(
+        &self,
+        client: &mut Client,
+        bitrates: Vec<u64>,
+    ) -> Result<String> {
         let args = Query::new()
             .arg("id", self.id)
             .arg_list("bitrate", bitrates)
@@ -89,7 +93,6 @@ impl Media for Song {
     fn download_url(&self, client: &mut Client) -> Result<String> {
         client.build_url("download", Query::with("id", self.id))
     }
-
 }
 
 impl<'de> Deserialize<'de> for Song {

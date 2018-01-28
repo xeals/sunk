@@ -1,9 +1,9 @@
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
+use client::Client;
 use error::*;
 use query::Query;
-use client::Client;
 use util::*;
 
 use media::song;
@@ -126,7 +126,8 @@ where
 }
 
 fn delete_playlist(client: &mut Client, id: u64) -> Result<()> {
-    client.get("deletePlaylist", Query::with("id", id))
+    client
+        .get("deletePlaylist", Query::with("id", id))
         .map(|_| ())
 }
 

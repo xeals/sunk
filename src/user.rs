@@ -1,7 +1,7 @@
+use client::Client;
 use error::*;
 use query::Query;
 use serde_json;
-use client::Client;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -83,7 +83,8 @@ pub fn update_user(client: &mut Client, username: &str) -> Result<()> {
 }
 
 pub fn delete_user(client: &mut Client, username: &str) -> Result<()> {
-    client.get("deleteUser", Query::with("username", username))
+    client
+        .get("deleteUser", Query::with("username", username))
         .map(|_| ())
 }
 

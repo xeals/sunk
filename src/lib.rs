@@ -18,7 +18,7 @@ extern crate rand;
 mod macros;
 mod error;
 
-pub use client::{License, Client};
+pub use client::{Client, License};
 
 pub mod album;
 pub mod artist;
