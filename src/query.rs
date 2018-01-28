@@ -1,4 +1,5 @@
 use std::fmt;
+use std::iter;
 
 /// An expandable query set for an API call.
 #[derive(Debug, PartialEq, PartialOrd)]
@@ -76,6 +77,12 @@ impl Query {
         Query {
             inner: self.inner.drain(..).collect(),
         }
+    }
+}
+
+impl iter::Extend<(String, Arg)> for Query {
+    fn extend<T: IntoIterator<Item = (String, Arg)>>(&mut self, iter: T) {
+        self.inner.extend(iter);
     }
 }
 
