@@ -5,6 +5,7 @@ use client::Client;
 
 pub mod song;
 pub mod format;
+pub mod podcast;
 
 // use format::{AudioFormat, VideoFormat};
 use self::format::AudioFormat;

@@ -102,8 +102,8 @@ by ID3 tags.
 
 |                          |   |
 |--------------------------|---|
-| `getPodcasts`            |   |
-| `getNewestPodcasts`      |   |
+| `getPodcasts`            | `Podcast::get()` and `Podcast::list()` |
+| `getNewestPodcasts`      | `Episode::newest()` |
 | `refreshPodcasts`        |   |
 | `createPodcastChannel`   |   |
 | `deletePodcastChannel`   |   |
