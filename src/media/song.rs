@@ -3,7 +3,7 @@ use serde::de::{Deserialize, Deserializer};
 use serde_json;
 use sunk::Sunk;
 
-use format::AudioFormat;
+use media::format::AudioFormat;
 use library::search;
 use query::Query;
 use util::*;

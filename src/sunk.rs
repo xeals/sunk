@@ -10,7 +10,7 @@ use error::*;
 use library;
 use query::Query;
 use response;
-use song::Song;
+use media::song::Song;
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 

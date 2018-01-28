@@ -7,7 +7,7 @@ use error::*;
 use query::Query;
 use sunk::Sunk;
 use util::*;
-use song::Song;
+use media::song::Song;
 
 use album::Album;
 

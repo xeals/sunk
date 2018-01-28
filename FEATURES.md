@@ -31,8 +31,8 @@ by ID3 tags.
 | `getAlbumInfo`      | does not use ID3               |
 | `getAlbumInfo2`     | `Album::info()`                |
 | `getSimilarSongs`   | does not use ID3               |
-| `getSimilarSongs2`  | `Song::similar()`               |
-| `getTopSongs`       | `Artist::top_songs()`       |
+| `getSimilarSongs2`  | `Song::similar()`              |
+| `getTopSongs`       | `Artist::top_songs()`          |
 
 ## Album/song lists
 

@@ -3,7 +3,7 @@ use serde_json;
 
 use error::*;
 use query::{Arg, IntoArg, Query};
-use song;
+use media::song;
 use sunk::Sunk;
 use util::*;
 

@@ -22,7 +22,7 @@ pub use sunk::{License, Sunk};
 pub mod album;
 pub mod artist;
 pub mod playlist;
-pub mod song;
+pub mod media;
 
 pub mod api;
 pub mod library;
@@ -30,7 +30,6 @@ pub mod query;
 mod sunk;
 pub mod response;
 pub mod user;
-pub mod format;
 
 #[cfg(test)]
 mod test_util;

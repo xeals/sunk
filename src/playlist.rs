@@ -6,7 +6,7 @@ use query::Query;
 use sunk::Sunk;
 use util::*;
 
-use song;
+use media::song;
 
 #[derive(Debug)]
 pub struct Playlist {
