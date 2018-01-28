@@ -6,6 +6,7 @@ use error::Result;
 use media::song::Song;
 use query::{Arg, IntoArg, Query};
 use std::result;
+use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
 pub enum ListType {
@@ -19,8 +20,8 @@ pub enum ListType {
     Starred,
 }
 
-impl ::std::fmt::Display for ListType {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+impl fmt::Display for ListType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::ListType::*;
         let fmt = match *self {
             AlphaByArtist => "alphabeticalByArtist",
