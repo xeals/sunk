@@ -1,5 +1,3 @@
-#![macro_use]
-
 macro_rules! impl_cover_art {
     () => {
         pub fn cover_art(&self, client: &mut Client, size: Option<u64>) -> Result<String> {

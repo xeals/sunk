@@ -1,6 +1,4 @@
-use error::Result;
 use serde::de::{Deserialize, Deserializer};
-use serde_json;
 use std::result;
 
 #[derive(Debug)]

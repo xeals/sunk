@@ -138,7 +138,7 @@ impl<'de> Deserialize<'de> for Artist {
 impl<'de> Deserialize<'de> for ArtistInfo {
     fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]

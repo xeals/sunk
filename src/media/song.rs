@@ -4,8 +4,7 @@ use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
 use library::search;
-use media::{Media, MusicStreamArgs, StreamArgs};
-use media::format::AudioFormat;
+use media::{Media, StreamArgs};
 use query::Query;
 
 #[derive(Debug, Clone)]

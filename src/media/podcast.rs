@@ -50,7 +50,7 @@ impl Podcast {
     where
         U: Into<Option<usize>>,
     {
-        let mut channel = client.get("getPodcasts", Query::with("id", id.into()))?;
+        let channel = client.get("getPodcasts", Query::with("id", id.into()))?;
         Ok(get_list_as!(channel, Podcast).remove(0))
     }
     /// Returns a list of all podcasts the server subscribes to and,

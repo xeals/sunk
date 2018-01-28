@@ -93,9 +93,13 @@ fn create_playlist(
         .build();
 
     let res = client.get("createPlaylist", args)?;
-    // TODO Match the API and return the playlist on new versions.
 
-    Ok(None)
+    // TODO API is private
+    // if client.api >= "1.14.0".into() {
+    Ok(Some(serde_json::from_value(res)?))
+    // } else {
+    // Ok(None)
+    // }
 }
 
 /// Updates a playlist. Only the owner of the playlist is privileged to do so.

@@ -4,8 +4,6 @@ use serde_json;
 use std::{fmt, io, num, result};
 use std::convert::From;
 
-use response;
-
 pub type Result<T> = result::Result<T, self::Error>;
 
 #[derive(Debug, Fail)]

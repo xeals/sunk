@@ -5,8 +5,8 @@ use client::Client;
 use error::Result;
 use media::song::Song;
 use query::{Arg, IntoArg, Query};
-use std::result;
 use std::fmt;
+use std::result;
 
 #[derive(Debug, Clone, Copy)]
 pub enum ListType {
@@ -120,7 +120,7 @@ pub struct AlbumInfo {
 impl<'de> Deserialize<'de> for AlbumInfo {
     fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]

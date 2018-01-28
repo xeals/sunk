@@ -1,5 +1,3 @@
-#![warn(missing_docs)]
-
 use reqwest::Client as ReqwestClient;
 use reqwest::Url;
 use serde_json;
@@ -7,7 +5,7 @@ use serde_json;
 use album;
 use api::Api;
 use artist;
-use error::{Result, Error, UriError};
+use error::{Error, Result, UriError};
 use library::{Genre, MusicFolder};
 use library::search::SearchPage;
 use media::NowPlaying;
@@ -204,7 +202,7 @@ impl Client {
     pub fn get_bytes(&mut self, query: &str, args: Query) -> Result<Vec<u8>> {
         use std::io::Read;
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
-        let mut res = self.reqclient.get(uri).send()?;
+        let res = self.reqclient.get(uri).send()?;
         Ok(res.bytes().map(|b| b.unwrap()).collect())
     }
 

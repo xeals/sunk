@@ -186,8 +186,8 @@ impl Response {
     }
 
     /// Returns `true` if the response is `"ok"`.
-    pub fn is_ok(&self) -> bool { self.status == String::from("ok") }
+    pub fn is_ok(&self) -> bool { self.status == "ok" }
 
     /// Returns `true` if the response is `"failed"`.
-    pub fn is_err(&self) -> bool { self.status == String::from("failed") }
+    pub fn is_err(&self) -> bool { self.status == "failed" }
 }
