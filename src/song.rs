@@ -93,6 +93,18 @@ impl Song {
         sunk.get_raw("hls", args)
     }
 
+    pub fn similar<U>(&self, sunk: &mut Sunk, count: U) -> Result<Vec<Song>>
+    where
+        U: Into<Option<usize>>,
+    {
+        let args = Query::with("id", self.id)
+            .arg("count", count.into())
+            .build();
+
+        let song = sunk.get("getSimilarSongs2", args)?;
+        Ok(get_list_as!(song, Song))
+    }
+
     /// Returns the URL of the cover art. Size is a single parameter and the
     /// image will be scaled on its longest edge.
     impl_cover_art!();

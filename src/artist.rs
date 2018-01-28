@@ -7,15 +7,16 @@ use error::*;
 use query::Query;
 use sunk::Sunk;
 use util::*;
+use song::Song;
 
-use album;
+use album::Album;
 
 #[derive(Debug)]
 pub struct Artist {
     pub id: u64,
     pub name: String,
     cover_id: Option<String>,
-    albums: Vec<album::Album>,
+    albums: Vec<Album>,
     pub album_count: u64,
 }
 
@@ -33,7 +34,7 @@ struct SimilarArtist {
     id: u64,
     name: String,
     cover_art: Option<String>,
-    album_count: u64
+    album_count: u64,
 }
 
 impl<'de> Deserialize<'de> for SimilarArtist {
@@ -62,7 +63,7 @@ impl<'de> Deserialize<'de> for SimilarArtist {
 }
 
 impl Artist {
-    pub fn albums(&self, sunk: &mut Sunk) -> Result<Vec<album::Album>> {
+    pub fn albums(&self, sunk: &mut Sunk) -> Result<Vec<Album>> {
         if self.albums.len() as u64 != self.album_count {
             Ok(get_artist(sunk, self.id)?.albums)
         } else {
@@ -113,6 +114,22 @@ impl Artist {
         })
     }
 
+    pub fn top_songs<U>(
+        &self,
+        sunk: &mut Sunk,
+        count: U
+    ) -> Result<Vec<Song>>
+    where
+        U: Into<Option<usize>>,
+    {
+        let args = Query::with("id", self.id)
+            .arg("count", count.into())
+            .build();
+
+        let song = sunk.get("getTopSongs", args)?;
+        Ok(get_list_as!(song, Song))
+    }
+
     impl_cover_art!();
 }
 
@@ -129,7 +146,7 @@ impl<'de> Deserialize<'de> for Artist {
             cover_art: Option<String>,
             album_count: u64,
             #[serde(default)]
-            album: Vec<album::Album>,
+            album: Vec<Album>,
         }
 
         let raw = _Artist::deserialize(de)?;

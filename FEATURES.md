@@ -16,39 +16,39 @@ by ID3 tags.
 
 ## Browsing
 
-| `getMusicFolders`   | `Sunk::music_folders()`  |
-| `getIndexes`        |                          |
-| `getMusicDirectory` |                          |
-| `getGenres`         | `Sunk::genres`           |
-| `getArtists`        | `artist::get_artists()`  |
-| `getArtist`         | `artist::get_artist()`   |
-| `getAlbum`          | `album::get_album()`     |
-| `getSong`           | `song::get_song()`       |
-| `getVideos`         |                          |
-| `getVideoInfo`      |                          |
-| `getArtistInfo`     | alternative since 1.11.0 |
-| `getArtistInfo2`    | `Artist::info()`         |
-| `getAlbumInfo`      | alternative since 1.14.0 |
-| `getAlbumInfo2`     | `Album::info()`          |
-| `getSimilarSongs`   |                          |
-| `getSimilarSongs2`  |                          |
-| `getTopSongs`       |                          |
+| `getMusicFolders`   | `Sunk::music_folders()`        |
+| `getIndexes`        | unsupported (in favour of ID3) |
+| `getMusicDirectory` | unsupported (in favour of ID3) |
+| `getGenres`         | `Sunk::genres`                 |
+| `getArtists`        | `artist::get_artists()`        |
+| `getArtist`         | `artist::get_artist()`         |
+| `getAlbum`          | `album::get_album()`           |
+| `getSong`           | `song::get_song()`             |
+| `getVideos`         |                                |
+| `getVideoInfo`      |                                |
+| `getArtistInfo`     | does not use ID3               |
+| `getArtistInfo2`    | `Artist::info()`               |
+| `getAlbumInfo`      | does not use ID3               |
+| `getAlbumInfo2`     | `Album::info()`                |
+| `getSimilarSongs`   | does not use ID3               |
+| `getSimilarSongs2`  | `Song::similar()`               |
+| `getTopSongs`       | `Artist::top_songs()`       |
 
 ## Album/song lists
 
-| `getAlbumList`    | alternatives since 1.8.0     |
+| `getAlbumList`    | does not use ID3             |
 | `getAlbumList2`   | `album::get_albums()`        |
 | `getRandomSongs`  | `song::get_random_songs()`   |
 | `getSongsByGenre` | `song::get_songs_in_genre()` |
 | `getNowPlaying`   |                              |
-| `getStarred`      |                              |
+| `getStarred`      | does not use ID3             |
 | `getStarred2`     |                              |
 
 ## Searching
 
-| `search`  | deprecated since 1.4.0   |
-| `search2` | alternatives since 1.8.0 |
-| `search3` | `Sunk::search()`         |
+| `search`  | deprecated since 1.4.0 |
+| `search2` | does not use ID3       |
+| `search3` | `Sunk::search()`       |
 
 ## Playlists
 
@@ -127,5 +127,5 @@ changePassword
     
 ## Media library scanning
 
-| `getScanStatus` |   |
-| `startScan`     |   |
+| `getScanStatus` | `Sunk::scan_status()`  |
+| `startScan`     | `Sunk::scan_library()` |
