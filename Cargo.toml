@@ -1,6 +1,6 @@
 [package]
 name = "sunk"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["alex-smith <azphreal19@protonmail.com>"]
 description = "Rust bindings for the Subsonic music streaming API"
 homepage = "https://github.com/Azphreal/sunk"

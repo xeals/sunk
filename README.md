@@ -12,6 +12,7 @@ TBA
 - Library scanning
 - Retrieval (stream, download, HLS)
 - Searching
+- User controls
 
 ## Currently not supported
 
@@ -22,7 +23,6 @@ TBA
 - Jukebox
 - Internet radio
 - Chat
-- User controls
 - Bookmarks
 - Anything to do with video
 
@@ -33,12 +33,9 @@ TBA
 ## What needs work
 
 - ***Documentation***
-- Reach full support for modern 1.14.0
-- Pre-1.14.0 support:
-  - XML parsing
-  - Alternatives for newer methods
-  - Cargo attribute for compile-time targeting?
+- Reach full support for 1.14.0
 - Proper module splitting
+- Consistency in naming
 - Unit testing for methods that don't require a server, and manual get-and-verify for ones that do
 - Go through [checklist](https://rust-lang-nursery.github.io/api-guidelines/checklist.html) before stabilisation
 

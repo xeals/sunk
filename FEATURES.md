@@ -5,7 +5,9 @@ to change.
 
 The API details are [here](http://www.subsonic.org/pages/api.jsp).
 
-The aim is to match feature parity with v1.14.0, then v1.16.0.
+The aim is to match feature parity with v1.14.0, then v1.16.0. The minimum
+supported version will be v1.8.0, to take advantage of functions that organise
+by ID3 tags.
 
 ## System
 
