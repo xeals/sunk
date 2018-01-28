@@ -1,3 +1,6 @@
+use serde::de::{Deserialize, Deserializer};
+use std::result;
+
 use sunk::Sunk;
 
 pub mod song;
@@ -107,5 +110,43 @@ impl NowPlaying {
         } else {
             song::get_song(sunk, self.id as u64)
         }
+    }
+}
+
+impl<'de> Deserialize<'de> for NowPlaying {
+    fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>
+    {
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct _NowPlaying {
+            username: String,
+            minutes_ago: usize,
+            player_id: usize,
+            id: String,
+            is_dir: bool,
+            title: String,
+            size: usize,
+            content_type: String,
+            suffix: String,
+            transcoded_content_type: Option<String>,
+            transcoded_suffix: Option<String>,
+            path: String,
+            is_video: bool,
+            created: String,
+            #[serde(rename = "type")]
+            media_type: String
+        }
+
+        let raw = _NowPlaying::deserialize(de)?;
+
+        Ok(NowPlaying {
+            user: raw.username,
+            minutes_ago: raw.minutes_ago,
+            player_id: raw.player_id,
+            id: raw.id.parse().unwrap(),
+            is_video: raw.is_video,
+        })
     }
 }

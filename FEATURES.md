@@ -19,7 +19,7 @@ by ID3 tags.
 | `getMusicFolders`   | `Sunk::music_folders()`        |
 | `getIndexes`        | unsupported (in favour of ID3) |
 | `getMusicDirectory` | unsupported (in favour of ID3) |
-| `getGenres`         | `Sunk::genres`                 |
+| `getGenres`         | `Sunk::genres()`               |
 | `getArtists`        | `artist::get_artists()`        |
 | `getArtist`         | `artist::get_artist()`         |
 | `getAlbum`          | `album::get_album()`           |
@@ -40,7 +40,7 @@ by ID3 tags.
 | `getAlbumList2`   | `album::get_albums()`        |
 | `getRandomSongs`  | `song::get_random_songs()`   |
 | `getSongsByGenre` | `song::get_songs_in_genre()` |
-| `getNowPlaying`   |                              |
+| `getNowPlaying`   | `Sunk::now_playing()`        |
 | `getStarred`      | does not use ID3             |
 | `getStarred2`     |                              |
 
@@ -60,13 +60,13 @@ by ID3 tags.
 
 ## Media retrieval
 
-| `stream`      | `Song::stream()` and `Song::stream_url()` |
-| `download`    | `Song::download_url()`                    |
-| `hls`         | `Song::hls()`                             |
-| `getCaptions` |                                           |
-| `getCoverArt` | `$Struct::cover_art()`                    |
-| `getLyrics`   | `song::get_lyrics()`                      |
-| `getAvatar`   |                                           |
+| `stream`      | `Media::stream()` and `Media::stream_url()`     |
+| `download`    | `Media::download()` and `Media::download_url()` |
+| `hls`         | `Song::hls()`                                   |
+| `getCaptions` |                                                 |
+| `getCoverArt` | `$Struct::cover_art()`                          |
+| `getLyrics`   | `song::get_lyrics()`                            |
+| `getAvatar`   |                                                 |
 
 ## Media annotation
 
@@ -110,11 +110,11 @@ by ID3 tags.
     
 ## User management
 
-| `getUser`    |   |
-| `getUsers`   |   |
-| `createUser` |   |
-| `updateUser` |   |
-| `deleteUser` |   |
+| `getUser`    | `user::get_user()`    |
+| `getUsers`   | `user::get_users()`   |
+| `createUser` |                       |
+| `updateUser` | `user::update_user()` |
+| `deleteUser` | `user::delete_user()` |
 changePassword
 
 ## Bookmarks

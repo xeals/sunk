@@ -11,6 +11,7 @@ use library;
 use query::Query;
 use response;
 use media::song::Song;
+use media::NowPlaying;
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
@@ -270,6 +271,11 @@ impl Sunk {
 
         use library::Genre;
         Ok(get_list_as!(genre, Genre))
+    }
+
+    pub fn now_playing(&mut self) -> Result<Vec<NowPlaying>> {
+        let entry = self.get("getNowPlaying", Query::none())?;
+        Ok(get_list_as!(entry, NowPlaying))
     }
 
     /// Returns albums, artists and songs matching the given search criteria.
