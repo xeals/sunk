@@ -258,7 +258,7 @@ impl Sunk {
     /// Returns all configured top-level music folders.
     pub fn music_folders(&mut self) -> Result<Vec<library::MusicFolder>> {
         #[allow(non_snake_case)]
-        let musicFolder = self.get("musicFolders", Query::none())?;
+        let musicFolder = self.get("getMusicFolders", Query::none())?;
 
         use library::MusicFolder;
         Ok(get_list_as!(musicFolder, MusicFolder))
