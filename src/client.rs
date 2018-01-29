@@ -150,11 +150,10 @@ impl Client {
         if res.status().is_success() {
             let response = res.json::<response::Response>()?;
             if response.is_ok() {
-                if query == "ping" {
-                    Ok(serde_json::Value::Null)
-                } else {
-                    Ok(response.into_value().expect("expected value"))
-                }
+                Ok(match response.into_value() {
+                    Some(v) => v,
+                    None => serde_json::Value::Null,
+                })
             } else {
                 Err(response
                     .into_error()
