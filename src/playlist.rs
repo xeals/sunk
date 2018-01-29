@@ -66,11 +66,11 @@ impl<'de> Deserialize<'de> for Playlist {
 
 impl Media for Playlist {
     fn has_cover_art(&self) -> bool {
-        self.cover_id.is_some()
+        !self.cover_id.is_empty()
     }
 
     fn cover_id(&self) -> Option<&str> {
-        self.cover_id.as_ref().map(|s| s.as_str())
+        Some(self.cover_id.as_ref())
     }
 
     fn cover_art<U: Into<Option<usize>>>(&self, client: &mut Client, size: U) -> Result<Vec<u8>> {
