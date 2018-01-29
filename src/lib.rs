@@ -4,21 +4,21 @@
 extern crate failure;
 #[macro_use]
 extern crate log;
+extern crate md5;
+extern crate rand;
 extern crate reqwest;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
+#[cfg(not(test))]
 extern crate serde_json;
-
-extern crate md5;
-extern crate rand;
 
 #[macro_use]
 mod macros;
 mod error;
 
 pub use client::{Client, License};
+pub use error::{Error, Result};
 
 pub mod album;
 pub mod artist;
@@ -34,3 +34,6 @@ pub mod user;
 
 #[cfg(test)]
 mod test_util;
+#[cfg(test)]
+#[macro_use]
+extern crate serde_json;

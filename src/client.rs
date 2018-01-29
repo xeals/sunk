@@ -70,20 +70,13 @@ impl SubsonicAuth {
             let pre_t = self.password.to_string() + &salt;
             let token = format!("{:x}", md5::compute(pre_t.as_bytes()));
 
-            // As detailed in http://www.subsonic.org/pages/api.jsp
             format!("u={u}&t={t}&s={s}", u = self.user, t = token, s = salt)
         } else {
             format!("u={u}&p={p}", u = self.user, p = self.password)
         };
 
-        // Prefer JSON.
-        let format = if api >= "1.14.0".into() {
-            "json"
-        } else {
-            "xml"
-        };
-
-        let crate_name = ::std::env::var("CARGO_PKG_NAME").unwrap();
+        let format = "json";
+        let crate_name = env!("CARGO_PKG_NAME");
 
         format!(
             "{auth}&v={v}&c={c}&f={f}",
@@ -155,7 +148,7 @@ impl Client {
         let mut res = self.reqclient.get(uri).send()?;
 
         if res.status().is_success() {
-            let response = res.json::<response::Root>()?.response;
+            let response = res.json::<response::Response>()?;
             if response.is_ok() {
                 if query == "ping" {
                     Ok(serde_json::Value::Null)
@@ -163,7 +156,8 @@ impl Client {
                     Ok(response.into_value()?)
                 }
             } else {
-                Err(response.into_error()?)
+                Err(response.into_error()
+                    .ok_or_else(|| Error::Other("unable to retrieve error"))?)
             }
         } else {
             Err(Error::ConnectionError(res.status()))

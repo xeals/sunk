@@ -4,15 +4,15 @@ use error::{ApiError, Error, Result};
 
 /// A top-level response from a Subsonic server.
 #[derive(Debug, Deserialize)]
-pub struct Root {
+pub struct Response {
     #[serde(rename = "subsonic-response")]
-    pub response: Response,
+    pub inner: InnerResponse,
 }
 
 /// A struct containing the possible responses of the Subsonic API.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Response {
+pub struct InnerResponse {
     status: String,
     version: String,
     #[doc(hidden)]
@@ -75,14 +75,14 @@ impl Response {
         // TODO Big time; make this not an `if ... else if ...` mess.
         macro_rules! maybe {
             ($f:ident) => ({
-                if let Some(v)  = self.$f {
+                if let Some(v)  = self.inner.$f {
                     return Ok(v)
                 }
             })
         }
 
-        if self.is_err() {
-            return Err(Error::Other("WIP"))
+        if let Some(err) = self.inner.error {
+            return Err(err.into())
         }
 
         maybe!(license);
@@ -133,16 +133,8 @@ impl Response {
         Err(Error::Other("non-exhaustive `into_value()`"))
     }
 
-    // TODO Work out how to better show which error struct it returns.
-    /// Extracts the error struct of the response.
-    ///
-    /// # Notes
-    ///
-    /// This method returns a `Result<Error, Error>`. The `ok()` case will be an
-    /// [`Error::Api`]; the `err()` case will be an [`Error::Other`].
-    ///
-    /// [`Error::Api`]: ../error/enum.Error.html#variant.Api
-    /// [`Error::Other`]: ../error/enum.Error.html#variant.Other
+    /// Extracts the error struct of the response. Returns `None` if the
+    /// response was not a failure.
     ///
     /// # Examples
     ///
@@ -151,10 +143,10 @@ impl Response {
     /// ```
     /// #[macro_use]
     /// extern crate serde_json;
-    /// # extern crate sunk;
-    /// use sunk::response::Root;
-    /// #
-    /// # fn run() -> Result<(), sunk::error::Error> {
+    /// extern crate sunk;
+    /// use sunk::response::Response;
+    ///
+    /// # fn run() -> Result<(), sunk::Error> {
     /// let fail = json!({"subsonic-response": {
     ///     "status": "failed",
     ///     "version": "1.14.0",
@@ -163,31 +155,28 @@ impl Response {
     ///         "message": "Requested resource not found"
     ///     }
     /// }});
-    /// let fail = serde_json::from_value::<Root>(fail)?.response;
-    /// assert!(fail.into_error().is_ok());
+    /// let fail = serde_json::from_value::<Response>(fail)?;
+    /// assert!(fail.into_error().is_some());
     ///
-    /// let success = json!({"subsonic-reponse": {
+    /// let success = json!({"subsonic-response": {
     ///     "status": "ok",
     ///     "version": "1.14.0"
     /// }});
-    /// let success = serde_json::from_value::<Root>(success)?.response;
-    /// assert!(success.into_error().is_err());
+    /// let success = serde_json::from_value::<Response>(success)?;
+    /// assert!(success.into_error().is_none());
     /// # Ok(())
     /// # }
     /// # fn main() {
-    /// #   run();
+    /// #   run().unwrap();
     /// # }
     /// ```
-    pub fn into_error(self) -> Result<Error> {
-        match self.error {
-            Some(e) => Ok(e.into()),
-            None => Err(Error::Other("WIP")),
-        }
+    pub fn into_error(self) -> Option<Error> {
+        self.inner.error.map(|e| e.into())
     }
 
     /// Returns `true` if the response is `"ok"`.
-    pub fn is_ok(&self) -> bool { self.status == "ok" }
+    pub fn is_ok(&self) -> bool { self.inner.status == "ok" }
 
     /// Returns `true` if the response is `"failed"`.
-    pub fn is_err(&self) -> bool { self.status == "failed" }
+    pub fn is_err(&self) -> bool { self.inner.status == "failed" }
 }
