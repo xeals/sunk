@@ -3,13 +3,16 @@ use std::result;
 
 use client::Client;
 
-pub mod song;
 pub mod format;
 pub mod podcast;
+pub mod song;
+pub mod video;
+
+pub use self::song::Song;
+pub use self::video::Video;
 
 // use format::{AudioFormat, VideoFormat};
 use self::format::AudioFormat;
-use self::song::Song;
 use error::{Error, Result};
 use query::{Arg, IntoArg};
 
@@ -19,21 +22,17 @@ pub trait Streamable {
     ///
     /// The method does not provide any information about the encoding of the
     /// media without evaluating the stream itself.
-    fn stream<A: StreamArgs>(
-        &self,
-        client: &mut Client,
-        args: A,
-    ) -> Result<Vec<u8>>;
+    fn stream<A>(&self, client: &mut Client, args: A) -> Result<Vec<u8>>
+    where
+        A: StreamArgs;
 
     /// Returns a constructed URL for streaming with desired arguments.
     ///
     /// This would be used in conjunction with a streaming library to directly
     /// take the URI and stream it.
-    fn stream_url<A: StreamArgs>(
-        &self,
-        client: &mut Client,
-        args: A,
-    ) -> Result<String>;
+    fn stream_url<A>(&self, client: &mut Client, args: A) -> Result<String>
+    where
+        A: StreamArgs;
 
     fn download(&self, client: &mut Client) -> Result<Vec<u8>>;
 

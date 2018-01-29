@@ -11,25 +11,25 @@ by ID3 tags.
 
 ## System
 
-|              |                            |
-|--------------|----------------------------|
-| `ping`       | `Sunk::check_connection()` |
-| `getLicense` | `Sunk::check_license()`    |
+|              |                              |
+|--------------|------------------------------|
+| `ping`       | `Client::check_connection()` |
+| `getLicense` | `Client::check_license()`    |
 
 ## Browsing
 
 |                     |                                |
 |---------------------|--------------------------------|
-| `getMusicFolders`   | `Sunk::music_folders()`        |
+| `getMusicFolders`   | `Client::music_folders()`      |
 | `getIndexes`        | unsupported (in favour of ID3) |
 | `getMusicDirectory` | unsupported (in favour of ID3) |
-| `getGenres`         | `Sunk::genres()`               |
+| `getGenres`         | `Client::genres()`             |
 | `getArtists`        | `artist::get_artists()`        |
 | `getArtist`         | `artist::get_artist()`         |
 | `getAlbum`          | `album::get_album()`           |
 | `getSong`           | `song::get_song()`             |
-| `getVideos`         |                                |
-| `getVideoInfo`      |                                |
+| `getVideos`         | `Video::list()`                |
+| `getVideoInfo`      | `Video::info()`                |
 | `getArtistInfo`     | does not use ID3               |
 | `getArtistInfo2`    | `Artist::info()`               |
 | `getAlbumInfo`      | does not use ID3               |
@@ -46,7 +46,7 @@ by ID3 tags.
 | `getAlbumList2`   | `album::get_albums()`        |
 | `getRandomSongs`  | `song::get_random_songs()`   |
 | `getSongsByGenre` | `song::get_songs_in_genre()` |
-| `getNowPlaying`   | `Sunk::now_playing()`        |
+| `getNowPlaying`   | `Client::now_playing()`      |
 | `getStarred`      | does not use ID3             |
 | `getStarred2`     |                              |
 
@@ -56,7 +56,7 @@ by ID3 tags.
 |-----------|------------------------|
 | `search`  | deprecated since 1.4.0 |
 | `search2` | does not use ID3       |
-| `search3` | `Sunk::search()`       |
+| `search3` | `Client::search()`     |
 
 ## Playlists
 
@@ -100,15 +100,15 @@ by ID3 tags.
 
 ## Podcast
 
-|                          |   |
-|--------------------------|---|
+|                          |                                        |
+|--------------------------|----------------------------------------|
 | `getPodcasts`            | `Podcast::get()` and `Podcast::list()` |
-| `getNewestPodcasts`      | `Episode::newest()` |
-| `refreshPodcasts`        |   |
-| `createPodcastChannel`   |   |
-| `deletePodcastChannel`   |   |
-| `deletePodcastEpisode`   |   |
-| `downloadPodcastEpisode` |   |
+| `getNewestPodcasts`      | `Episode::newest()`                    |
+| `refreshPodcasts`        |                                        |
+| `createPodcastChannel`   |                                        |
+| `deletePodcastChannel`   |                                        |
+| `deletePodcastEpisode`   |                                        |
+| `downloadPodcastEpisode` |                                        |
 
 ## Jukebox
 
@@ -157,5 +157,5 @@ by ID3 tags.
 
 |                 |                        |
 |-----------------|------------------------|
-| `getScanStatus` | `Sunk::scan_status()`  |
-| `startScan`     | `Sunk::scan_library()` |
+| `getScanStatus` | `Client::scan_status()`  |
+| `startScan`     | `Client::scan_library()` |
