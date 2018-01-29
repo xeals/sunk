@@ -153,7 +153,7 @@ impl Client {
                 if query == "ping" {
                     Ok(serde_json::Value::Null)
                 } else {
-                    Ok(response.into_value()?)
+                    Ok(response.into_value().expect("expected value"))
                 }
             } else {
                 Err(response.into_error()
