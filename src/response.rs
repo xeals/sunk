@@ -1,6 +1,6 @@
 use serde_json;
 
-use error::{ApiError, Error};
+use error::ApiError;
 
 /// A top-level response from a Subsonic server.
 #[derive(Debug, Deserialize)]
