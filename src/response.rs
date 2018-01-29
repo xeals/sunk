@@ -171,9 +171,7 @@ impl Response {
     /// #   run().unwrap();
     /// # }
     /// ```
-    pub fn into_error(self) -> Option<ApiError> {
-        self.inner.error
-    }
+    pub fn into_error(self) -> Option<ApiError> { self.inner.error }
 
     /// Returns `true` if the response is `"ok"`.
     pub fn is_ok(&self) -> bool { self.inner.error.is_none() }

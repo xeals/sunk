@@ -1,8 +1,8 @@
-use client::Client;
-use error::{Error, Result};
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
+use client::Client;
+use error::{Error, Result};
 use library::search;
 use media::{Media, StreamArgs, Streamable};
 use query::Query;
