@@ -13,22 +13,73 @@ use self::song::Song;
 use error::{Error, Result};
 use query::{Arg, IntoArg};
 
-pub trait Media {
-    fn stream<A: StreamArgs>(&self, &mut Client, A) -> Result<Vec<u8>>;
+/// A trait for forms of streamable media.
+pub trait Streamable {
+    /// Returns the raw bytes of the media.
+    ///
+    /// The method does not provide any information about the encoding of the
+    /// media without evaluating the stream itself.
+    fn stream<A: StreamArgs>(&self, client: &mut Client, args: A) -> Result<Vec<u8>>;
 
     /// Returns a constructed URL for streaming with desired arguments.
     ///
     /// This would be used in conjunction with a streaming library to directly
     /// take the URI and stream it.
-    fn stream_url<A: StreamArgs>(&self, &mut Client, A) -> Result<String>;
+    fn stream_url<A: StreamArgs>(&self, client: &mut Client, args: A) -> Result<String>;
 
-    fn download(&self, &mut Client) -> Result<Vec<u8>>;
+    fn download(&self, client: &mut Client) -> Result<Vec<u8>>;
 
     /// Returns a constructed URL for downloading the song.
     ///
     /// `download_url()` does not support transcoding, while `stream_url()`
     /// does.
-    fn download_url(&self, &mut Client) -> Result<String>;
+    fn download_url(&self, client: &mut Client) -> Result<String>;
+
+    /// Returns the default encoding of the media.
+    ///
+    /// A Subsonic server is able to transcode media for streaming to reduce
+    /// data size (for example, it may transcode FLAC to MP3 to reduce file
+    /// size, or downsample high bitrate files). Where possible, the method will
+    /// return the default transcoding of the media (if enabled); otherwise, it
+    /// will return the original encoding.
+    fn encoding(&self) -> &str;
+}
+
+/// A trait deriving common methods for any form of media.
+pub trait Media {
+    /// Returns whether or not the media has an associated cover.
+    fn has_cover_art(&self) -> bool;
+
+    /// Returns the cover ID associated with the media, if any.
+    ///
+    /// The ID may be a number, an identifier-number pair, or simply empty. This is due to the
+    /// introduction of ID3 tags into the Subsonic API; collections of media (such as albums or playlists) will
+    /// typically have an identifier-number ID, while raw media (such as songs or videos) will
+    /// have a numeric or no identifier.
+    ///
+    /// Because the method has the potential to return either a string-y or numeric ID, the
+    /// number is cooerced into a `&str` to avoid type checking workarounds.
+    fn cover_id(&self) -> Option<&str>;
+
+    /// Returns the raw bytes of the cover art of the media.
+    ///
+    /// The image is guaranteed to be valid and displayable by the Subsonic
+    /// server (as long as the method does not error), but makes no guarantees
+    /// on the encoding of the image.
+    ///
+    /// # Errors
+    ///
+    /// Aside from errors imposed by the [`Client`], the method will error if the media does not
+    /// have an associated cover art.
+    fn cover_art<U: Into<Option<usize>>>(&self, client: &mut Client, size: U) -> Result<Vec<u8>>;
+
+    /// Returns the URL pointing to the cover art of the media.
+    ///
+    /// # Errors
+    ///
+    /// Aside from errors imposed by the [`Client`], the method will error if the media does not
+    /// have an associated cover art.
+    fn cover_art_url<U: Into<Option<usize>>>(&self, client: &mut Client, size: U) -> Result<String>;
 }
 
 pub trait StreamArgs {

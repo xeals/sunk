@@ -1,10 +1,10 @@
 use client::Client;
-use error::Result;
+use error::{Result, Error};
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
 use library::search;
-use media::{Media, StreamArgs};
+use media::{Media, Streamable, StreamArgs};
 use query::Query;
 
 #[derive(Debug, Clone)]
@@ -18,8 +18,12 @@ pub struct Song {
     pub track: Option<u64>,
     pub year: Option<u64>,
     pub genre: Option<String>,
-    cover_id: Option<u64>,
+    cover_id: Option<String>,
     pub size: u64,
+    content_type: String,
+    suffix: String,
+    transcoded_content_type: Option<String>,
+    transcoded_suffix: Option<String>,
     pub duration: Option<u64>,
     path: String,
     pub media_type: String,
@@ -58,13 +62,9 @@ impl Song {
         let song = client.get("getSimilarSongs2", args)?;
         Ok(get_list_as!(song, Song))
     }
-
-    /// Returns the URL of the cover art. Size is a single parameter and the
-    /// image will be scaled on its longest edge.
-    impl_cover_art!();
 }
 
-impl Media for Song {
+impl Streamable for Song {
     fn stream<A>(&self, client: &mut Client, args: A) -> Result<Vec<u8>>
     where
         A: StreamArgs,
@@ -90,6 +90,38 @@ impl Media for Song {
     fn download_url(&self, client: &mut Client) -> Result<String> {
         client.build_url("download", Query::with("id", self.id))
     }
+
+    fn encoding(&self) -> &str {
+        self.transcoded_content_type.as_ref().unwrap_or(&self.content_type)
+    }
+}
+
+impl Media for Song {
+    fn has_cover_art(&self) -> bool {
+        self.cover_id.is_some()
+    }
+
+    fn cover_id(&self) -> Option<&str> {
+        self.cover_id.as_ref().map(|s| s.as_str())
+    }
+
+    fn cover_art<U: Into<Option<usize>>>(&self, client: &mut Client, size: U) -> Result<Vec<u8>> {
+        let cover = self.cover_id().ok_or_else(|| Error::Other("no cover art found"))?;
+        let query = Query::with("id", cover)
+            .arg("size", size.into())
+            .build();
+
+        client.get_bytes("getCoverArt", query)
+    }
+
+    fn cover_art_url<U: Into<Option<usize>>>(&self, client: &mut Client, size: U) -> Result<String> {
+        let cover = self.cover_id().ok_or_else(|| Error::Other("no cover art found"))?;
+        let query = Query::with("id", cover)
+            .arg("size", size.into())
+            .build();
+
+        client.build_url("getCoverArt", query)
+    }
 }
 
 impl<'de> Deserialize<'de> for Song {
@@ -113,6 +145,8 @@ impl<'de> Deserialize<'de> for Song {
             size: u64,
             content_type: String,
             suffix: String,
+            transcoded_content_type: Option<String>,
+            transcoded_suffix: Option<String>,
             duration: Option<u64>,
             bit_rate: u64,
             path: String,
@@ -135,11 +169,15 @@ impl<'de> Deserialize<'de> for Song {
             album_id: raw.album_id.map(|i| i.parse().unwrap()),
             artist: raw.artist,
             artist_id: raw.artist_id.map(|i| i.parse().unwrap()),
-            cover_id: raw.cover_art.map(|i| i.parse().unwrap()),
+            cover_id: raw.cover_art,
             track: raw.track,
             year: raw.year,
             genre: raw.genre,
             size: raw.size,
+            content_type: raw.content_type,
+            suffix: raw.suffix,
+            transcoded_content_type: raw.transcoded_content_type,
+            transcoded_suffix: raw.transcoded_suffix,
             duration: raw.duration,
             path: raw.path,
             media_type: raw.media_type,
