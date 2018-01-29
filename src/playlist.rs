@@ -179,18 +179,18 @@ mod tests {
     }
 
     fn raw() -> serde_json::Value {
-        json!(
-            {
-                "id" : "1",
-                "name" : "Sleep Hits",
-                "owner" : "user",
-                "public" : false,
-                "songCount" : 32,
-                "duration" : 8334,
-                "created" : "2018-01-01T14:45:07.464Z",
-                "changed" : "2018-01-01T14:45:07.478Z",
-                "coverArt" : "pl-2"
-            }
-        )
+        serde_json::from_str(
+            r#"{
+            "id" : "1",
+            "name" : "Sleep Hits",
+            "owner" : "user",
+            "public" : false,
+            "songCount" : 32,
+            "duration" : 8334,
+            "created" : "2018-01-01T14:45:07.464Z",
+            "changed" : "2018-01-01T14:45:07.478Z",
+            "coverArt" : "pl-2"
+        }"#,
+        ).unwrap()
     }
 }

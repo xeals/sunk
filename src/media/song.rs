@@ -291,7 +291,7 @@ mod tests {
     }
 
     fn raw() -> serde_json::Value {
-        json!({
+        serde_json::from_str(r#"{
             "id" : "27",
             "parent" : "25",
             "isDir" : false,
@@ -314,6 +314,6 @@ mod tests {
             "albumId" : "1",
             "artistId" : "1",
             "type" : "music"
-        })
+        }"#).unwrap()
     }
 }

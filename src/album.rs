@@ -242,7 +242,7 @@ mod tests {
     }
 
     fn raw() -> serde_json::Value {
-        json!({
+        serde_json::from_str(r#"{
          "id" : "1",
          "name" : "Bellevue",
          "artist" : "Misteur Valaire",
@@ -446,6 +446,6 @@ mod tests {
             "artistId" : "1",
             "type" : "music"
          } ]
-      })
+      }"#).unwrap()
     }
 }

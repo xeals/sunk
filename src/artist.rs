@@ -251,7 +251,8 @@ mod tests {
     }
 
     fn raw() -> serde_json::Value {
-        json!({
+        serde_json::from_str(
+            r#"{
             "id" : "1",
             "name" : "Misteur Valaire",
             "coverArt" : "ar-1",
@@ -268,7 +269,8 @@ mod tests {
                 "created" : "2017-03-12T11:07:25.000Z",
                 "genre" : "(255)"
             } ]
-        })
+        }"#,
+        ).unwrap()
     }
 
 }

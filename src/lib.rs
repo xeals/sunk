@@ -10,14 +10,14 @@ extern crate reqwest;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-#[cfg(not(test))]
 extern crate serde_json;
 
 #[macro_use]
 mod macros;
-mod error;
 
 pub use client::{Client, License};
+
+pub mod error;
 pub use error::{Error, Result};
 
 pub mod album;
@@ -34,6 +34,3 @@ pub mod user;
 
 #[cfg(test)]
 mod test_util;
-#[cfg(test)]
-#[macro_use]
-extern crate serde_json;
