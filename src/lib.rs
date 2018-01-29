@@ -14,21 +14,21 @@ extern crate serde_json;
 
 #[macro_use]
 mod macros;
+mod client;
 
-pub use client::{Client, License};
+pub use client::Client;
+pub use error::{Error, Result};
 
 pub mod error;
-pub use error::{Error, Result};
+pub mod media;
 
 pub mod album;
 pub mod artist;
 pub mod playlist;
-pub mod media;
 
-pub mod api;
 pub mod library;
 pub mod query;
-mod client;
+pub mod api;
 pub mod response;
 pub mod user;
 

@@ -171,8 +171,8 @@ impl Response {
     /// #   run().unwrap();
     /// # }
     /// ```
-    pub fn into_error(self) -> Option<Error> {
-        self.inner.error.map(|e| e.into())
+    pub fn into_error(self) -> Option<ApiError> {
+        self.inner.error
     }
 
     /// Returns `true` if the response is `"ok"`.

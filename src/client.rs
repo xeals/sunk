@@ -157,6 +157,7 @@ impl Client {
             } else {
                 Err(response
                     .into_error()
+                    .map(|e| e.into())
                     .ok_or_else(|| Error::Other("unable to retrieve error"))?)
             }
         } else {
