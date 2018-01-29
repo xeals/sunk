@@ -156,7 +156,8 @@ impl Client {
                     Ok(response.into_value().expect("expected value"))
                 }
             } else {
-                Err(response.into_error()
+                Err(response
+                    .into_error()
                     .ok_or_else(|| Error::Other("unable to retrieve error"))?)
             }
         } else {

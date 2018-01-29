@@ -19,13 +19,21 @@ pub trait Streamable {
     ///
     /// The method does not provide any information about the encoding of the
     /// media without evaluating the stream itself.
-    fn stream<A: StreamArgs>(&self, client: &mut Client, args: A) -> Result<Vec<u8>>;
+    fn stream<A: StreamArgs>(
+        &self,
+        client: &mut Client,
+        args: A,
+    ) -> Result<Vec<u8>>;
 
     /// Returns a constructed URL for streaming with desired arguments.
     ///
     /// This would be used in conjunction with a streaming library to directly
     /// take the URI and stream it.
-    fn stream_url<A: StreamArgs>(&self, client: &mut Client, args: A) -> Result<String>;
+    fn stream_url<A: StreamArgs>(
+        &self,
+        client: &mut Client,
+        args: A,
+    ) -> Result<String>;
 
     fn download(&self, client: &mut Client) -> Result<Vec<u8>>;
 
@@ -52,13 +60,15 @@ pub trait Media {
 
     /// Returns the cover ID associated with the media, if any.
     ///
-    /// The ID may be a number, an identifier-number pair, or simply empty. This is due to the
-    /// introduction of ID3 tags into the Subsonic API; collections of media (such as albums or playlists) will
-    /// typically have an identifier-number ID, while raw media (such as songs or videos) will
-    /// have a numeric or no identifier.
+    /// The ID may be a number, an identifier-number pair, or simply empty.
+    /// This is due to the introduction of ID3 tags into the Subsonic API;
+    /// collections of media (such as albums or playlists) will typically
+    /// have an identifier-number ID, while raw media (such as songs or videos)
+    /// will have a numeric or no identifier.
     ///
-    /// Because the method has the potential to return either a string-y or numeric ID, the
-    /// number is cooerced into a `&str` to avoid type checking workarounds.
+    /// Because the method has the potential to return either a string-y or
+    /// numeric ID, the number is cooerced into a `&str` to avoid type
+    /// checking workarounds.
     fn cover_id(&self) -> Option<&str>;
 
     /// Returns the raw bytes of the cover art of the media.
@@ -69,17 +79,25 @@ pub trait Media {
     ///
     /// # Errors
     ///
-    /// Aside from errors imposed by the [`Client`], the method will error if the media does not
-    /// have an associated cover art.
-    fn cover_art<U: Into<Option<usize>>>(&self, client: &mut Client, size: U) -> Result<Vec<u8>>;
+    /// Aside from errors imposed by the [`Client`], the method will error if
+    /// the media does not have an associated cover art.
+    fn cover_art<U: Into<Option<usize>>>(
+        &self,
+        client: &mut Client,
+        size: U,
+    ) -> Result<Vec<u8>>;
 
     /// Returns the URL pointing to the cover art of the media.
     ///
     /// # Errors
     ///
-    /// Aside from errors imposed by the [`Client`], the method will error if the media does not
-    /// have an associated cover art.
-    fn cover_art_url<U: Into<Option<usize>>>(&self, client: &mut Client, size: U) -> Result<String>;
+    /// Aside from errors imposed by the [`Client`], the method will error if
+    /// the media does not have an associated cover art.
+    fn cover_art_url<U: Into<Option<usize>>>(
+        &self,
+        client: &mut Client,
+        size: U,
+    ) -> Result<String>;
 }
 
 pub trait StreamArgs {

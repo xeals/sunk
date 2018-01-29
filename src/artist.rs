@@ -135,28 +135,32 @@ impl<'de> Deserialize<'de> for Artist {
 }
 
 impl Media for Artist {
-    fn has_cover_art(&self) -> bool {
-        self.cover_id.is_some()
-    }
+    fn has_cover_art(&self) -> bool { self.cover_id.is_some() }
 
     fn cover_id(&self) -> Option<&str> {
         self.cover_id.as_ref().map(|s| s.as_str())
     }
 
-    fn cover_art<U: Into<Option<usize>>>(&self, client: &mut Client, size: U) -> Result<Vec<u8>> {
-        let cover = self.cover_id().ok_or_else(|| Error::Other("no cover art found"))?;
-        let query = Query::with("id", cover)
-            .arg("size", size.into())
-            .build();
+    fn cover_art<U: Into<Option<usize>>>(
+        &self,
+        client: &mut Client,
+        size: U,
+    ) -> Result<Vec<u8>> {
+        let cover = self.cover_id()
+            .ok_or_else(|| Error::Other("no cover art found"))?;
+        let query = Query::with("id", cover).arg("size", size.into()).build();
 
         client.get_bytes("getCoverArt", query)
     }
 
-    fn cover_art_url<U: Into<Option<usize>>>(&self, client: &mut Client, size: U) -> Result<String> {
-        let cover = self.cover_id().ok_or_else(|| Error::Other("no cover art found"))?;
-        let query = Query::with("id", cover)
-            .arg("size", size.into())
-            .build();
+    fn cover_art_url<U: Into<Option<usize>>>(
+        &self,
+        client: &mut Client,
+        size: U,
+    ) -> Result<String> {
+        let cover = self.cover_id()
+            .ok_or_else(|| Error::Other("no cover art found"))?;
+        let query = Query::with("id", cover).arg("size", size.into()).build();
 
         client.build_url("getCoverArt", query)
     }
