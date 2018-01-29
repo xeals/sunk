@@ -4,7 +4,8 @@ use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
 use client::Client;
-use error::Result;
+use error::{Error, Result};
+use media::Media;
 use media::song::Song;
 use query::Query;
 
@@ -103,8 +104,6 @@ impl Artist {
         let song = client.get("getTopSongs", args)?;
         Ok(get_list_as!(song, Song))
     }
-
-    impl_cover_art!();
 }
 
 impl<'de> Deserialize<'de> for Artist {
@@ -132,6 +131,34 @@ impl<'de> Deserialize<'de> for Artist {
             album_count: raw.album_count,
             albums: raw.album,
         })
+    }
+}
+
+impl Media for Artist {
+    fn has_cover_art(&self) -> bool {
+        self.cover_id.is_some()
+    }
+
+    fn cover_id(&self) -> Option<&str> {
+        self.cover_id.as_ref().map(|s| s.as_str())
+    }
+
+    fn cover_art<U: Into<Option<usize>>>(&self, client: &mut Client, size: U) -> Result<Vec<u8>> {
+        let cover = self.cover_id().ok_or_else(|| Error::Other("no cover art found"))?;
+        let query = Query::with("id", cover)
+            .arg("size", size.into())
+            .build();
+
+        client.get_bytes("getCoverArt", query)
+    }
+
+    fn cover_art_url<U: Into<Option<usize>>>(&self, client: &mut Client, size: U) -> Result<String> {
+        let cover = self.cover_id().ok_or_else(|| Error::Other("no cover art found"))?;
+        let query = Query::with("id", cover)
+            .arg("size", size.into())
+            .build();
+
+        client.build_url("getCoverArt", query)
     }
 }
 
