@@ -4,7 +4,6 @@ use std::result;
 
 use client::Client;
 use error::{Error, Result};
-use library::search;
 use media::{Media, StreamArgs, Streamable};
 use query::Query;
 
@@ -34,7 +33,7 @@ pub struct Video {
 }
 
 impl Video {
-    pub fn get<U>(client: &mut Client, id: usize) -> Result<Video> {
+    pub fn get(client: &mut Client, id: usize) -> Result<Video> {
         Video::list(client)?
             .into_iter()
             .find(|v| v.id == id)

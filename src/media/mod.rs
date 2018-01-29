@@ -2,6 +2,8 @@ use serde::de::{Deserialize, Deserializer};
 use std::result;
 
 use client::Client;
+use error::{Error, Result};
+use query::{Arg, IntoArg};
 
 pub mod format;
 pub mod podcast;
@@ -11,10 +13,7 @@ pub mod video;
 pub use self::song::Song;
 pub use self::video::Video;
 
-// use format::{AudioFormat, VideoFormat};
-use self::format::AudioFormat;
-use error::{Error, Result};
-use query::{Arg, IntoArg};
+use self::format::{AudioFormat, VideoFormat};
 
 /// A trait for forms of streamable media.
 pub trait Streamable {
@@ -105,14 +104,14 @@ pub trait StreamArgs {
 
 #[derive(Debug)]
 pub struct MusicStreamArgs {
-    max_bit_rate: Option<usize>,
+    max_bitrate: Option<usize>,
     format: Option<AudioFormat>,
     estimate_content_length: Option<bool>,
 }
 
 impl MusicStreamArgs {
     pub fn new<B, F, U>(
-        max_bit_rate: U,
+        max_bitrate: U,
         format: F,
         estimate_content_length: B,
     ) -> MusicStreamArgs
@@ -122,7 +121,7 @@ impl MusicStreamArgs {
         U: Into<Option<usize>>,
     {
         MusicStreamArgs {
-            max_bit_rate: max_bit_rate.into(),
+            max_bitrate: max_bitrate.into(),
             format: format.into(),
             estimate_content_length: estimate_content_length.into(),
         }
@@ -131,26 +130,44 @@ impl MusicStreamArgs {
 
 impl StreamArgs for MusicStreamArgs {
     fn into_arg_set(self) -> Vec<(String, Arg)> {
+        macro_rules! arg {
+            ($f:ident) => (self.$f.into_arg());
+        }
+
         vec![
-            ("maxBitRate".to_string(), self.max_bit_rate.into_arg()),
-            ("format".to_string(), self.format.into_arg()),
-            (
-                "estimateContentLength".to_string(),
-                self.estimate_content_length.into_arg(),
-            ),
-        ]
+            ("maxBitRate", arg!(max_bitrate)),
+            ("format", arg!(format)),
+            ("estimateContentLength", arg!(estimate_content_length)),
+        ].into_iter().map(|(k, v)| (k.to_string(), v)).collect()
     }
 }
 
-// #[derive(Debug)]
-// pub struct VideoStreamArgs {
-//     max_bit_rate: usize,
-//     format: VideoFormat,
-//     time_offset: usize,
-//     size: (usize, usize),
-//     estimate_content_length: bool,
-//     converted: bool,
-// }
+#[derive(Debug)]
+pub struct VideoStreamArgs {
+    max_bitrate: usize,
+    format: VideoFormat,
+    time_offset: usize,
+    size: (usize, usize),
+    estimate_content_length: bool,
+    converted: bool,
+}
+
+impl StreamArgs for VideoStreamArgs {
+    fn into_arg_set(self) -> Vec<(String, Arg)> {
+        macro_rules! arg {
+            ($f:ident) => (self.$f.into_arg());
+        }
+
+        vec![
+            ("maxBitRate", arg!(max_bitrate)),
+            ("format", arg!(format)),
+            ("timeOffset", arg!(time_offset)),
+            ("size", format!("{}x{}", self.size.0, self.size.1).into_arg()),
+            ("estimateContentLength", arg!(estimate_content_length)),
+            ("converted", arg!(converted))
+        ].into_iter().map(|(k, v)| (k.to_string(), v)).collect()
+    }
+}
 
 /// Information about currently playing media.
 ///
