@@ -2,9 +2,9 @@ use reqwest::Client as ReqwestClient;
 use reqwest::Url;
 use serde_json;
 
-use album;
+use album::Album;
 use api::Api;
-use artist;
+use artist::Artist;
 use error::{Error, Result, UriError};
 use library::{Genre, MusicFolder};
 use library::search::SearchPage;
@@ -310,7 +310,7 @@ impl Client {
         artist_page: SearchPage,
         album_page: SearchPage,
         song_page: SearchPage,
-    ) -> Result<(Vec<artist::Artist>, Vec<album::Album>, Vec<Song>)> {
+    ) -> Result<(Vec<Artist>, Vec<Album>, Vec<Song>)> {
         // FIXME There has to be a way to make this nicer.
         let args = Query::with("query", query)
             .arg("artistCount", artist_page.count)
@@ -325,8 +325,26 @@ impl Client {
 
         #[derive(Deserialize)]
         struct Output {
-            artist: Vec<artist::Artist>,
-            album: Vec<album::Album>,
+            artist: Vec<Artist>,
+            album: Vec<Album>,
+            song: Vec<Song>,
+        }
+
+        let result = serde_json::from_value::<Output>(res)?;
+        Ok((result.artist, result.album, result.song))
+    }
+
+    /// Returns a list of all starred artists, albums, and songs.
+    pub fn starred<U>(&mut self, folder_id: U) -> Result<(Vec<Artist>, Vec<Album>, Vec<Song>)>
+    where
+        U: Into<Option<usize>>
+    {
+        let res = self.get("getStarred", Query::with("musicFolderId", folder_id.into()))?;
+
+        #[derive(Deserialize)]
+        struct Output {
+            artist: Vec<Artist>,
+            album: Vec<Album>,
             song: Vec<Song>,
         }
 
