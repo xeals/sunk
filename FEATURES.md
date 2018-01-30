@@ -48,7 +48,7 @@ by ID3 tags.
 | `getSongsByGenre` | `song::get_songs_in_genre()` |
 | `getNowPlaying`   | `Client::now_playing()`      |
 | `getStarred`      | does not use ID3             |
-| `getStarred2`     |                              |
+| `getStarred2`     | `Client::starred()`          |
 
 ## Searching
 
@@ -70,24 +70,24 @@ by ID3 tags.
 
 ## Media retrieval
 
-|               |                                                 |
-|---------------|-------------------------------------------------|
-| `stream`      | `Media::stream()` and `Media::stream_url()`     |
-| `download`    | `Media::download()` and `Media::download_url()` |
-| `hls`         | `Song::hls()`                                   |
-| `getCaptions` |                                                 |
-| `getCoverArt` | `$Struct::cover_art()`                          |
-| `getLyrics`   | `song::get_lyrics()`                            |
-| `getAvatar`   |                                                 |
+|               |                                                           |
+|---------------|-----------------------------------------------------------|
+| `stream`      | `Streamable::stream()` and `Streamable::stream_url()`     |
+| `download`    | `Streamable::download()` and `Streamable::download_url()` |
+| `hls`         | `Song::hls()`                                             |
+| `getCaptions` | `Video::captions()`                                       |
+| `getCoverArt` | `Media::cover_art()`                                      |
+| `getLyrics`   | `song::get_lyrics()`                                      |
+| `getAvatar`   | `User::avatar()`                                          |
 
 ## Media annotation
 
-|             |   |
-|-------------|---|
-| `star`      |   |
-| `unstar`    |   |
-| `setRating` |   |
-| `scrobble`  |   |
+|             |                             |
+|-------------|-----------------------------|
+| `star`      | `Annotatable::star()`       |
+| `unstar`    | `Annotatable::unstar()`     |
+| `setRating` | `Annotatable::set_rating()` |
+| `scrobble`  | `Annotatable::scrobble()`   |
 
 ## Sharing
 
@@ -155,7 +155,7 @@ by ID3 tags.
     
 ## Media library scanning
 
-|                 |                        |
-|-----------------|------------------------|
+|                 |                          |
+|-----------------|--------------------------|
 | `getScanStatus` | `Client::scan_status()`  |
 | `startScan`     | `Client::scan_library()` |
