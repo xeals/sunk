@@ -13,6 +13,14 @@ impl Query {
 
     /// A blank query to be used where an API call doesn't require additional
     /// arguments.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use sunk::query::Query;
+    /// let query = Query::none();
+    /// assert_eq!(query.to_string(), "");
+    /// ```
     pub fn none() -> Query {
         Query {
             inner: vec![("".into(), Arg(None))],
@@ -21,7 +29,7 @@ impl Query {
 
     /// Creates a new query with an initial argument.
     ///
-    /// Shorthand for the following:
+    /// # Examples
     ///
     /// ```
     /// # use sunk::query::Query;
@@ -38,6 +46,19 @@ impl Query {
     }
 
     /// Adds an argument to the query.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use sunk::query::Query;
+    /// let query_with = Query::with("key", "value");
+    ///
+    /// let mut builder = Query::new();
+    /// assert_ne!(query_with, builder);
+    ///
+    /// query2.arg("key", "value");
+    /// assert_eq!(query_with, builder);
+    /// ```
     pub fn arg<A: IntoArg>(&mut self, key: &str, value: A) -> &mut Query {
         self.inner.push((key.to_string(), value.into_arg()));
         self
@@ -141,45 +162,18 @@ impl IntoArg for Arg {
     fn into_arg(self) -> Arg { self }
 }
 
-impl IntoArg for u8 {
-    fn into_arg(self) -> Arg { Arg(Some(self.to_string())) }
+macro_rules! impl_arg {
+    ($t:ty) => {impl IntoArg for $t {
+        fn into_arg(self) -> Arg { Arg(Some(self.to_string())) }
+    }};
 }
 
-impl IntoArg for u16 {
-    fn into_arg(self) -> Arg { Arg(Some(self.to_string())) }
-}
-
-impl IntoArg for u32 {
-    fn into_arg(self) -> Arg { Arg(Some(self.to_string())) }
-}
-
-impl IntoArg for u64 {
-    fn into_arg(self) -> Arg { Arg(Some(self.to_string())) }
-}
-
-impl IntoArg for usize {
-    fn into_arg(self) -> Arg { Arg(Some(self.to_string())) }
-}
-
-impl IntoArg for i8 {
-    fn into_arg(self) -> Arg { Arg(Some(self.to_string())) }
-}
-
-impl IntoArg for i16 {
-    fn into_arg(self) -> Arg { Arg(Some(self.to_string())) }
-}
-
-impl IntoArg for i32 {
-    fn into_arg(self) -> Arg { Arg(Some(self.to_string())) }
-}
-
-impl IntoArg for i64 {
-    fn into_arg(self) -> Arg { Arg(Some(self.to_string())) }
-}
-
-impl IntoArg for isize {
-    fn into_arg(self) -> Arg { Arg(Some(self.to_string())) }
-}
+impl_arg!(u8);
+impl_arg!(u16);
+impl_arg!(u32);
+impl_arg!(u64);
+impl_arg!(usize);
+impl_arg!(bool);
 
 impl<'a> IntoArg for &'a str {
     fn into_arg(self) -> Arg { Arg(Some(self.to_owned())) }
@@ -188,48 +182,6 @@ impl<'a> IntoArg for &'a str {
 impl IntoArg for String {
     fn into_arg(self) -> Arg { Arg(Some(self)) }
 }
-
-impl IntoArg for bool {
-    fn into_arg(self) -> Arg { Arg(Some(self.to_string())) }
-}
-
-pub trait IntoStrArg {
-    fn into_str_arg(self) -> Arg;
-}
-
-impl IntoStrArg for String {
-    fn into_str_arg(self) -> Arg { self.into_arg() }
-}
-
-impl<'a> IntoStrArg for &'a str {
-    fn into_str_arg(self) -> Arg { self.into_arg() }
-}
-
-pub trait IntoNumArg {
-    fn into_num_arg(self) -> Arg;
-}
-
-macro_rules! impl_num {
-    ($n:ty) => {
-        impl IntoNumArg for Option<$n> {
-            fn into_num_arg(self) -> Arg {
-                self.into_arg()
-            }
-        }
-
-        impl IntoNumArg for $n {
-            fn into_num_arg(self) -> Arg {
-                self.into_arg()
-            }
-        }
-    };
-}
-
-impl_num!(u8);
-impl_num!(u16);
-impl_num!(u32);
-impl_num!(u64);
-impl_num!(usize);
 
 #[cfg(test)]
 mod tests {
