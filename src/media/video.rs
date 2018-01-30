@@ -58,6 +58,18 @@ impl Video {
         let res = client.get("getVideoInfo", args)?;
         Ok(serde_json::from_value(res)?)
     }
+
+    /// Returns the raw video captions.
+    pub fn captions<'a, S>(&self, client: &mut Client, format: S) -> Result<String>
+    where
+        S: Into<Option<&'a str>>
+    {
+        let args = Query::with("id", self.id)
+            .arg("format", format.into())
+            .build();
+        let res = client.get_raw("getCaptions", args)?;
+        Ok(res)
+    }
 }
 
 impl Streamable for Video {
