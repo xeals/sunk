@@ -6,7 +6,7 @@ use error::{Error, Result};
 use media::Media;
 use query::Query;
 
-use media::song;
+use media::song::Song;
 
 #[derive(Debug)]
 pub struct Playlist {
@@ -15,12 +15,12 @@ pub struct Playlist {
     duration: u64,
     cover_id: String,
     song_count: u64,
-    songs: Vec<song::Song>,
+    songs: Vec<Song>,
 }
 
 impl Playlist {
     /// Fetches the songs contained in a playlist.
-    pub fn songs(&self, client: &mut Client) -> Result<Vec<song::Song>> {
+    pub fn songs(&self, client: &mut Client) -> Result<Vec<Song>> {
         if self.songs.len() as u64 != self.song_count {
             Ok(get_playlist(client, self.id)?.songs)
         } else {
@@ -48,7 +48,7 @@ impl<'de> Deserialize<'de> for Playlist {
             changed: String,
             cover_art: String,
             #[serde(default)]
-            songs: Vec<song::Song>,
+            songs: Vec<Song>,
         }
 
         let raw = _Playlist::deserialize(de)?;
@@ -114,11 +114,11 @@ fn get_playlist(client: &mut Client, id: u64) -> Result<Playlist> {
 fn create_playlist(
     client: &mut Client,
     name: String,
-    songs: Vec<u64>,
+    songs: &[u64],
 ) -> Result<Option<Playlist>> {
     let args = Query::new()
         .arg("name", name)
-        .arg_list("songId", songs)
+        .arg_list("songId", &songs)
         .build();
 
     let res = client.get("createPlaylist", args)?;
@@ -150,8 +150,8 @@ where
         .arg("name", name.into())
         .arg("comment", comment.into())
         .arg("public", public.into())
-        .arg_list("songIdToAdd", to_add)
-        .arg_list("songIndexToRemove", to_remove)
+        .arg_list("songIdToAdd", &to_add)
+        .arg_list("songIndexToRemove", &to_remove)
         .build();
 
     client.get("updatePlaylist", args)?;

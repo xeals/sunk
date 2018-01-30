@@ -30,34 +30,12 @@ impl<'de> Deserialize<'de> for MusicFolder {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Genre {
     pub name: String,
     pub song_count: u64,
     pub album_count: u64,
-}
-
-impl<'de> Deserialize<'de> for Genre {
-    fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct _Genre {
-            song_count: u64,
-            album_count: u64,
-            value: String,
-        }
-
-        let raw = _Genre::deserialize(de)?;
-
-        Ok(Genre {
-            song_count: raw.song_count,
-            album_count: raw.album_count,
-            name: raw.value,
-        })
-    }
 }
 
 pub mod search {
@@ -87,7 +65,9 @@ pub mod search {
             }
         }
 
-        pub fn at_page(offset: usize) -> SearchPage { SearchPage { offset, count: 20 } }
+        pub fn at_page(offset: usize) -> SearchPage {
+            SearchPage { offset, count: 20 }
+        }
 
         pub fn with_size(self, count: usize) -> SearchPage {
             SearchPage {
