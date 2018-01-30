@@ -60,30 +60,25 @@ impl<'a> Jukebox<'a> {
         Jukebox { client }
     }
 
-    fn send_action_with<T, U>(
+    fn send_action_with<U>(
         &mut self,
         action: &str,
         index: U,
-        offset: U,
-        ids: &[usize],
-        gain: T
+        ids: Vec<usize>,
     ) -> Result<JukeboxStatus>
     where
-        T: Into<Option<f32>>,
         U: Into<Option<usize>>,
     {
         let args = Query::with("action", action)
             .arg("index", index.into())
-            .arg("offset", offset.into())
-            .arg_list("id", ids.to_vec())
-            .arg("gain", gain.into())
+            .arg_list("id", ids)
             .build();
         let res = self.client.get("jukeboxControl", args)?;
         Ok(serde_json::from_value(res)?)
     }
 
     fn send_action(&mut self, action: &str) -> Result<JukeboxStatus> {
-        self.send_action_with(action, None, None, &[], None)
+        self.send_action_with(action, None, vec![])
     }
 
     pub fn playlist(&mut self) -> Result<JukeboxPlaylist> {
@@ -101,6 +96,55 @@ impl<'a> Jukebox<'a> {
 
     pub fn stop(&mut self) -> Result<JukeboxStatus> {
         self.send_action("stop")
+    }
+
+    /// Moves the jukebox's currently playing song to the provided index (zero-indexed).
+    ///
+    /// Using an index outside the range of the jukebox playlist will play the last song in the
+    /// playlist.
+    pub fn skip_to(&mut self, n: usize) -> Result<JukeboxStatus> {
+        self.send_action_with("skip", n, vec![])
+    }
+
+    pub fn add(&mut self, song: Song) -> Result<JukeboxStatus> {
+        self.send_action_with("add", None, vec![song.id as usize])
+    }
+
+    pub fn add_id(&mut self, id: usize) -> Result<JukeboxStatus> {
+        self.send_action_with("add", None, vec![id])
+    }
+
+    pub fn add_all(&mut self, songs: &[Song]) -> Result<JukeboxStatus> {
+        self.send_action_with("add", None, songs.to_vec().iter().map(|s| s.id as usize)
+            .collect())
+    }
+
+    pub fn add_all_ids(&mut self, ids: &[usize]) -> Result<JukeboxStatus> {
+        self.send_action_with("add", None, ids.to_vec())
+    }
+
+    pub fn clear(&mut self) -> Result<JukeboxStatus> {
+        self.send_action("clear")
+    }
+
+    pub fn remove(&mut self, song: Song) -> Result<JukeboxStatus> {
+        self.send_action_with("remove", song.id as usize, vec![])
+    }
+
+    pub fn remove_id(&mut self, id: usize) -> Result<JukeboxStatus> {
+        self.send_action_with("remove", id, vec![])
+    }
+
+    pub fn shuffle(&mut self) -> Result<JukeboxStatus> {
+        self.send_action("shuffle")
+    }
+
+    pub fn set_volume(&mut self, volume: f32) -> Result<JukeboxStatus> {
+        let args = Query::with("action", "setGain")
+            .arg("gain", volume)
+            .build();
+        let res = self.client.get("jukeboxControl", args)?;
+        Ok(serde_json::from_value(res)?)
     }
 }
 

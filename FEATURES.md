@@ -91,6 +91,9 @@ by ID3 tags.
 
 ## Sharing
 
+`getShares` returns artists and albums that are sorted by the old, non-ID3 system. This makes the results unable to 
+be pivoted with `Album::songs()`, `Artist::albums()`, etc. As such, they may not be supported for a time.
+
 |               |   |
 |---------------|---|
 | `getShares`   |   |
@@ -112,9 +115,9 @@ by ID3 tags.
 
 ## Jukebox
 
-|                  |   |
-|------------------|---|
-| `jukeboxControl` |   |
+|                  |           |
+|------------------|-----------|
+| `jukeboxControl` | `Jukebox` |
 
 ## Internet radio
 
