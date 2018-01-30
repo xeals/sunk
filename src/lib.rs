@@ -26,6 +26,7 @@ pub mod album;
 pub mod artist;
 pub mod playlist;
 
+pub mod jukebox;
 pub mod library;
 pub mod query;
 pub mod api;
