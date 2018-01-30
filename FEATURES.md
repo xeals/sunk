@@ -138,7 +138,7 @@ by ID3 tags.
 |------------------|---------------------------|
 | `getUser`        | `user::get_user()`        |
 | `getUsers`       | `user::get_users()`       |
-| `createUser`     |                           |
+| `createUser`     | `User::new()...send_to()` |
 | `updateUser`     | `user::update_user()`     |
 | `deleteUser`     | `user::delete_user()`     |
 | `changePassword` | `user::change_password()` |

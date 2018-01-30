@@ -65,7 +65,7 @@ pub trait Media {
     /// will have a numeric or no identifier.
     ///
     /// Because the method has the potential to return either a string-y or
-    /// numeric ID, the number is cooerced into a `&str` to avoid type
+    /// numeric ID, the number is coerced into a `&str` to avoid type
     /// checking workarounds.
     fn cover_id(&self) -> Option<&str>;
 
@@ -77,8 +77,10 @@ pub trait Media {
     ///
     /// # Errors
     ///
-    /// Aside from errors imposed by the [`Client`], the method will error if
+    /// Aside from errors that the [`Client`] may cause, the method will error if
     /// the media does not have an associated cover art.
+    ///
+    /// [`Client`]: ../client/struct.Client.html
     fn cover_art<U: Into<Option<usize>>>(
         &self,
         client: &mut Client,
@@ -89,8 +91,10 @@ pub trait Media {
     ///
     /// # Errors
     ///
-    /// Aside from errors imposed by the [`Client`], the method will error if
+    /// Aside from errors that the [`Client`] may cause, the method will error if
     /// the media does not have an associated cover art.
+    ///
+    /// [`Client`]: ../client/struct.Client.html
     fn cover_art_url<U: Into<Option<usize>>>(
         &self,
         client: &mut Client,

@@ -83,13 +83,11 @@ pub mod search {
         pub fn new() -> SearchPage {
             SearchPage {
                 offset: 0,
-                count: 0,
+                count: 20,
             }
         }
 
-        pub fn at_page(offset: usize) -> SearchPage {
-            SearchPage { offset, count: 0 }
-        }
+        pub fn at_page(offset: usize) -> SearchPage { SearchPage { offset, count: 20 } }
 
         pub fn with_size(self, count: usize) -> SearchPage {
             SearchPage {

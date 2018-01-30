@@ -12,10 +12,9 @@ pub struct Response {
 /// A struct containing the possible responses of the Subsonic API.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct InnerResponse {
+struct InnerResponse {
     status: String,
     version: String,
-    #[doc(hidden)]
     error: Option<ApiError>,
     license: Option<serde_json::Value>,
     music_folders: Option<serde_json::Value>,
@@ -139,10 +138,7 @@ impl Response {
     ///
     /// # Examples
     ///
-    /// Basic usage:
-    ///
     /// ```
-    /// #[macro_use]
     /// extern crate serde_json;
     /// extern crate sunk;
     /// use sunk::response::Response;
@@ -178,4 +174,7 @@ impl Response {
 
     /// Returns `true` if the response is `"failed"`.
     pub fn is_err(&self) -> bool { !self.is_ok() }
+
+//    /// Returns `true` if the response is `"ok"`, but the response body is empty.
+//    pub fn is_empty(&self) -> bool { self.is_ok() && self.into_value().is_none() }
 }

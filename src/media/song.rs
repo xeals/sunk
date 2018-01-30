@@ -38,7 +38,7 @@ impl Song {
     /// parameter.
     ///
     ///  Returns an M3U8 playlist on success (content type
-    ///  "application/vnd.apple.mpegurl").
+    ///  `application/vnd.apple.mpegurl`).
     pub fn hls(
         &self,
         client: &mut Client,
