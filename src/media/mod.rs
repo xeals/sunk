@@ -21,17 +21,13 @@ pub trait Streamable {
     ///
     /// The method does not provide any information about the encoding of the
     /// media without evaluating the stream itself.
-    fn stream<A>(&self, client: &mut Client, args: A) -> Result<Vec<u8>>
-    where
-        A: StreamArgs;
+    fn stream(&self, client: &mut Client) -> Result<Vec<u8>>;
 
     /// Returns a constructed URL for streaming with desired arguments.
     ///
     /// This would be used in conjunction with a streaming library to directly
     /// take the URI and stream it.
-    fn stream_url<A>(&self, client: &mut Client, args: A) -> Result<String>
-    where
-        A: StreamArgs;
+    fn stream_url(&self, client: &mut Client) -> Result<String>;
 
     fn download(&self, client: &mut Client) -> Result<Vec<u8>>;
 
@@ -49,6 +45,27 @@ pub trait Streamable {
     /// return the default transcoding of the media (if enabled); otherwise, it
     /// will return the original encoding.
     fn encoding(&self) -> &str;
+
+    /// Sets the maximum bitrate the media will use when streaming.
+    ///
+    /// The bit rate is measured in Kbps. Higher bit rate media will be downsampled to this bit rate.
+    ///
+    /// Supported values are 0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192,
+    /// 224, 256, 320. The method will not error or panic when using a non-legal
+    /// value, but the server may not provide the requested bit rate. A bit rate
+    /// of 0 will disable a limit (i.e., use the original bit rate.)
+    fn set_max_bit_rate(&mut self, bit_rate: usize);
+
+    /// Sets the transcoding format the media will use when streaming.
+    ///
+    /// The possible transcoding formats are those defined by the Subsonic
+    /// server as valid transcoding targets. Default values are `"mp3"`,
+    /// `"flv"`, `"mkv"`, and `"mp4"`. The special value `"raw"` is additionally
+    /// supported on servers implementing version 1.9.0 of the API.
+    ///
+    /// The method will not error or panic when using a non-supported format,
+    /// but the server may not provide that transcoded format.
+    fn set_transcoding(&mut self, format: &str);
 }
 
 /// A trait deriving common methods for any form of media.
@@ -98,77 +115,6 @@ pub trait Media {
     ) -> Result<String>;
 }
 
-pub trait StreamArgs {
-    fn into_arg_set(self) -> Vec<(String, Arg)>;
-}
-
-#[derive(Debug)]
-pub struct MusicStreamArgs {
-    max_bitrate: Option<usize>,
-    format: Option<AudioFormat>,
-    estimate_content_length: Option<bool>,
-}
-
-impl MusicStreamArgs {
-    pub fn new<B, F, U>(
-        max_bitrate: U,
-        format: F,
-        estimate_content_length: B,
-    ) -> MusicStreamArgs
-    where
-        B: Into<Option<bool>>,
-        F: Into<Option<AudioFormat>>,
-        U: Into<Option<usize>>,
-    {
-        MusicStreamArgs {
-            max_bitrate: max_bitrate.into(),
-            format: format.into(),
-            estimate_content_length: estimate_content_length.into(),
-        }
-    }
-}
-
-impl StreamArgs for MusicStreamArgs {
-    fn into_arg_set(self) -> Vec<(String, Arg)> {
-        macro_rules! arg {
-            ($f:ident) => (self.$f.into_arg());
-        }
-
-        vec![
-            ("maxBitRate", arg!(max_bitrate)),
-            ("format", arg!(format)),
-            ("estimateContentLength", arg!(estimate_content_length)),
-        ].into_iter().map(|(k, v)| (k.to_string(), v)).collect()
-    }
-}
-
-#[derive(Debug)]
-pub struct VideoStreamArgs {
-    max_bitrate: usize,
-    format: VideoFormat,
-    time_offset: usize,
-    size: (usize, usize),
-    estimate_content_length: bool,
-    converted: bool,
-}
-
-impl StreamArgs for VideoStreamArgs {
-    fn into_arg_set(self) -> Vec<(String, Arg)> {
-        macro_rules! arg {
-            ($f:ident) => (self.$f.into_arg());
-        }
-
-        vec![
-            ("maxBitRate", arg!(max_bitrate)),
-            ("format", arg!(format)),
-            ("timeOffset", arg!(time_offset)),
-            ("size", format!("{}x{}", self.size.0, self.size.1).into_arg()),
-            ("estimateContentLength", arg!(estimate_content_length)),
-            ("converted", arg!(converted))
-        ].into_iter().map(|(k, v)| (k.to_string(), v)).collect()
-    }
-}
-
 /// Information about currently playing media.
 ///
 /// Due to the "now playing" information possibly containing both audio and
@@ -186,19 +132,43 @@ pub struct NowPlaying {
 }
 
 impl NowPlaying {
+    /// Fetches information about the currently playing song.
+    ///
     /// # Errors
     ///
     /// Aside from the inherent errors from the [`Client`], the method will
     /// error if the `NowPlaying` is not a song.
     ///
     /// [`Client`]: ../client/struct.Client.html
-    pub fn song_info<M>(&self, client: &mut Client) -> Result<Song> {
+    pub fn song_info(&self, client: &mut Client) -> Result<Song> {
         if self.is_video {
             Err(Error::Other("Now Playing info is not a song"))
         } else {
             song::get_song(client, self.id as u64)
         }
     }
+
+    /// Fetches information about the currently playing video.
+    ///
+    /// # Errors
+    ///
+    /// Aside from the inherent errors from the [`Client`], the method will
+    /// error if the `NowPlaying` is not a video.
+    ///
+    /// [`Client`]: ../client/struct.Client.html
+    pub fn video_info(&self, client: &mut Client) -> Result<Video> {
+        if !self.is_video {
+            Err(Error::Other("Now Playing info is not a video"))
+        } else {
+            Video::get(client, self.id)
+        }
+    }
+
+    /// Returns `true` if the currently playing media is a song.
+    pub fn is_song(&self) -> bool { !self.is_video }
+
+    /// Returns `true` if the currently playing media is a video.
+    pub fn is_video(&self) -> bool { self.is_video }
 }
 
 impl<'de> Deserialize<'de> for NowPlaying {

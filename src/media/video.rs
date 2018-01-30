@@ -4,7 +4,7 @@ use std::result;
 
 use client::Client;
 use error::{Error, Result};
-use media::{Media, StreamArgs, Streamable};
+use media::{Media, Streamable};
 use query::Query;
 
 #[derive(Debug)]
@@ -30,6 +30,10 @@ pub struct Video {
     bookmark_position: Option<u64>,
     original_height: Option<u64>,
     original_width: Option<u64>,
+    stream_br: Option<usize>,
+    stream_size: Option<(usize, usize)>,
+    stream_offset: usize,
+    stream_tc: Option<String>,
 }
 
 impl Video {
@@ -39,6 +43,7 @@ impl Video {
             .find(|v| v.id == id)
             .ok_or_else(|| Error::Other("no video found"))
     }
+
     pub fn list(client: &mut Client) -> Result<Vec<Video>> {
         let video = client.get("getVideos", Query::none())?;
         Ok(get_list_as!(video, Video))
@@ -70,25 +75,39 @@ impl Video {
         let res = client.get_raw("getCaptions", args)?;
         Ok(res)
     }
+
+    /// Sets the size that the video will stream at, measured in pixels.
+    pub fn set_size(&mut self, width: usize, height: usize) {
+        self.stream_size = Some((width, height));
+    }
+
+    /// Sets the time (in seconds) that a stream will be offset by.
+    ///
+    /// For example, to start playback at 1:40, use an offset of 100 seconds.
+    ///
+    /// Can be used to implement video skipping.
+    pub fn set_start_time(&mut self, offset: usize) {
+        self.stream_offset = offset;
+    }
 }
 
 impl Streamable for Video {
-    fn stream<A>(&self, client: &mut Client, args: A) -> Result<Vec<u8>>
-    where
-        A: StreamArgs,
-    {
-        let mut q = Query::with("id", self.id);
-        q.extend(args.into_arg_set());
-        client.get_bytes("stream", q)
+    fn stream(&self, client: &mut Client) -> Result<Vec<u8>> {
+        let args = Query::with("id", self.id)
+            .arg("maxBitRate", self.stream_br)
+            .arg("size", self.stream_size.map(|(w, h)| format!("{}x{}", w, h)))
+            .arg("timeOffset", self.stream_offset)
+            .build();
+        client.get_bytes("stream", args)
     }
 
-    fn stream_url<A>(&self, client: &mut Client, args: A) -> Result<String>
-    where
-        A: StreamArgs,
-    {
-        let mut q = Query::with("id", self.id);
-        q.extend(args.into_arg_set());
-        client.build_url("stream", q)
+    fn stream_url(&self, client: &mut Client) -> Result<String> {
+        let args = Query::with("id", self.id)
+            .arg("maxBitRate", self.stream_br)
+            .arg("size", self.stream_size.map(|(w, h)| format!("{}x{}", w, h)))
+            .arg("timeOffset", self.stream_offset)
+            .build();
+        client.build_url("stream", args)
     }
 
     fn download(&self, client: &mut Client) -> Result<Vec<u8>> {
@@ -103,6 +122,14 @@ impl Streamable for Video {
         self.transcoded_content_type
             .as_ref()
             .unwrap_or(&self.content_type)
+    }
+
+    fn set_max_bit_rate(&mut self, bit_rate: usize) {
+        self.stream_br = Some(bit_rate);
+    }
+
+    fn set_transcoding(&mut self, format: &str) {
+        self.stream_tc = Some(format.to_string());
     }
 }
 
@@ -194,6 +221,10 @@ impl<'de> Deserialize<'de> for Video {
             bookmark_position: raw.bookmark_position,
             original_height: raw.original_height,
             original_width: raw.original_width,
+            stream_br: None,
+            stream_size: None,
+            stream_offset: 0,
+            stream_tc: None,
         })
     }
 }

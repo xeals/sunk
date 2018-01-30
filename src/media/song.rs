@@ -4,9 +4,10 @@ use serde_json;
 use client::Client;
 use error::{Error, Result};
 use library::search;
-use media::{Media, StreamArgs, Streamable};
+use media::{Media, Streamable};
 use query::Query;
 
+/// A work of music contained on a Subsonic server.
 #[derive(Debug, Clone)]
 pub struct Song {
     pub id: u64,
@@ -27,25 +28,32 @@ pub struct Song {
     pub duration: Option<u64>,
     path: String,
     pub media_type: String,
+    stream_br: Option<usize>,
+    stream_tc: Option<String>,
 }
 
 impl Song {
     /// Creates an HLS (HTTP Live Streaming) playlist used for streaming video
     /// or audio. HLS is a streaming protocol implemented by Apple and works by
     /// breaking the overall stream into a sequence of small HTTP-based file
-    /// downloads. It's supported by iOS and newer versions of Android. This
-    /// method also supports adaptive bitrate streaming, see the bitRate
-    /// parameter.
+    /// downloads. It's supported by iOS and newer versions of Android.
     ///
     ///  Returns an M3U8 playlist on success (content type
     ///  "application/vnd.apple.mpegurl").
+    ///
+    /// The method also supports adaptive streaming; when supplied with multiple
+    /// bit rates, the server will create a variable playlist, suitable for
+    /// adaptive bitrate streaming. The playlist will support streaming at all
+    /// the specified bitrates. The `bit_rate` parameter can be omitted (with an
+    /// empty array) to disable adaptive streaming, or given a single value to
+    /// force streaming at that bit rate.
     pub fn hls(
         &self,
         client: &mut Client,
-        bitrates: Vec<u64>,
+        bit_rates: &[u64],
     ) -> Result<String> {
         let args = Query::with("id", self.id)
-            .arg_list("bitrate", bitrates)
+            .arg_list("bitrate", bit_rates)
             .build();
 
         client.get_raw("hls", args)
@@ -65,21 +73,15 @@ impl Song {
 }
 
 impl Streamable for Song {
-    fn stream<A>(&self, client: &mut Client, args: A) -> Result<Vec<u8>>
-    where
-        A: StreamArgs,
-    {
+    fn stream(&self, client: &mut Client) -> Result<Vec<u8>> {
         let mut q = Query::with("id", self.id);
-        q.extend(args.into_arg_set());
+        q.arg("maxBitRate", self.stream_br);
         client.get_bytes("stream", q)
     }
 
-    fn stream_url<A>(&self, client: &mut Client, args: A) -> Result<String>
-    where
-        A: StreamArgs,
-    {
+    fn stream_url(&self, client: &mut Client) -> Result<String> {
         let mut q = Query::with("id", self.id);
-        q.extend(args.into_arg_set());
+        q.arg("maxBitRate", self.stream_br);
         client.build_url("stream", q)
     }
 
@@ -95,6 +97,14 @@ impl Streamable for Song {
         self.transcoded_content_type
             .as_ref()
             .unwrap_or(&self.content_type)
+    }
+
+    fn set_max_bit_rate(&mut self, bit_rate: usize) {
+        self.stream_br = Some(bit_rate);
+    }
+
+    fn set_transcoding(&mut self, format: &str) {
+        self.stream_tc = Some(format.to_string());
     }
 }
 
@@ -187,6 +197,8 @@ impl<'de> Deserialize<'de> for Song {
             duration: raw.duration,
             path: raw.path,
             media_type: raw.media_type,
+            stream_br: None,
+            stream_tc: None,
         })
     }
 }
