@@ -50,6 +50,14 @@ impl User {
     ) -> Result<()> {
         self::change_password(client, &self.username, password)
     }
+
+    /// Returns the user's avatar image as a collection of bytes.
+    ///
+    /// The method makes no guarantee as to the encoding of the image, but does guarantee that it
+    /// is a valid image file.
+    pub fn avatar(&self, client: &mut Client) -> Result<Vec<u8>> {
+        client.get_bytes("getAvatar", Query::with("username", self.username.as_str()))
+    }
 }
 
 pub fn get_user(client: &mut Client, username: &str) -> Result<User> {
