@@ -168,6 +168,11 @@ macro_rules! impl_arg {
     }};
 }
 
+impl_arg!(i8);
+impl_arg!(i16);
+impl_arg!(i32);
+impl_arg!(i64);
+impl_arg!(isize);
 impl_arg!(u8);
 impl_arg!(u16);
 impl_arg!(u32);
