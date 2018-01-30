@@ -82,13 +82,13 @@ impl Query {
     ///
     /// assert_eq!(query_list, query_manual);
     /// ```
-    pub fn arg_list<A: IntoArg>(
+    pub fn arg_list<A: IntoArg + Clone>(
         &mut self,
         key: &str,
-        values: Vec<A>,
+        values: &[A],
     ) -> &mut Query {
-        for v in values {
-            self.inner.push((key.to_string(), v.into_arg()))
+        for v in values.clone() {
+            self.inner.push((key.to_string(), v.clone().into_arg()))
         }
         self
     }
@@ -125,7 +125,7 @@ impl Default for Query {
     fn default() -> Query { Query::new() }
 }
 
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct Arg(Option<String>);
 
 impl Arg {
@@ -168,6 +168,11 @@ macro_rules! impl_arg {
     }};
 }
 
+impl_arg!(i8);
+impl_arg!(i16);
+impl_arg!(i32);
+impl_arg!(i64);
+impl_arg!(isize);
 impl_arg!(u8);
 impl_arg!(u16);
 impl_arg!(u32);
@@ -217,7 +222,7 @@ mod tests {
     fn query_vec() {
         let ids = vec![1, 2, 3, 4];
         let mut q = Query::new();
-        q.arg_list("id", ids);
+        q.arg_list("id", &ids);
         assert_eq!("id=1&id=2&id=3&id=4", &format!("{}", q))
     }
 }
