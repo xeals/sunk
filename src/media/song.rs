@@ -53,7 +53,7 @@ impl Song {
         bit_rates: &[u64],
     ) -> Result<String> {
         let args = Query::with("id", self.id)
-            .arg_list("bitrate", bit_rates)
+            .arg_list("bitrate", bit_rates.to_vec())
             .build();
 
         client.get_raw("hls", args)
@@ -298,7 +298,7 @@ mod tests {
         let mut srv = test_util::demo_site().unwrap();
         let song = serde_json::from_value::<Song>(raw()).unwrap();
 
-        let hls = song.hls(&mut srv, vec![]);
+        let hls = song.hls(&mut srv, &[]);
         assert!(hls.is_ok());
     }
 

@@ -85,10 +85,10 @@ impl Query {
     pub fn arg_list<A: IntoArg + Clone>(
         &mut self,
         key: &str,
-        values: &[A],
+        values: Vec<A>,
     ) -> &mut Query {
         for v in values.clone() {
-            self.inner.push((key.to_string(), v.clone().into_arg()))
+            self.inner.push((key.to_string(), v.into_arg()))
         }
         self
     }
@@ -173,6 +173,8 @@ impl_arg!(i16);
 impl_arg!(i32);
 impl_arg!(i64);
 impl_arg!(isize);
+impl_arg!(f32);
+impl_arg!(f64);
 impl_arg!(u8);
 impl_arg!(u16);
 impl_arg!(u32);
