@@ -58,6 +58,15 @@ impl User {
     pub fn avatar(&self, client: &mut Client) -> Result<Vec<u8>> {
         client.get_bytes("getAvatar", Query::with("username", self.username.as_str()))
     }
+
+    /// Creates a new local user to be pushed to the server.
+    ///
+    /// See the [`UserBuilder`] struct for more details.
+    ///
+    /// [`UserBuilder`]: struct.UserBuilder.html
+    pub fn new(username: &str, password: &str, email: &str) -> UserBuilder {
+        UserBuilder::new(username, password, email)
+    }
 }
 
 pub fn get_user(client: &mut Client, username: &str) -> Result<User> {
@@ -68,22 +77,6 @@ pub fn get_user(client: &mut Client, username: &str) -> Result<User> {
 pub fn get_users(client: &mut Client) -> Result<Vec<User>> {
     let user = client.get("getUsers", Query::none())?;
     Ok(get_list_as!(user, User))
-}
-
-// TODO: Figure out how to pass fifteen possible permissions cleanly.
-pub fn create_user(
-    client: &mut Client,
-    username: &str,
-    password: &str,
-    email: &str,
-) -> Result<()> {
-    let args = Query::with("username", username)
-        .arg("password", password)
-        .arg("email", email)
-        .build();
-    warn!("Full permission set not yet supported");
-    client.get("createUser", args)?;
-    Ok(())
 }
 
 // TODO: Figure out how to pass fifteen possible permissions cleanly.
@@ -107,6 +100,132 @@ pub fn change_password(
         .build();
     client.get("changePassword", args)?;
     Ok(())
+}
+
+/// A new user to be created.
+#[derive(Clone, Debug, Default)]
+pub struct UserBuilder {
+    #[doc(hidden)]
+    username: String,
+    password: String,
+    email: String,
+    ldap_authenticated: bool,
+    admin_role: bool,
+    settings_role: bool,
+    stream_role: bool,
+    jukebox_role: bool,
+    download_role: bool,
+    upload_role: bool,
+    cover_art_role: bool,
+    comment_role: bool,
+    podcast_role: bool,
+    share_role: bool,
+    video_conversion_role: bool,
+    folders: Vec<u64>,
+    max_bitrate: u64,
+}
+
+macro_rules! build {
+    ($f:ident: $t:ty) => {
+        pub fn $f(&mut self, $f: $t) -> &mut UserBuilder {
+            self.$f = $f.into();
+            self
+        }
+    };
+}
+
+impl UserBuilder {
+    /// Begins creating a new user.
+    fn new(username: &str, password: &str, email: &str) -> UserBuilder {
+        UserBuilder {
+            username: username.to_string(),
+            password: password.to_string(),
+            email: email.to_string(),
+            ..UserBuilder::default()
+        }
+    }
+    /// Sets the user's username.
+    build!(username: &str);
+    /// Sets the user's password.
+    build!(password: &str);
+    /// Set's the user's email.
+    build!(email: &str);
+    /// Enables LDAP authentication for the user.
+    build!(ldap_authenticated: bool);
+    /// Bestows admin rights onto the user.
+    build!(admin_role: bool);
+    /// Allows the user to change personal settings and their own password.
+    build!(settings_role: bool);
+    /// Allows the user to play files.
+    build!(stream_role: bool);
+    /// Allows the user to play files in jukebox mode.
+    build!(jukebox_role: bool);
+    /// Allows the user to download files.
+    build!(download_role: bool);
+    /// Allows the user to upload files.
+    build!(upload_role: bool);
+    /// Allows the user to change cover art and tags.
+    build!(cover_art_role: bool);
+    /// Allows the user to create and edit comments and ratings.
+    build!(comment_role: bool);
+    /// Allows the user to administrate podcasts.
+    build!(podcast_role: bool);
+    /// Allows the user to share files with others.
+    build!(share_role: bool);
+    /// Allows the user to start video coversions.
+    build!(video_conversion_role: bool);
+    /// IDs of the music folders the user is allowed to access.
+    build!(folders: &[u64]);
+    /// The maximum bitrate (in Kbps) the user is allowed to stream at. Higher bitrate streams
+    /// will be downsampled to their limit.
+    build!(max_bitrate: u64);
+
+    /// Pushes a defined new user to the Subsonic server.
+    pub fn create(&self, client: &mut Client) -> Result<()> {
+        let args = Query::with("username", self.username.as_ref())
+            .arg("password", self.password.as_ref())
+            .arg("email", self.email.as_ref())
+            .arg("ldapAuthenticated", self.ldap_authenticated)
+            .arg("adminRole", self.admin_role)
+            .arg("settingsRole", self.settings_role)
+            .arg("streamRole", self.stream_role)
+            .arg("jukeboxRole", self.jukebox_role)
+            .arg("downloadRole", self.download_role)
+            .arg("uploadRole", self.upload_role)
+            .arg("coverArt_role", self.cover_art_role)
+            .arg("commentRole", self.comment_role)
+            .arg("podcastRole", self.podcast_role)
+            .arg("shareRole", self.share_role)
+            .arg("videoConversionRole", self.video_conversion_role)
+            .arg_list("musicFolderId", self.folders.clone())
+            .arg("maxBitRate", self.max_bitrate)
+            .build();
+        client.get("createUser", args)?;
+        Ok(())
+    }
+
+    pub fn update(&self, client: &mut Client) -> Result<()> {
+        let args = Query::with("username", self.username.as_ref())
+            .arg("password", self.password.as_ref())
+            .arg("email", self.email.as_ref())
+            .arg("ldapAuthenticated", self.ldap_authenticated)
+            .arg("adminRole", self.admin_role)
+            .arg("settingsRole", self.settings_role)
+            .arg("streamRole", self.stream_role)
+            .arg("jukeboxRole", self.jukebox_role)
+            .arg("downloadRole", self.download_role)
+            .arg("uploadRole", self.upload_role)
+            .arg("coverArt_role", self.cover_art_role)
+            .arg("commentRole", self.comment_role)
+            .arg("podcastRole", self.podcast_role)
+            .arg("shareRole", self.share_role)
+            .arg("videoConversionRole", self.video_conversion_role)
+            .arg_list("musicFolderId", self.folders.clone())
+            .arg("maxBitRate", self.max_bitrate)
+            .build();
+        client.get("updateUser", args)?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
