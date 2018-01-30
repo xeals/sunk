@@ -56,7 +56,7 @@ impl User {
     /// The method makes no guarantee as to the encoding of the image, but does guarantee that it
     /// is a valid image file.
     pub fn avatar(&self, client: &mut Client) -> Result<Vec<u8>> {
-        client.get_bytes("getAvatar", Query::with("username", self.username))
+        client.get_bytes("getAvatar", Query::with("username", self.username.as_str()))
     }
 }
 
