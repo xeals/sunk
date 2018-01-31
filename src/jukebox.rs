@@ -129,7 +129,7 @@ impl<'a> Jukebox<'a> {
         self.send_action("clear")
     }
 
-    pub fn remove(&mut self, song: Song) -> Result<JukeboxStatus> {
+    pub fn remove(&mut self, song: &Song) -> Result<JukeboxStatus> {
         self.send_action_with("remove", song.id as usize, &[])
     }
 

@@ -125,7 +125,7 @@ impl User {
     /// See the [`UserBuilder`] struct for more details.
     ///
     /// [`UserBuilder`]: struct.UserBuilder.html
-    pub fn new(username: &str, password: &str, email: &str) -> UserBuilder {
+    pub fn create(username: &str, password: &str, email: &str) -> UserBuilder {
         UserBuilder::new(username, password, email)
     }
 
