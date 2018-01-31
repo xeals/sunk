@@ -27,6 +27,7 @@ pub mod artist;
 pub mod playlist;
 
 pub mod jukebox;
+pub mod annotate;
 pub mod library;
 pub mod query;
 pub mod api;

@@ -9,6 +9,7 @@ pub mod format;
 pub mod podcast;
 pub mod song;
 pub mod video;
+pub mod radio;
 
 pub use self::song::Song;
 pub use self::video::Video;

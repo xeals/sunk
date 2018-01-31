@@ -5,6 +5,6 @@ macro_rules! get_list_as {
         struct List {
             $f: Vec<$t>
         }
-        serde_json::from_value::<List>($f)?.$f
+        ::serde_json::from_value::<List>($f)?.$f
     });
 }
