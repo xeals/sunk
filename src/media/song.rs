@@ -71,35 +71,28 @@ impl Song {
         Ok(get_list_as!(song, Song))
     }
 
-    /// Returns a number of random songs.
+    /// Returns a number of random songs. Optionally accepts a maximum number of results to return.
     ///
-    /// Optionally takes:
-    /// - a maximum number of songs to return
-    /// - a genre that all the returned songs will be in
-    /// - a "from" or "to" year, providing a range that returned songs will be
-    ///   between
-    /// - the ID of a music folder to exclusively return songs from
-    pub fn random<'a, S, U>(
-        client: &mut Client,
-        size: U,
-        genre: S,
-        from_year: U,
-        to_year: U,
-        folder_id: U,
-    ) -> Result<Vec<Song>>
+    /// Some parts of the query can be modified. Use [`random_with`] to be able to set these
+    /// optional fields.
+    ///
+    /// [`random_with`]: #method.random_with
+    pub fn random<S, U>( client: &mut Client, size: U) -> Result<Vec<Song>>
     where
-        S: Into<Option<&'a str>>,
-        U: Into<Option<u64>>,
+        U: Into<Option<usize>>,
     {
-        let args = Query::with("size", size.into().unwrap_or(10))
-            .arg("genre", genre.into())
-            .arg("fromYear", from_year.into())
-            .arg("toYear", to_year.into())
-            .arg("musicFolderId", folder_id.into())
-            .build();
-
-        let song = client.get("getRandomSongs", args)?;
+        let arg = Query::with("size", size.into().unwrap_or(10));
+        let song = client.get("getRandomSongs", arg)?;
         Ok(get_list_as!(song, Song))
+    }
+
+    /// Creates a new builder to request a set of random songs.
+    ///
+    /// See the [struct level documentation] for more information on how to use the builder.
+    ///
+    /// [struct level documentation]: struct.RandomSongs.html
+    pub fn random_with<'a>(client: &mut Client) -> RandomSongs {
+        RandomSongs::new(client, 10)
     }
 
     /// Lists all the songs in a provided genre. Supports paging through the
@@ -292,6 +285,131 @@ pub struct Lyrics {
     pub artist: String,
     #[serde(rename = "value")]
     pub lyrics: String,
+}
+
+/// A builder struct for a query of random songs.
+///
+/// A `RandomSongs` can only be created with [`Song::random_with`]. This allows customisation of the
+/// results to return.
+///
+/// The builder holds an internal reference of the client that it will query using, so there's no
+/// need to provide it with one when sending the query.
+///
+/// If you don't need to customise a query and just need a set of random songs, use
+/// [`Song::random`] instead, as it skips constructing the builder and directly queries the
+/// Subsonic server.
+///
+/// [`Song::random_with`]: struct.Song.html#method.random_with
+/// [`Song::random`]: struct.Song.html#method.random
+///
+/// # Examples
+///
+/// ```no_run
+/// extern crate sunk;
+/// use sunk::Client;
+/// use sunk::media::Song;
+///
+/// # fn run() -> sunk::error::Result<()> {
+/// let mut server = Client::new("http://demo.subsonic.org", "guest3", "guest")?;
+///
+/// // Get 25 songs from the last 10 years
+/// let random = Song::random_with(&mut server)
+///                  .size(25)
+///                  .in_years(2008..2018)
+///                  .request()?;
+/// # Ok(())
+/// # }
+/// # fn main() {
+/// # run().unwrap();
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct RandomSongs<'a> {
+    client: &'a mut Client,
+    size: usize,
+    genre: Option<&'a str>,
+    from_year: Option<usize>,
+    to_year: Option<usize>,
+    folder_id: Option<usize>,
+}
+
+use std::ops::Range;
+impl<'a> RandomSongs<'a> {
+    fn new(client: &'a mut Client, n: usize) -> RandomSongs<'a> {
+        RandomSongs {
+            client,
+            size: n,
+            genre: None,
+            from_year: None,
+            to_year: None,
+            folder_id: None,
+        }
+    }
+
+    /// Sets the number of songs to return.
+    pub fn size(&mut self, n: usize) -> &mut RandomSongs<'a> {
+        self.size = n;
+        self
+    }
+
+    /// Sets the genre that songs will be in.
+    ///
+    /// Genres will vary between Subsonic instances, but can be found using the [`Client::genres`]
+    /// method.
+    ///
+    /// [`Client::genres`]: ../../client/struct.Client.html#method.genres
+    pub fn genre(&mut self, genre: &'a str) -> &mut RandomSongs<'a> {
+        self.genre = Some(genre);
+        self
+    }
+
+    /// Sets a lower bound on the year that songs were released in.
+    pub fn from_year(&mut self, year: usize) -> &mut RandomSongs<'a> {
+        self.from_year = Some(year);
+        self
+    }
+
+    /// Sets an upper bound on the year that songs were released in.
+    pub fn to_year(&mut self, year: usize) -> &mut RandomSongs<'a> {
+        self.to_year = Some(year);
+        self
+    }
+
+    /// Sets both the lower and upper year bounds using a range.
+    ///
+    /// The range is set *inclusive* at both ends, unlike a standard Rust range. For example, a
+    /// range `2013..2016` will return songs that were released in 2013, 2014, 2015, and 2016.
+    pub fn in_years(&mut self, years: Range<usize>) -> &mut RandomSongs<'a> {
+        self.from_year = Some(years.start);
+        self.to_year = Some(years.end);
+        self
+    }
+
+    /// Sets the folder index that songs must be in.
+    ///
+    /// Music folders are zero-indexed, and there will always be index `0` (provided the server
+    /// is configured at all) . A list of music folders can be found using the
+    /// [`Client::music_folders`] method.
+    ///
+    /// [`Client::music_folders`]: ../../client/struct.Client.html#method.music_folders
+    pub fn in_folder(&mut self, id: usize) -> &mut RandomSongs<'a> {
+        self.folder_id = Some(id);
+        self
+    }
+
+    /// Issues the query to the Subsonic server. Returns a list of random songs, modified by the
+    /// builder.
+    pub fn request(&mut self) -> Result<Vec<Song>> {
+        let args = Query::with("size", self.size)
+            .arg("genre", self.genre)
+            .arg("fromYear", self.from_year)
+            .arg("toYear", self.to_year)
+            .arg("musicFolderId", self.folder_id)
+            .build();
+
+        let song = self.client.get("getRandomSongs", args)?;
+        Ok(get_list_as!(song, Song))
+    }
 }
 
 #[cfg(test)]
