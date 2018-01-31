@@ -10,29 +10,123 @@ use query::Query;
 /// A work of music contained on a Subsonic server.
 #[derive(Debug, Clone)]
 pub struct Song {
+    /// Unique identifier for the song.
     pub id: u64,
+    /// Title of the song. Prefers the song's ID3 tags, but will fall back to
+    /// the file name.
     pub title: String,
+    /// Album the song belongs to. Reads from the song's ID3 tags.
     pub album: Option<String>,
     album_id: Option<u64>,
+    /// Credited artist for the song. Reads from the song's ID3 tags.
     pub artist: Option<String>,
     artist_id: Option<u64>,
+    /// Position of the song in the album.
     pub track: Option<u64>,
+    /// Year the song was released.
     pub year: Option<u64>,
+    /// Genre of the song.
     pub genre: Option<String>,
     cover_id: Option<String>,
+    /// File size of the song, in bytes.
     pub size: u64,
     content_type: String,
     suffix: String,
     transcoded_content_type: Option<String>,
     transcoded_suffix: Option<String>,
+    /// Duration of the song, in seconds.
     pub duration: Option<u64>,
     path: String,
-    pub media_type: String,
+    media_type: String,
     stream_br: Option<usize>,
     stream_tc: Option<String>,
 }
 
 impl Song {
+    /// Returns a single song from the Subsonic server.
+    ///
+    /// # Errors
+    ///
+    /// The server will return an error if there is no song matching the
+    /// provided ID.
+    pub fn get(client: &mut Client, id: u64) -> Result<Song> {
+        let res = client.get("getSong", Query::with("id", id))?;
+        Ok(serde_json::from_value(res)?)
+    }
+
+    /// Returns a number of random songs similar to this one.
+    ///
+    /// last.fm suggests a number of similar songs to the one the method is
+    /// called on. Optionally takes a `count` to specify the maximum number of
+    /// results to return.
+    pub fn similar<U>(&self, client: &mut Client, count: U) -> Result<Vec<Song>>
+    where
+        U: Into<Option<usize>>,
+    {
+        let args = Query::with("id", self.id)
+            .arg("count", count.into())
+            .build();
+
+        let song = client.get("getSimilarSongs2", args)?;
+        Ok(get_list_as!(song, Song))
+    }
+
+    /// Returns a number of random songs.
+    ///
+    /// Optionally takes:
+    /// - a maximum number of songs to return
+    /// - a genre that all the returned songs will be in
+    /// - a "from" or "to" year, providing a range that returned songs will be
+    ///   between
+    /// - the ID of a music folder to exclusively return songs from
+    pub fn random<'a, S, U>(
+        client: &mut Client,
+        size: U,
+        genre: S,
+        from_year: U,
+        to_year: U,
+        folder_id: U,
+    ) -> Result<Vec<Song>>
+    where
+        S: Into<Option<&'a str>>,
+        U: Into<Option<u64>>,
+    {
+        let args = Query::with("size", size.into().unwrap_or(10))
+            .arg("genre", genre.into())
+            .arg("fromYear", from_year.into())
+            .arg("toYear", to_year.into())
+            .arg("musicFolderId", folder_id.into())
+            .build();
+
+        let song = client.get("getRandomSongs", args)?;
+        Ok(get_list_as!(song, Song))
+    }
+
+    /// Lists all the songs in a provided genre. Supports paging through the
+    /// result.
+    ///
+    /// See the documentation for [`SearchPage`] for paging.
+    ///
+    /// [`SearchPage`]: ../../library/search/struct.SearchPage.html
+    pub fn list_in_genre<U>(
+        client: &mut Client,
+        genre: &str,
+        page: search::SearchPage,
+        folder_id: U,
+    ) -> Result<Vec<Song>>
+    where
+        U: Into<Option<u64>>,
+    {
+        let args = Query::with("genre", genre)
+            .arg("count", page.count)
+            .arg("offset", page.offset)
+            .arg("musicFolderId", folder_id.into())
+            .build();
+
+        let song = client.get("getSongsByGenre", args)?;
+        Ok(get_list_as!(song, Song))
+    }
+
     /// Creates an HLS (HTTP Live Streaming) playlist used for streaming video
     /// or audio. HLS is a streaming protocol implemented by Apple and works by
     /// breaking the overall stream into a sequence of small HTTP-based file
@@ -57,18 +151,6 @@ impl Song {
             .build();
 
         client.get_raw("hls", args)
-    }
-
-    pub fn similar<U>(&self, client: &mut Client, count: U) -> Result<Vec<Song>>
-    where
-        U: Into<Option<usize>>,
-    {
-        let args = Query::with("id", self.id)
-            .arg("count", count.into())
-            .build();
-
-        let song = client.get("getSimilarSongs2", args)?;
-        Ok(get_list_as!(song, Song))
     }
 }
 
@@ -203,80 +285,13 @@ impl<'de> Deserialize<'de> for Song {
     }
 }
 
-pub fn get_song(client: &mut Client, id: u64) -> Result<Song> {
-    let res = client.get("getSong", Query::with("id", id))?;
-    Ok(serde_json::from_value(res)?)
-}
-
-pub fn get_random_songs<'a, S, U>(
-    client: &mut Client,
-    size: U,
-    genre: S,
-    from_year: U,
-    to_year: U,
-    folder_id: U,
-) -> Result<Vec<Song>>
-where
-    S: Into<Option<&'a str>>,
-    U: Into<Option<u64>>,
-{
-    let args = Query::with("size", size.into().unwrap_or(10))
-        .arg("genre", genre.into())
-        .arg("fromYear", from_year.into())
-        .arg("toYear", to_year.into())
-        .arg("musicFolderId", folder_id.into())
-        .build();
-
-    let song = client.get("getRandomSongs", args)?;
-    Ok(get_list_as!(song, Song))
-}
-
-pub fn get_songs_in_genre<U>(
-    client: &mut Client,
-    genre: &str,
-    page: search::SearchPage,
-    folder_id: U,
-) -> Result<Vec<Song>>
-where
-    U: Into<Option<u64>>,
-{
-    let args = Query::with("genre", genre)
-        .arg("count", page.count)
-        .arg("offset", page.offset)
-        .arg("musicFolderId", folder_id.into())
-        .build();
-
-    let song = client.get("getSongsByGenre", args)?;
-    Ok(get_list_as!(song, Song))
-}
-
-/// Searches for lyrics matching the artist and title. Returns `None` if no
-/// lyrics are found.
-pub fn get_lyrics<'a, S>(
-    client: &mut Client,
-    artist: S,
-    title: S,
-) -> Result<Option<Lyrics>>
-where
-    S: Into<Option<&'a str>>,
-{
-    let args = Query::with("artist", artist.into())
-        .arg("title", title.into())
-        .build();
-    let res = client.get("getLyrics", args)?;
-
-    if res.get("value").is_some() {
-        Ok(Some(serde_json::from_value(res)?))
-    } else {
-        Ok(None)
-    }
-}
-
+/// A struct matching a lyric search result.
 #[derive(Debug, Deserialize)]
 pub struct Lyrics {
-    title: String,
-    artist: String,
-    value: String,
+    pub title: String,
+    pub artist: String,
+    #[serde(rename = "value")]
+    pub lyrics: String,
 }
 
 #[cfg(test)]

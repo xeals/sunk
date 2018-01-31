@@ -3,6 +3,7 @@ use error::Result;
 use query::Query;
 use serde_json;
 
+/// A struct representing a Subsonic user.
 #[derive(Debug, Deserialize)]
 pub struct User {
     /// A user's name.
@@ -146,16 +147,18 @@ impl User {
     /// extern crate sunk;
     /// use sunk::Client;
     /// use sunk::user::User;
+    ///
     /// # fn run() -> sunk::error::Result<()> {
     /// let mut server = Client::new("http://demo.subsonic.org", "guest3", "guest")?;
     /// let mut user = User::get(&mut server, "guest")?;
+    ///
     /// // Update email
     /// user.email = "user@example.com".to_string();
     /// // Disable commenting
     /// user.comment_role = false;
     /// // Update on server
     /// user.update(&mut server)?;
-    /// Ok(())
+    /// # Ok(())
     /// # }
     /// # fn main() {
     /// #     run().unwrap();

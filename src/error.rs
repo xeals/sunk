@@ -4,47 +4,88 @@ use serde_json;
 use std::{fmt, io, num, result};
 use std::convert::From;
 
+/// An alias for `sunk`'s error result type.
 pub type Result<T> = result::Result<T, self::Error>;
 
+/// Possible errors that may be returned by a function.
 #[derive(Debug, Fail)]
 pub enum Error {
-    #[fail(display = "Invalid URL: {}", _0)] Uri(UriError),
+    /// Unable to connect to the Subsonic server.
     #[fail(display = "Unable to connect to server: received {}", _0)]
     ConnectionError(reqwest::StatusCode),
-    #[fail(display = "{}", _0)] Other(&'static str),
 
-    #[fail(display = "{}", _0)] Api(#[cause] ApiError),
+    /// Unable to recognize the URL provided in `Client` setup.
+    #[fail(display = "Invalid URL: {}", _0)]
+    Uri(UriError),
+    /// The Subsonic server returned an error.
+    #[fail(display = "{}", _0)]
+    Api(#[cause] ApiError),
 
+    #[doc(hidden)]
     #[fail(display = "Failed to parse int: {}", _0)]
     ParError(#[cause] num::ParseIntError),
-    #[fail(display = "IO error: {}", _0)] Io(#[cause] io::Error),
+    /// An IO issue occurred.
+    #[fail(display = "IO error: {}", _0)]
+    Io(#[cause] io::Error),
+    /// An error in the web framework occurred.
     #[fail(display = "Connection error: {}", _0)]
     ReqwestError(#[cause] reqwest::Error),
+    /// An error occurred in serialization.
     #[fail(display = "Error serialising: {}", _0)]
     SerdeError(#[cause] serde_json::Error),
+
+    /// For general, one-off errors.
+    #[fail(display = "{}", _0)]
+    Other(&'static str),
 }
 
+/// Possible errors when initializing a `Client`.
 #[derive(Debug, Fail)]
 pub enum UriError {
-    #[fail(display = "{}", _0)] Reqwest(#[cause] reqwest::UrlError),
-    #[fail(display = "Unable to determine scheme")] Scheme,
-    #[fail(display = "Missing server address")] Address,
+    /// Unable to parse the URL.
+    #[fail(display = "{}", _0)]
+    Reqwest(#[cause] reqwest::UrlError),
+    /// Unable to determine the scheme of the address.
+    ///
+    /// The provider for the `Client` does not automatically add the HTTP
+    /// scheme like other Rust frameworks. If you encounter this error,
+    /// you probably need to add `http://` or `https://` to your server address.
+    #[fail(display = "Unable to determine scheme")]
+    Scheme,
+    /// The server address was not provided.
+    #[fail(display = "Missing server address")]
+    Address,
 }
 
+/// The possible errors a Subsonic server may return.
 #[derive(Debug, Fail, Clone)]
 pub enum ApiError {
+    /// A generic error.
     Generic(String),
+    /// A required parameter is missing.
     MissingParameter,
+    /// Incompatible REST protocol version. Client must upgrade.
     ClientMustUpgrade,
+    /// Incompatible REST protocol version. Server must upgrade.
     ServerMustUpgrade,
+    /// Wrong username or password.
     WrongAuth,
+    /// Token authentication is not supported for LDAP users.
     Ldap,
+    /// The user is not authorized for the given operation.
     NotAuthorized(String),
+    /// The trial period for the Subsonic server is over.
+    ///
+    /// Subsonic has a thirty day trial to use the software, including the REST
+    /// API. Forks of Subsonic typically do not offer this support and should
+    /// never return this error.
     TrialExpired,
+    /// The requested data was not found.
     NotFound,
 }
 
 impl ApiError {
+    /// Returns the code number of the error.
     pub fn as_u16(&self) -> u16 {
         use self::ApiError::*;
         match *self {

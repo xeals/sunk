@@ -1,9 +1,10 @@
 use serde::de::{Deserialize, Deserializer};
+use serde_json;
 use std::result;
 
 use client::Client;
 use error::{Error, Result};
-use query::{Arg, IntoArg};
+use query::Query;
 
 pub mod format;
 pub mod podcast;
@@ -11,31 +12,63 @@ pub mod song;
 pub mod video;
 pub mod radio;
 
+use self::song::Lyrics;
 pub use self::song::Song;
 pub use self::video::Video;
 
 use self::format::{AudioFormat, VideoFormat};
 
+/// Searches for lyrics matching the artist and title. Returns `None` if no
+/// lyrics are found.
+pub fn lyrics<'a, S>(
+    client: &mut Client,
+    artist: S,
+    title: S,
+) -> Result<Option<Lyrics>>
+where
+    S: Into<Option<&'a str>>,
+{
+    let args = Query::with("artist", artist.into())
+        .arg("title", title.into())
+        .build();
+    let res = client.get("getLyrics", args)?;
+
+    if res.get("value").is_some() {
+        Ok(Some(serde_json::from_value(res)?))
+    } else {
+        Ok(None)
+    }
+}
+
 /// A trait for forms of streamable media.
 pub trait Streamable {
     /// Returns the raw bytes of the media.
+    ///
+    /// Supports transcoding options specified on the media beforehand. See the
+    /// struct-level documentation for available options. The `Media` trait
+    /// provides setting a maximum bit rate and a target transcoding format.
     ///
     /// The method does not provide any information about the encoding of the
     /// media without evaluating the stream itself.
     fn stream(&self, client: &mut Client) -> Result<Vec<u8>>;
 
-    /// Returns a constructed URL for streaming with desired arguments.
+    /// Returns a constructed URL for streaming.
+    ///
+    /// Supports transcoding options specified on the media beforehand. See the
+    /// struct-level documentation for available options. The `Media` trait
+    /// provides setting a maximum bit rate and a target transcoding format.
     ///
     /// This would be used in conjunction with a streaming library to directly
     /// take the URI and stream it.
     fn stream_url(&self, client: &mut Client) -> Result<String>;
 
+    /// Returns the raw bytes of the media.
+    ///
+    /// The method does not provide any information about the encoding of the
+    /// media without evaluating the stream itself.
     fn download(&self, client: &mut Client) -> Result<Vec<u8>>;
 
     /// Returns a constructed URL for downloading the song.
-    ///
-    /// `download_url()` does not support transcoding, while `stream_url()`
-    /// does.
     fn download_url(&self, client: &mut Client) -> Result<String>;
 
     /// Returns the default encoding of the media.
@@ -130,9 +163,12 @@ pub trait Media {
 /// the full `Song` or `Video` struct, though requires another web reqeust.
 #[derive(Debug)]
 pub struct NowPlaying {
-    user: String,
-    minutes_ago: usize,
-    player_id: usize,
+    /// The user streaming the current media.
+    pub user: String,
+    /// How long ago the user sent an update to the server.
+    pub minutes_ago: usize,
+    /// The ID of the player.
+    pub player_id: usize,
     id: usize,
     is_video: bool,
 }
@@ -150,7 +186,7 @@ impl NowPlaying {
         if self.is_video {
             Err(Error::Other("Now Playing info is not a song"))
         } else {
-            song::get_song(client, self.id as u64)
+            Song::get(client, self.id as u64)
         }
     }
 
