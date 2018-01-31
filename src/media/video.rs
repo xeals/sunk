@@ -65,9 +65,13 @@ impl Video {
     }
 
     /// Returns the raw video captions.
-    pub fn captions<'a, S>(&self, client: &mut Client, format: S) -> Result<String>
+    pub fn captions<'a, S>(
+        &self,
+        client: &mut Client,
+        format: S,
+    ) -> Result<String>
     where
-        S: Into<Option<&'a str>>
+        S: Into<Option<&'a str>>,
     {
         let args = Query::with("id", self.id)
             .arg("format", format.into())
@@ -95,7 +99,10 @@ impl Streamable for Video {
     fn stream(&self, client: &mut Client) -> Result<Vec<u8>> {
         let args = Query::with("id", self.id)
             .arg("maxBitRate", self.stream_br)
-            .arg("size", self.stream_size.map(|(w, h)| format!("{}x{}", w, h)))
+            .arg(
+                "size",
+                self.stream_size.map(|(w, h)| format!("{}x{}", w, h)),
+            )
             .arg("timeOffset", self.stream_offset)
             .build();
         client.get_bytes("stream", args)
@@ -104,7 +111,10 @@ impl Streamable for Video {
     fn stream_url(&self, client: &mut Client) -> Result<String> {
         let args = Query::with("id", self.id)
             .arg("maxBitRate", self.stream_br)
-            .arg("size", self.stream_size.map(|(w, h)| format!("{}x{}", w, h)))
+            .arg(
+                "size",
+                self.stream_size.map(|(w, h)| format!("{}x{}", w, h)),
+            )
             .arg("timeOffset", self.stream_offset)
             .build();
         client.build_url("stream", args)

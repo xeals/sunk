@@ -53,10 +53,13 @@ impl User {
 
     /// Returns the user's avatar image as a collection of bytes.
     ///
-    /// The method makes no guarantee as to the encoding of the image, but does guarantee that it
-    /// is a valid image file.
+    /// The method makes no guarantee as to the encoding of the image, but does
+    /// guarantee that it is a valid image file.
     pub fn avatar(&self, client: &mut Client) -> Result<Vec<u8>> {
-        client.get_bytes("getAvatar", Query::with("username", self.username.as_str()))
+        client.get_bytes(
+            "getAvatar",
+            Query::with("username", self.username.as_str()),
+        )
     }
 
     /// Creates a new local user to be pushed to the server.
@@ -176,8 +179,8 @@ impl UserBuilder {
     build!(video_conversion_role: bool);
     /// IDs of the music folders the user is allowed to access.
     build!(folders: &[u64]);
-    /// The maximum bitrate (in Kbps) the user is allowed to stream at. Higher bitrate streams
-    /// will be downsampled to their limit.
+    /// The maximum bitrate (in Kbps) the user is allowed to stream at. Higher
+    /// bitrate streams will be downsampled to their limit.
     build!(max_bitrate: u64);
 
     /// Pushes a defined new user to the Subsonic server.

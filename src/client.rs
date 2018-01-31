@@ -335,11 +335,17 @@ impl Client {
     }
 
     /// Returns a list of all starred artists, albums, and songs.
-    pub fn starred<U>(&mut self, folder_id: U) -> Result<(Vec<Artist>, Vec<Album>, Vec<Song>)>
+    pub fn starred<U>(
+        &mut self,
+        folder_id: U,
+    ) -> Result<(Vec<Artist>, Vec<Album>, Vec<Song>)>
     where
-        U: Into<Option<usize>>
+        U: Into<Option<usize>>,
     {
-        let res = self.get("getStarred", Query::with("musicFolderId", folder_id.into()))?;
+        let res = self.get(
+            "getStarred",
+            Query::with("musicFolderId", folder_id.into()),
+        )?;
 
         #[derive(Deserialize)]
         struct Output {

@@ -15,18 +15,26 @@ pub trait Annotatable {
     fn set_rating(&self, client: &mut Client, rating: u8) -> Result<()>;
 
     /// Registers the local playback of the content. Typically used when playing
-    /// media that is cached on the client. This operation includes the following:
+    /// media that is cached on the client. This operation includes the
+    /// following:
     ///
-    /// - "Scrobbles" the media files on last.fm if the user has configured their last.fm
-    /// credentials on the Subsonic server.
+    /// - "Scrobbles" the media files on last.fm if the user has configured
+    /// their last.fm credentials on the Subsonic server.
     /// - Updates the play count and last played timestamp for the content.
-    /// - Makes the content appear in the "Now Playing" page in the web app, and appear in the
-    /// list of songs returned by [`Client::now_playing()`] (since API version 1.11.0).
+    /// - Makes the content appear in the "Now Playing" page in the web app,
+    /// and appear in the list of songs returned by
+    /// [`Client::now_playing()`] (since API version 1.11.0).
     ///
     /// [`Client::now_playing()`]: ../struct.Client.html#method.now_playing
     ///
-    /// `time` should be a valid ISO8601 timestamp. In the future, this will be validated.
-    fn scrobble<'a, B, T>(&self, client: &mut Client, time: T, now_playing: B) -> Result<()>
+    /// `time` should be a valid ISO8601 timestamp. In the future, this will be
+    /// validated.
+    fn scrobble<'a, B, T>(
+        &self,
+        client: &mut Client,
+        time: T,
+        now_playing: B,
+    ) -> Result<()>
     where
         B: Into<Option<bool>>,
         T: Into<Option<&'a str>>;
@@ -48,16 +56,20 @@ impl Annotatable for Artist {
             return Err(Error::Other("rating must be between 0 and 5 inclusive"))
         }
 
-        let args = Query::with("id", self.id)
-            .arg("rating", rating)
-            .build();
+        let args = Query::with("id", self.id).arg("rating", rating).build();
         client.get("setRating", args)?;
         Ok(())
     }
 
-    fn scrobble<'a, B, T>(&self, client: &mut Client, time: T, now_playing: B) -> Result<()> where
+    fn scrobble<'a, B, T>(
+        &self,
+        client: &mut Client,
+        time: T,
+        now_playing: B,
+    ) -> Result<()>
+    where
         B: Into<Option<bool>>,
-        T: Into<Option<&'a str>>
+        T: Into<Option<&'a str>>,
     {
         let args = Query::with("id", self.id)
             .arg("time", time.into())
@@ -84,16 +96,20 @@ impl Annotatable for Album {
             return Err(Error::Other("rating must be between 0 and 5 inclusive"))
         }
 
-        let args = Query::with("id", self.id)
-            .arg("rating", rating)
-            .build();
+        let args = Query::with("id", self.id).arg("rating", rating).build();
         client.get("setRating", args)?;
         Ok(())
     }
 
-    fn scrobble<'a, B, T>(&self, client: &mut Client, time: T, now_playing: B) -> Result<()> where
+    fn scrobble<'a, B, T>(
+        &self,
+        client: &mut Client,
+        time: T,
+        now_playing: B,
+    ) -> Result<()>
+    where
         B: Into<Option<bool>>,
-        T: Into<Option<&'a str>>
+        T: Into<Option<&'a str>>,
     {
         let args = Query::with("id", self.id)
             .arg("time", time.into())
@@ -120,16 +136,20 @@ impl Annotatable for Song {
             return Err(Error::Other("rating must be between 0 and 5 inclusive"))
         }
 
-        let args = Query::with("id", self.id)
-            .arg("rating", rating)
-            .build();
+        let args = Query::with("id", self.id).arg("rating", rating).build();
         client.get("setRating", args)?;
         Ok(())
     }
 
-    fn scrobble<'a, B, T>(&self, client: &mut Client, time: T, now_playing: B) -> Result<()> where
+    fn scrobble<'a, B, T>(
+        &self,
+        client: &mut Client,
+        time: T,
+        now_playing: B,
+    ) -> Result<()>
+    where
         B: Into<Option<bool>>,
-        T: Into<Option<&'a str>>
+        T: Into<Option<&'a str>>,
     {
         let args = Query::with("id", self.id)
             .arg("time", time.into())

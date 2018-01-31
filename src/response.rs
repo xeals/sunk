@@ -175,6 +175,7 @@ impl Response {
     /// Returns `true` if the response is `"failed"`.
     pub fn is_err(&self) -> bool { !self.is_ok() }
 
-//    /// Returns `true` if the response is `"ok"`, but the response body is empty.
-//    pub fn is_empty(&self) -> bool { self.is_ok() && self.into_value().is_none() }
+    // /// Returns `true` if the response is `"ok"`, but the response body
+    // is empty. pub fn is_empty(&self) -> bool { self.is_ok() &&
+    // self.into_value().is_none() }
 }

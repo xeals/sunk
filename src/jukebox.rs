@@ -1,5 +1,5 @@
-use serde_json;
 use serde::de::{Deserialize, Deserializer};
+use serde_json;
 use std::result;
 
 use client::Client;
@@ -29,8 +29,9 @@ pub struct JukeboxPlaylist {
 }
 
 impl<'de> Deserialize<'de> for JukeboxPlaylist {
-    fn deserialize<D>(de: D) -> result::Result<Self, D::Error> where
-        D: Deserializer<'de>
+    fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
     {
         #[derive(Deserialize)]
         struct _Playlist {
@@ -56,9 +57,7 @@ impl<'de> Deserialize<'de> for JukeboxPlaylist {
 
 impl<'a> Jukebox<'a> {
     /// Creates a new handler to the jukebox of the client.
-    pub fn start(client: &'a mut Client) -> Jukebox {
-        Jukebox { client }
-    }
+    pub fn start(client: &'a mut Client) -> Jukebox { Jukebox { client } }
 
     fn send_action_with<U>(
         &mut self,
@@ -82,7 +81,8 @@ impl<'a> Jukebox<'a> {
     }
 
     pub fn playlist(&mut self) -> Result<JukeboxPlaylist> {
-        let res = self.client.get("jukeboxControl", Query::with("action", "get"))?;
+        let res = self.client
+            .get("jukeboxControl", Query::with("action", "get"))?;
         Ok(serde_json::from_value::<JukeboxPlaylist>(res)?)
     }
 
@@ -94,14 +94,13 @@ impl<'a> Jukebox<'a> {
         self.send_action("start")
     }
 
-    pub fn stop(&mut self) -> Result<JukeboxStatus> {
-        self.send_action("stop")
-    }
+    pub fn stop(&mut self) -> Result<JukeboxStatus> { self.send_action("stop") }
 
-    /// Moves the jukebox's currently playing song to the provided index (zero-indexed).
+    /// Moves the jukebox's currently playing song to the provided index
+    /// (zero-indexed).
     ///
-    /// Using an index outside the range of the jukebox playlist will play the last song in the
-    /// playlist.
+    /// Using an index outside the range of the jukebox playlist will play the
+    /// last song in the playlist.
     pub fn skip_to(&mut self, n: usize) -> Result<JukeboxStatus> {
         self.send_action_with("skip", n, vec![])
     }
@@ -115,8 +114,11 @@ impl<'a> Jukebox<'a> {
     }
 
     pub fn add_all(&mut self, songs: &[Song]) -> Result<JukeboxStatus> {
-        self.send_action_with("add", None, songs.to_vec().iter().map(|s| s.id as usize)
-            .collect())
+        self.send_action_with(
+            "add",
+            None,
+            songs.to_vec().iter().map(|s| s.id as usize).collect(),
+        )
     }
 
     pub fn add_all_ids(&mut self, ids: &[usize]) -> Result<JukeboxStatus> {
@@ -140,9 +142,7 @@ impl<'a> Jukebox<'a> {
     }
 
     pub fn set_volume(&mut self, volume: f32) -> Result<JukeboxStatus> {
-        let args = Query::with("action", "setGain")
-            .arg("gain", volume)
-            .build();
+        let args = Query::with("action", "setGain").arg("gain", volume).build();
         let res = self.client.get("jukeboxControl", args)?;
         Ok(serde_json::from_value(res)?)
     }

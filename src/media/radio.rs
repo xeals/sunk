@@ -16,7 +16,7 @@ pub struct RadioStation {
 impl<'de> Deserialize<'de> for RadioStation {
     fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
@@ -37,22 +37,34 @@ impl<'de> Deserialize<'de> for RadioStation {
 }
 
 impl RadioStation {
-    pub fn id(&self) -> usize {self.id}
-    pub fn stream_url(&self) -> &str {&self.stream_url}
-    pub fn name(&self) -> &str {&self.name}
-    pub fn homepage_url(&self) -> Option<&str> {self.homepage_url.map(|s| s.as_str())}
+    pub fn id(&self) -> usize { self.id }
+    pub fn stream_url(&self) -> &str { &self.stream_url }
+    pub fn name(&self) -> &str { &self.name }
+    pub fn homepage_url(&self) -> Option<&str> {
+        self.homepage_url.map(|s| s.as_str())
+    }
 
-    pub fn set_name(&mut self, name: &str) {self.name = name.to_owned();}
-    pub fn set_stream(&mut self, url: &str) {self.stream_url = url.to_owned();}
-    pub fn set_homepage(&mut self, url: &str) {self.homepage_url = Some(url.to_owned());}
+    pub fn set_name(&mut self, name: &str) { self.name = name.to_owned(); }
+    pub fn set_stream(&mut self, url: &str) {
+        self.stream_url = url.to_owned();
+    }
+    pub fn set_homepage(&mut self, url: &str) {
+        self.homepage_url = Some(url.to_owned());
+    }
 
     pub fn list(client: &mut Client) -> Result<Vec<RadioStation>> {
         #[allow(non_snake_case)]
-        let internetRadioStation = client.get("getInternetRadioStations", Query::none())?;
+        let internetRadioStation =
+            client.get("getInternetRadioStations", Query::none())?;
         Ok(get_list_as!(internetRadioStation, RadioStation))
     }
 
-    pub fn create(client: &mut Client, name: &str, url: &str, homepage: Option<&str>) -> Result<()> {
+    pub fn create(
+        client: &mut Client,
+        name: &str,
+        url: &str,
+        homepage: Option<&str>,
+    ) -> Result<()> {
         let args = Query::with("name", name)
             .arg("streamUrl", url)
             .arg("homepageUrl", homepage)

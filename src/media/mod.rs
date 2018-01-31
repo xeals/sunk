@@ -49,7 +49,8 @@ pub trait Streamable {
 
     /// Sets the maximum bitrate the media will use when streaming.
     ///
-    /// The bit rate is measured in Kbps. Higher bit rate media will be downsampled to this bit rate.
+    /// The bit rate is measured in Kbps. Higher bit rate media will be
+    /// downsampled to this bit rate.
     ///
     /// Supported values are 0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192,
     /// 224, 256, 320. The method will not error or panic when using a non-legal
@@ -95,8 +96,8 @@ pub trait Media {
     ///
     /// # Errors
     ///
-    /// Aside from errors that the [`Client`] may cause, the method will error if
-    /// the media does not have an associated cover art.
+    /// Aside from errors that the [`Client`] may cause, the method will error
+    /// if the media does not have an associated cover art.
     ///
     /// [`Client`]: ../client/struct.Client.html
     fn cover_art<U: Into<Option<usize>>>(
@@ -109,8 +110,8 @@ pub trait Media {
     ///
     /// # Errors
     ///
-    /// Aside from errors that the [`Client`] may cause, the method will error if
-    /// the media does not have an associated cover art.
+    /// Aside from errors that the [`Client`] may cause, the method will error
+    /// if the media does not have an associated cover art.
     ///
     /// [`Client`]: ../client/struct.Client.html
     fn cover_art_url<U: Into<Option<usize>>>(

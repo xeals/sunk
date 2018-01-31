@@ -176,7 +176,9 @@ mod tests {
         let songs = parsed.songs(&mut srv);
 
         match songs {
-            Err(::error::Error::Api(::error::ApiError::NotAuthorized(_))) => assert!(true),
+            Err(::error::Error::Api(::error::ApiError::NotAuthorized(_))) => {
+                assert!(true)
+            }
             Err(e) => panic!("unexpected error: {}", e),
             Ok(_) => panic!("test should have failed; insufficient privilege"),
         }
