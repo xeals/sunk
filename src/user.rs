@@ -4,51 +4,109 @@ use query::Query;
 use serde_json;
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct User {
+    /// A user's name.
     pub username: String,
+    /// A user's email address.
     pub email: String,
+    /// A user may be limited to the bit rate of media they may stream. Any
+    /// higher sampled media will be downsampled to their limit. A limit of `0`
+    /// disables this.
+    #[serde(rename = "maxBitRate")]
     #[serde(default)]
-    max_bit_rate: u64,
-    scrobbling_enabled: bool,
-    admin_role: bool,
-    settings_role: bool,
-    download_role: bool,
-    upload_role: bool,
-    playlist_role: bool,
-    cover_art_role: bool,
-    comment_role: bool,
-    podcast_role: bool,
-    stream_role: bool,
-    jukebox_role: bool,
-    share_role: bool,
-    video_conversion_role: bool,
-    avatar_last_changed: String,
+    pub max_bit_rate: u64,
+    /// Whether the user is allowed to scrobble their songs to last.fm.
+    #[serde(rename = "scrobblingEnabled")]
+    pub scrobbling_enabled: bool,
+    /// Whether the user is authenticated in LDAP.
+    #[serde(rename = "ldapAuthenticated")]
+    #[serde(default)]
+    pub ldap_authenticated: bool,
+    /// Whether the user is an administrator.
+    #[serde(rename = "adminRole")]
+    pub admin_role: bool,
+    /// Whether the user is allowed to manage their own settings and change
+    /// their password.
+    #[serde(rename = "settingsRole")]
+    pub settings_role: bool,
+    /// Whether the user is allowed to download media.
+    #[serde(rename = "downloadRole")]
+    pub download_role: bool,
+    /// Whether the user is allowed to upload media.
+    #[serde(rename = "uploadRole")]
+    pub upload_role: bool,
+    /// Whether the user is allowed to modify or delete playlists.
+    #[serde(rename = "playlistRole")]
+    pub playlist_role: bool,
+    /// Whether the user is allowed to change cover art and media tags.
+    #[serde(rename = "coverArtRole")]
+    pub cover_art_role: bool,
+    /// Whether the user is allowed to create and edit comments and
+    /// ratings.
+    #[serde(rename = "commentRole")]
+    pub comment_role: bool,
+    /// Whether the user is allowed to administrate podcasts.
+    #[serde(rename = "podcastRole")]
+    pub podcast_role: bool,
+    /// Whether the user is allowed to play media.
+    #[serde(rename = "streamRole")]
+    pub stream_role: bool,
+    /// Whether the user is allowed to control the jukebox.
+    #[serde(rename = "jukeboxRole")]
+    pub jukebox_role: bool,
+    /// Whether the user is allowed to share content.
+    #[serde(rename = "shareRole")]
+    pub share_role: bool,
+    /// Whether the user is allowed to start video conversions.
+    #[serde(rename = "videoConversionRole")]
+    pub video_conversion_role: bool,
+    /// The date the user's avatar was last changed (as an ISO8601
+    /// timestamp).
+    #[serde(rename = "avatarLastChanged")]
+    pub avatar_last_changed: String,
+    /// The list of media folders the user has access to.
     #[serde(rename = "folder")]
-    folders: Vec<u64>,
+    pub folders: Vec<u64>,
+    #[serde(default)]
+    _private: bool,
 }
 
 impl User {
-    pub fn bitrate_limit(&self) -> u64 { self.max_bit_rate }
-    pub fn is_admin(&self) -> bool { self.admin_role }
-    pub fn can_comment(&self) -> bool { self.comment_role }
-    pub fn can_download(&self) -> bool { self.download_role }
-    pub fn can_scrobble(&self) -> bool { self.scrobbling_enabled }
-    pub fn can_share(&self) -> bool { self.share_role }
-    pub fn can_stream(&self) -> bool { self.stream_role }
-    pub fn can_upload(&self) -> bool { self.upload_role }
-    pub fn can_manage_cover(&self) -> bool { self.cover_art_role }
-    pub fn can_manage_jukebox(&self) -> bool { self.jukebox_role }
-    pub fn can_manage_playlist(&self) -> bool { self.playlist_role }
-    pub fn can_manage_podcast(&self) -> bool { self.podcast_role }
-    pub fn can_manage_self(&self) -> bool { self.settings_role }
+    /// Fetches a single user's information from the server.
+    pub fn get(client: &mut Client, username: &str) -> Result<User> {
+        let res = client.get("getUser", Query::with("username", username))?;
+        Ok(serde_json::from_value::<User>(res)?)
+    }
 
+    /// Lists all users on the server.
+    ///
+    /// # Errors
+    ///
+    /// Attempting to use this method as a non-administrative user (when
+    /// creating the `Client`) will result in a [`NotAuthorized`] error.
+    ///
+    /// [`NotAuthorized`]: ../error/enum.ApiError.html#variant.NotAuthorized
+    pub fn list(client: &mut Client) -> Result<Vec<User>> {
+        let user = client.get("getUsers", Query::none())?;
+        Ok(get_list_as!(user, User))
+    }
+
+    /// Changes the user's password.
+    ///
+    /// # Errors
+    ///
+    /// A user may only change their own password, and only if they have the
+    /// `settings_role` permission, unless they are an administrator.
     pub fn change_password(
         &self,
         client: &mut Client,
         password: &str,
     ) -> Result<()> {
-        self::change_password(client, &self.username, password)
+        let args = Query::with("username", self.username.as_str())
+            .arg("password", password)
+            .build();
+        client.get("changePassword", args)?;
+        Ok(())
     }
 
     /// Returns the user's avatar image as a collection of bytes.
@@ -70,45 +128,65 @@ impl User {
     pub fn new(username: &str, password: &str, email: &str) -> UserBuilder {
         UserBuilder::new(username, password, email)
     }
-}
 
-pub fn get_user(client: &mut Client, username: &str) -> Result<User> {
-    let res = client.get("getUser", Query::with("username", username))?;
-    Ok(serde_json::from_value::<User>(res)?)
-}
+    /// Removes the user from the Subsonic server.
+    pub fn delete(&self, client: &mut Client) -> Result<()> {
+        client.get(
+            "deleteUser",
+            Query::with("username", self.username.as_str()),
+        )?;
+        Ok(())
+    }
 
-pub fn get_users(client: &mut Client) -> Result<Vec<User>> {
-    let user = client.get("getUsers", Query::none())?;
-    Ok(get_list_as!(user, User))
-}
-
-// TODO: Figure out how to pass fifteen possible permissions cleanly.
-pub fn update_user(client: &mut Client, username: &str) -> Result<()> {
-    client.get("updateUser", Query::with("username", username))?;
-    Ok(())
-}
-
-pub fn delete_user(client: &mut Client, username: &str) -> Result<()> {
-    client.get("deleteUser", Query::with("username", username))?;
-    Ok(())
-}
-
-pub fn change_password(
-    client: &mut Client,
-    username: &str,
-    password: &str,
-) -> Result<()> {
-    let args = Query::with("username", username)
-        .arg("password", password)
-        .build();
-    client.get("changePassword", args)?;
-    Ok(())
+    /// Pushes any changes made to the user to the server.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// extern crate sunk;
+    /// use sunk::Client;
+    /// use sunk::user::User;
+    /// # fn run() -> sunk::error::Result<()> {
+    /// let mut server = Client::new("http://demo.subsonic.org", "guest3", "guest")?;
+    /// let mut user = User::get(&mut server, "guest")?;
+    /// // Update email
+    /// user.email = "user@example.com".to_string();
+    /// // Disable commenting
+    /// user.comment_role = false;
+    /// // Update on server
+    /// user.update(&mut server)?;
+    /// Ok(())
+    /// # }
+    /// # fn main() {
+    /// #     run().unwrap();
+    /// # }
+    /// ```
+    pub fn update(&self, client: &mut Client) -> Result<()> {
+        let args = Query::with("username", self.username.as_ref())
+            .arg("email", self.email.as_ref())
+            .arg("ldapAuthenticated", self.ldap_authenticated)
+            .arg("adminRole", self.admin_role)
+            .arg("settingsRole", self.settings_role)
+            .arg("streamRole", self.stream_role)
+            .arg("jukeboxRole", self.jukebox_role)
+            .arg("downloadRole", self.download_role)
+            .arg("uploadRole", self.upload_role)
+            .arg("coverArt_role", self.cover_art_role)
+            .arg("commentRole", self.comment_role)
+            .arg("podcastRole", self.podcast_role)
+            .arg("shareRole", self.share_role)
+            .arg("videoConversionRole", self.video_conversion_role)
+            .arg_list("musicFolderId", self.folders.clone())
+            .arg("maxBitRate", self.max_bit_rate)
+            .build();
+        client.get("updateUser", args)?;
+        Ok(())
+    }
 }
 
 /// A new user to be created.
 #[derive(Clone, Debug, Default)]
 pub struct UserBuilder {
-    #[doc(hidden)]
     username: String,
     password: String,
     email: String,
@@ -125,7 +203,7 @@ pub struct UserBuilder {
     share_role: bool,
     video_conversion_role: bool,
     folders: Vec<u64>,
-    max_bitrate: u64,
+    max_bit_rate: u64,
 }
 
 macro_rules! build {
@@ -147,6 +225,7 @@ impl UserBuilder {
             ..UserBuilder::default()
         }
     }
+
     /// Sets the user's username.
     build!(username: &str);
     /// Sets the user's password.
@@ -179,9 +258,9 @@ impl UserBuilder {
     build!(video_conversion_role: bool);
     /// IDs of the music folders the user is allowed to access.
     build!(folders: &[u64]);
-    /// The maximum bitrate (in Kbps) the user is allowed to stream at. Higher
-    /// bitrate streams will be downsampled to their limit.
-    build!(max_bitrate: u64);
+    /// The maximum bit rate (in Kbps) the user is allowed to stream at. Higher
+    /// bit rate streams will be downsampled to their limit.
+    build!(max_bit_rate: u64);
 
     /// Pushes a defined new user to the Subsonic server.
     pub fn create(&self, client: &mut Client) -> Result<()> {
@@ -201,32 +280,9 @@ impl UserBuilder {
             .arg("shareRole", self.share_role)
             .arg("videoConversionRole", self.video_conversion_role)
             .arg_list("musicFolderId", self.folders.clone())
-            .arg("maxBitRate", self.max_bitrate)
+            .arg("maxBitRate", self.max_bit_rate)
             .build();
         client.get("createUser", args)?;
-        Ok(())
-    }
-
-    pub fn update(&self, client: &mut Client) -> Result<()> {
-        let args = Query::with("username", self.username.as_ref())
-            .arg("password", self.password.as_ref())
-            .arg("email", self.email.as_ref())
-            .arg("ldapAuthenticated", self.ldap_authenticated)
-            .arg("adminRole", self.admin_role)
-            .arg("settingsRole", self.settings_role)
-            .arg("streamRole", self.stream_role)
-            .arg("jukeboxRole", self.jukebox_role)
-            .arg("downloadRole", self.download_role)
-            .arg("uploadRole", self.upload_role)
-            .arg("coverArt_role", self.cover_art_role)
-            .arg("commentRole", self.comment_role)
-            .arg("podcastRole", self.podcast_role)
-            .arg("shareRole", self.share_role)
-            .arg("videoConversionRole", self.video_conversion_role)
-            .arg_list("musicFolderId", self.folders.clone())
-            .arg("maxBitRate", self.max_bitrate)
-            .build();
-        client.get("updateUser", args)?;
         Ok(())
     }
 }
@@ -239,10 +295,10 @@ mod tests {
     #[test]
     fn remote_parse_user() {
         let mut srv = test_util::demo_site().unwrap();
-        let guest = get_user(&mut srv, "guest3").unwrap();
+        let guest = User::get(&mut srv, "guest3").unwrap();
 
         assert_eq!(guest.username, "guest3");
-        assert!(guest.can_stream());
-        assert!(!guest.is_admin());
+        assert!(guest.stream_role);
+        assert!(!guest.admin_role);
     }
 }
