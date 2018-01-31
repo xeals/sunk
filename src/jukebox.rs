@@ -63,7 +63,7 @@ impl<'a> Jukebox<'a> {
         &mut self,
         action: &str,
         index: U,
-        ids: Vec<usize>,
+        ids: &[usize],
     ) -> Result<JukeboxStatus>
     where
         U: Into<Option<usize>>,
@@ -77,7 +77,7 @@ impl<'a> Jukebox<'a> {
     }
 
     fn send_action(&mut self, action: &str) -> Result<JukeboxStatus> {
-        self.send_action_with(action, None, vec![])
+        self.send_action_with(action, None, &[])
     }
 
     pub fn playlist(&mut self) -> Result<JukeboxPlaylist> {
@@ -102,27 +102,27 @@ impl<'a> Jukebox<'a> {
     /// Using an index outside the range of the jukebox playlist will play the
     /// last song in the playlist.
     pub fn skip_to(&mut self, n: usize) -> Result<JukeboxStatus> {
-        self.send_action_with("skip", n, vec![])
+        self.send_action_with("skip", n, &[])
     }
 
-    pub fn add(&mut self, song: Song) -> Result<JukeboxStatus> {
-        self.send_action_with("add", None, vec![song.id as usize])
+    pub fn add(&mut self, song: &Song) -> Result<JukeboxStatus> {
+        self.send_action_with("add", None, &[song.id as usize])
     }
 
     pub fn add_id(&mut self, id: usize) -> Result<JukeboxStatus> {
-        self.send_action_with("add", None, vec![id])
+        self.send_action_with("add", None, &[id])
     }
 
     pub fn add_all(&mut self, songs: &[Song]) -> Result<JukeboxStatus> {
         self.send_action_with(
             "add",
             None,
-            songs.to_vec().iter().map(|s| s.id as usize).collect(),
+            &songs.iter().map(|s| s.id as usize).collect::<Vec<_>>(),
         )
     }
 
     pub fn add_all_ids(&mut self, ids: &[usize]) -> Result<JukeboxStatus> {
-        self.send_action_with("add", None, ids.to_vec())
+        self.send_action_with("add", None, ids)
     }
 
     pub fn clear(&mut self) -> Result<JukeboxStatus> {
@@ -130,11 +130,11 @@ impl<'a> Jukebox<'a> {
     }
 
     pub fn remove(&mut self, song: Song) -> Result<JukeboxStatus> {
-        self.send_action_with("remove", song.id as usize, vec![])
+        self.send_action_with("remove", song.id as usize, &[])
     }
 
     pub fn remove_id(&mut self, id: usize) -> Result<JukeboxStatus> {
-        self.send_action_with("remove", id, vec![])
+        self.send_action_with("remove", id, &[])
     }
 
     pub fn shuffle(&mut self) -> Result<JukeboxStatus> {

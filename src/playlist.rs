@@ -118,7 +118,7 @@ fn create_playlist(
 ) -> Result<Option<Playlist>> {
     let args = Query::new()
         .arg("name", name)
-        .arg_list("songId", songs.to_vec())
+        .arg_list("songId", songs)
         .build();
 
     let res = client.get("createPlaylist", args)?;
@@ -150,8 +150,8 @@ where
         .arg("name", name.into())
         .arg("comment", comment.into())
         .arg("public", public.into())
-        .arg_list("songIdToAdd", to_add.to_vec())
-        .arg_list("songIndexToRemove", to_remove.to_vec())
+        .arg_list("songIdToAdd", to_add)
+        .arg_list("songIndexToRemove", to_remove)
         .build();
 
     client.get("updatePlaylist", args)?;

@@ -176,7 +176,7 @@ impl User {
             .arg("podcastRole", self.podcast_role)
             .arg("shareRole", self.share_role)
             .arg("videoConversionRole", self.video_conversion_role)
-            .arg_list("musicFolderId", self.folders.clone())
+            .arg_list("musicFolderId", &self.folders.clone())
             .arg("maxBitRate", self.max_bit_rate)
             .build();
         client.get("updateUser", args)?;
@@ -279,7 +279,7 @@ impl UserBuilder {
             .arg("podcastRole", self.podcast_role)
             .arg("shareRole", self.share_role)
             .arg("videoConversionRole", self.video_conversion_role)
-            .arg_list("musicFolderId", self.folders.clone())
+            .arg_list("musicFolderId", &self.folders)
             .arg("maxBitRate", self.max_bit_rate)
             .build();
         client.get("createUser", args)?;

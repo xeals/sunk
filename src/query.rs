@@ -85,9 +85,9 @@ impl Query {
     pub fn arg_list<A: IntoArg + Clone>(
         &mut self,
         key: &str,
-        values: Vec<A>,
+        values: &[A],
     ) -> &mut Query {
-        for v in values.clone() {
+        for v in values.to_owned() {
             self.inner.push((key.to_string(), v.into_arg()))
         }
         self

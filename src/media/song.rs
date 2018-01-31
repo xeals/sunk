@@ -53,7 +53,7 @@ impl Song {
         bit_rates: &[u64],
     ) -> Result<String> {
         let args = Query::with("id", self.id)
-            .arg_list("bitrate", bit_rates.to_vec())
+            .arg_list("bitrate", bit_rates)
             .build();
 
         client.get_raw("hls", args)
