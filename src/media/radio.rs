@@ -8,9 +8,9 @@ use query::Query;
 #[derive(Debug)]
 pub struct RadioStation {
     id: usize,
-    name: String,
-    stream_url: String,
-    homepage_url: Option<String>,
+    pub name: String,
+    pub stream_url: String,
+    pub homepage_url: Option<String>,
 }
 
 impl<'de> Deserialize<'de> for RadioStation {
@@ -38,19 +38,6 @@ impl<'de> Deserialize<'de> for RadioStation {
 
 impl RadioStation {
     pub fn id(&self) -> usize { self.id }
-    pub fn stream_url(&self) -> &str { &self.stream_url }
-    pub fn name(&self) -> &str { &self.name }
-    pub fn homepage_url(&self) -> Option<&str> {
-        self.homepage_url.map(|s| s.as_str())
-    }
-
-    pub fn set_name(&mut self, name: &str) { self.name = name.to_owned(); }
-    pub fn set_stream(&mut self, url: &str) {
-        self.stream_url = url.to_owned();
-    }
-    pub fn set_homepage(&mut self, url: &str) {
-        self.homepage_url = Some(url.to_owned());
-    }
 
     pub fn list(client: &mut Client) -> Result<Vec<RadioStation>> {
         #[allow(non_snake_case)]
@@ -75,9 +62,9 @@ impl RadioStation {
 
     pub fn update(&self, client: &mut Client) -> Result<()> {
         let args = Query::with("id", self.id)
-            .arg("streamUrl", self.stream_url)
-            .arg("name", self.name)
-            .arg("homepageUrl", self.homepage_url)
+            .arg("streamUrl", self.stream_url.as_str())
+            .arg("name", self.name.as_str())
+            .arg("homepageUrl", self.homepage_url.as_ref().map(|s| s.as_str()))
             .build();
         client.get("updateInternetRadioStation", args)?;
         Ok(())
