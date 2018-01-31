@@ -224,7 +224,7 @@ mod tests {
     fn query_vec() {
         let ids = vec![1, 2, 3, 4];
         let mut q = Query::new();
-        q.arg_list("id", &ids);
+        q.arg_list("id", ids);
         assert_eq!("id=1&id=2&id=3&id=4", &format!("{}", q))
     }
 }

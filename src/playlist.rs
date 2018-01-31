@@ -168,14 +168,18 @@ mod tests {
     use super::*;
     use test_util;
 
+    // The demo playlist exists, but can't be accessed
     #[test]
     fn remote_playlist_songs() {
         let parsed = serde_json::from_value::<Playlist>(raw()).unwrap();
         let mut srv = test_util::demo_site().unwrap();
-        let songs = parsed.songs(&mut srv).unwrap();
+        let songs = parsed.songs(&mut srv);
 
-        println!("{:?}", songs);
-        assert!(!songs.is_empty())
+        match songs {
+            Err(::error::Error::Api(::error::ApiError::NotAuthorized(_))) => assert!(true),
+            Err(e) => panic!("unexpected error: {}", e),
+            Ok(_) => panic!("test should have failed; insufficient privilege"),
+        }
     }
 
     fn raw() -> serde_json::Value {

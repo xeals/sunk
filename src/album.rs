@@ -219,7 +219,6 @@ mod tests {
             get_albums(&mut srv, ListType::AlphaByArtist, None, None, None)
                 .unwrap();
 
-        println!("{:?}", albums);
         assert!(!albums.is_empty())
     }
 

@@ -246,7 +246,6 @@ mod tests {
         assert_eq!(parsed.cover_id, Some(String::from("ar-1")));
 
         let cover = parsed.cover_art(&mut srv, None).unwrap();
-        println!("{:?}", cover);
         assert!(!cover.is_empty())
     }
 
