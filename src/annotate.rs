@@ -3,6 +3,7 @@ use artist::Artist;
 use client::Client;
 use error::{Error, Result};
 use media::song::Song;
+use query::Query;
 
 pub trait Annotatable {
     /// Attaches a star to the content.
