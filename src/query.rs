@@ -56,7 +56,7 @@ impl Query {
     /// let mut builder = Query::new();
     /// assert_ne!(query_with, builder);
     ///
-    /// query2.arg("key", "value");
+    /// builder.arg("key", "value");
     /// assert_eq!(query_with, builder);
     /// ```
     pub fn arg<A: IntoArg>(&mut self, key: &str, value: A) -> &mut Query {
@@ -70,7 +70,7 @@ impl Query {
     ///
     /// ```
     /// # use sunk::query::Query;
-    /// let list = vec![0, 1, 2];
+    /// let list = &[0, 1, 2];
     ///
     /// let query_list = Query::new().arg_list("index", list).build();
     ///

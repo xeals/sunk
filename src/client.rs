@@ -31,6 +31,7 @@ const SALT_SIZE: usize = 36; // Minimum 6 characters.
 /// # let site = "http://demo.subsonic.org";
 /// # let user = "guest3";
 /// # let password = "guest";
+///
 /// let mut server = Client::new(site, user, password)?;
 /// server.check_connection()?;
 /// # Ok(())
@@ -280,21 +281,21 @@ impl Client {
     /// ```no_run
     /// use sunk::Client;
     /// use sunk::library::search;
-    /// # fn run() -> Result<(), sunk::error::Error> {
+    ///
+    /// # fn run() -> sunk::error::Result<()> {
     /// # let site = "http://demo.subsonic.org";
     /// # let user = "guest3";
     /// # let password = "guest";
-    /// #
     /// let mut server = Client::new(site, user, password)?;
     ///
     /// let search_size = search::SearchPage::new();
     /// let ignore = search::NONE;
     ///
     /// let (artists, albums, songs) = server.search("smile", ignore, ignore, search_size)?;
-    /// for song in songs {
-    ///     let url = song.download_url(&mut server)?;
-    ///     // Download `url`.
-    /// }
+    ///
+    /// assert!(artists.is_empty());
+    /// assert!(albums.is_empty());
+    /// assert!(!songs.is_empty());
     /// # Ok(())
     /// # }
     /// ```

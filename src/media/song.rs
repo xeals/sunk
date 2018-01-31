@@ -310,7 +310,10 @@ pub struct Lyrics {
 /// use sunk::media::Song;
 ///
 /// # fn run() -> sunk::error::Result<()> {
-/// let mut server = Client::new("http://demo.subsonic.org", "guest3", "guest")?;
+/// # let site = "http://demo.subsonic.org";
+/// # let user = "guest3";
+/// # let password = "guest";
+/// let mut server = Client::new(site, user, password)?;
 ///
 /// // Get 25 songs from the last 10 years
 /// let random = Song::random_with(&mut server)
