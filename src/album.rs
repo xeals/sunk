@@ -57,7 +57,7 @@ pub struct Album {
 }
 
 impl Album {
-    pub fn songs(&self, client: &mut Client) -> Result<Vec<Song>> {
+    pub fn songs(&self, client: &Client) -> Result<Vec<Song>> {
         if self.songs.len() as u64 != self.song_count {
             Ok(get_album(client, self.id)?.songs)
         } else {
@@ -65,7 +65,7 @@ impl Album {
         }
     }
 
-    pub fn info(&self, client: &mut Client) -> Result<AlbumInfo> {
+    pub fn info(&self, client: &Client) -> Result<AlbumInfo> {
         let res = client.get("getArtistInfo", Query::with("id", self.id))?;
         Ok(serde_json::from_value(res)?)
     }
@@ -119,7 +119,7 @@ impl Media for Album {
 
     fn cover_art<U: Into<Option<usize>>>(
         &self,
-        client: &mut Client,
+        client: &Client,
         size: U,
     ) -> Result<Vec<u8>> {
         let cover = self.cover_id()
@@ -131,7 +131,7 @@ impl Media for Album {
 
     fn cover_art_url<U: Into<Option<usize>>>(
         &self,
-        client: &mut Client,
+        client: &Client,
         size: U,
     ) -> Result<String> {
         let cover = self.cover_id()
@@ -181,13 +181,13 @@ impl<'de> Deserialize<'de> for AlbumInfo {
     }
 }
 
-pub fn get_album(client: &mut Client, id: u64) -> Result<Album> {
+pub fn get_album(client: &Client, id: u64) -> Result<Album> {
     let res = client.get("getAlbum", Query::with("id", id))?;
     Ok(serde_json::from_value::<Album>(res)?)
 }
 
 pub fn get_albums<U>(
-    client: &mut Client,
+    client: &Client,
     list_type: ListType,
     size: U,
     offset: U,

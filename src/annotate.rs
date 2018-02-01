@@ -7,13 +7,13 @@ use query::Query;
 
 pub trait Annotatable {
     /// Attaches a star to the content.
-    fn star(&self, client: &mut Client) -> Result<()>;
+    fn star(&self, client: &Client) -> Result<()>;
 
     /// Removes a star from the content.
-    fn unstar(&self, client: &mut Client) -> Result<()>;
+    fn unstar(&self, client: &Client) -> Result<()>;
 
     /// Sets the rating for the content.
-    fn set_rating(&self, client: &mut Client, rating: u8) -> Result<()>;
+    fn set_rating(&self, client: &Client, rating: u8) -> Result<()>;
 
     /// Registers the local playback of the content. Typically used when playing
     /// media that is cached on the client. This operation includes the
@@ -32,7 +32,7 @@ pub trait Annotatable {
     /// validated.
     fn scrobble<'a, B, T>(
         &self,
-        client: &mut Client,
+        client: &Client,
         time: T,
         now_playing: B,
     ) -> Result<()>
@@ -42,17 +42,17 @@ pub trait Annotatable {
 }
 
 impl Annotatable for Artist {
-    fn star(&self, client: &mut Client) -> Result<()> {
+    fn star(&self, client: &Client) -> Result<()> {
         client.get("star", Query::with("artistId", self.id))?;
         Ok(())
     }
 
-    fn unstar(&self, client: &mut Client) -> Result<()> {
+    fn unstar(&self, client: &Client) -> Result<()> {
         client.get("unstar", Query::with("artistId", self.id))?;
         Ok(())
     }
 
-    fn set_rating(&self, client: &mut Client, rating: u8) -> Result<()> {
+    fn set_rating(&self, client: &Client, rating: u8) -> Result<()> {
         if rating > 5 {
             return Err(Error::Other("rating must be between 0 and 5 inclusive"))
         }
@@ -64,7 +64,7 @@ impl Annotatable for Artist {
 
     fn scrobble<'a, B, T>(
         &self,
-        client: &mut Client,
+        client: &Client,
         time: T,
         now_playing: B,
     ) -> Result<()>
@@ -82,17 +82,17 @@ impl Annotatable for Artist {
 }
 
 impl Annotatable for Album {
-    fn star(&self, client: &mut Client) -> Result<()> {
+    fn star(&self, client: &Client) -> Result<()> {
         client.get("star", Query::with("albumId", self.id))?;
         Ok(())
     }
 
-    fn unstar(&self, client: &mut Client) -> Result<()> {
+    fn unstar(&self, client: &Client) -> Result<()> {
         client.get("unstar", Query::with("albumId", self.id))?;
         Ok(())
     }
 
-    fn set_rating(&self, client: &mut Client, rating: u8) -> Result<()> {
+    fn set_rating(&self, client: &Client, rating: u8) -> Result<()> {
         if rating > 5 {
             return Err(Error::Other("rating must be between 0 and 5 inclusive"))
         }
@@ -104,7 +104,7 @@ impl Annotatable for Album {
 
     fn scrobble<'a, B, T>(
         &self,
-        client: &mut Client,
+        client: &Client,
         time: T,
         now_playing: B,
     ) -> Result<()>
@@ -122,17 +122,17 @@ impl Annotatable for Album {
 }
 
 impl Annotatable for Song {
-    fn star(&self, client: &mut Client) -> Result<()> {
+    fn star(&self, client: &Client) -> Result<()> {
         client.get("star", Query::with("id", self.id))?;
         Ok(())
     }
 
-    fn unstar(&self, client: &mut Client) -> Result<()> {
+    fn unstar(&self, client: &Client) -> Result<()> {
         client.get("unstar", Query::with("id", self.id))?;
         Ok(())
     }
 
-    fn set_rating(&self, client: &mut Client, rating: u8) -> Result<()> {
+    fn set_rating(&self, client: &Client, rating: u8) -> Result<()> {
         if rating > 5 {
             return Err(Error::Other("rating must be between 0 and 5 inclusive"))
         }
@@ -144,7 +144,7 @@ impl Annotatable for Song {
 
     fn scrobble<'a, B, T>(
         &self,
-        client: &mut Client,
+        client: &Client,
         time: T,
         now_playing: B,
     ) -> Result<()>

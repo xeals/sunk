@@ -63,7 +63,7 @@ impl<'de> Deserialize<'de> for SimilarArtist {
 }
 
 impl Artist {
-    pub fn albums(&self, client: &mut Client) -> Result<Vec<Album>> {
+    pub fn albums(&self, client: &Client) -> Result<Vec<Album>> {
         if self.albums.len() as u64 != self.album_count {
             Ok(get_artist(client, self.id)?.albums)
         } else {
@@ -73,7 +73,7 @@ impl Artist {
 
     pub fn info<B, U>(
         &self,
-        client: &mut Client,
+        client: &Client,
         count: U,
         include_not_present: B,
     ) -> Result<ArtistInfo>
@@ -89,11 +89,7 @@ impl Artist {
         Ok(serde_json::from_value(res)?)
     }
 
-    pub fn top_songs<U>(
-        &self,
-        client: &mut Client,
-        count: U,
-    ) -> Result<Vec<Song>>
+    pub fn top_songs<U>(&self, client: &Client, count: U) -> Result<Vec<Song>>
     where
         U: Into<Option<usize>>,
     {
@@ -143,7 +139,7 @@ impl Media for Artist {
 
     fn cover_art<U: Into<Option<usize>>>(
         &self,
-        client: &mut Client,
+        client: &Client,
         size: U,
     ) -> Result<Vec<u8>> {
         let cover = self.cover_id()
@@ -155,7 +151,7 @@ impl Media for Artist {
 
     fn cover_art_url<U: Into<Option<usize>>>(
         &self,
-        client: &mut Client,
+        client: &Client,
         size: U,
     ) -> Result<String> {
         let cover = self.cover_id()
@@ -199,7 +195,7 @@ impl<'de> Deserialize<'de> for ArtistInfo {
     }
 }
 
-pub fn get_artist(client: &mut Client, id: u64) -> Result<Artist> {
+pub fn get_artist(client: &Client, id: u64) -> Result<Artist> {
     let res = client.get("getArtist", Query::with("id", id))?;
     Ok(serde_json::from_value::<Artist>(res)?)
 }

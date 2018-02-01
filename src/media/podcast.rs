@@ -46,7 +46,7 @@ pub struct Episode {
 
 impl Podcast {
     /// Fetches the details of a single podcast and its episodes.
-    pub fn get<U>(client: &mut Client, id: U) -> Result<Podcast>
+    pub fn get<U>(client: &Client, id: U) -> Result<Podcast>
     where
         U: Into<Option<usize>>,
     {
@@ -56,7 +56,7 @@ impl Podcast {
     /// Returns a list of all podcasts the server subscribes to and,
     /// optionally, their episodes.
     pub fn list<B, U>(
-        client: &mut Client,
+        client: &Client,
         include_episodes: B,
     ) -> Result<Vec<Podcast>>
     where
@@ -74,7 +74,7 @@ impl Podcast {
 impl Episode {
     /// Returns a list of the newest episodes of podcasts the server subscribes
     /// to. Optionally takes a number of episodes to maximally return.
-    pub fn newest<U>(client: &mut Client, count: U) -> Result<Vec<Episode>>
+    pub fn newest<U>(client: &Client, count: U) -> Result<Vec<Episode>>
     where
         U: Into<Option<usize>>,
     {

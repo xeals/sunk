@@ -49,7 +49,7 @@ impl Song {
     ///
     /// The server will return an error if there is no song matching the
     /// provided ID.
-    pub fn get(client: &mut Client, id: u64) -> Result<Song> {
+    pub fn get(client: &Client, id: u64) -> Result<Song> {
         let res = client.get("getSong", Query::with("id", id))?;
         Ok(serde_json::from_value(res)?)
     }
@@ -59,7 +59,7 @@ impl Song {
     /// last.fm suggests a number of similar songs to the one the method is
     /// called on. Optionally takes a `count` to specify the maximum number of
     /// results to return.
-    pub fn similar<U>(&self, client: &mut Client, count: U) -> Result<Vec<Song>>
+    pub fn similar<U>(&self, client: &Client, count: U) -> Result<Vec<Song>>
     where
         U: Into<Option<usize>>,
     {
@@ -71,13 +71,14 @@ impl Song {
         Ok(get_list_as!(song, Song))
     }
 
-    /// Returns a number of random songs. Optionally accepts a maximum number of results to return.
+    /// Returns a number of random songs. Optionally accepts a maximum number
+    /// of results to return.
     ///
-    /// Some parts of the query can be modified. Use [`random_with`] to be able to set these
-    /// optional fields.
+    /// Some parts of the query can be modified. Use [`random_with`] to be able
+    /// to set these optional fields.
     ///
     /// [`random_with`]: #method.random_with
-    pub fn random<S, U>( client: &mut Client, size: U) -> Result<Vec<Song>>
+    pub fn random<S, U>(client: &Client, size: U) -> Result<Vec<Song>>
     where
         U: Into<Option<usize>>,
     {
@@ -88,10 +89,11 @@ impl Song {
 
     /// Creates a new builder to request a set of random songs.
     ///
-    /// See the [struct level documentation] for more information on how to use the builder.
+    /// See the [struct level documentation] for more information on how to use
+    /// the builder.
     ///
     /// [struct level documentation]: struct.RandomSongs.html
-    pub fn random_with<'a>(client: &mut Client) -> RandomSongs {
+    pub fn random_with<'a>(client: &Client) -> RandomSongs {
         RandomSongs::new(client, 10)
     }
 
@@ -102,7 +104,7 @@ impl Song {
     ///
     /// [`SearchPage`]: ../../library/search/struct.SearchPage.html
     pub fn list_in_genre<U>(
-        client: &mut Client,
+        client: &Client,
         genre: &str,
         page: search::SearchPage,
         folder_id: U,
@@ -134,11 +136,7 @@ impl Song {
     /// the specified bitrates. The `bit_rate` parameter can be omitted (with an
     /// empty array) to disable adaptive streaming, or given a single value to
     /// force streaming at that bit rate.
-    pub fn hls(
-        &self,
-        client: &mut Client,
-        bit_rates: &[u64],
-    ) -> Result<String> {
+    pub fn hls(&self, client: &Client, bit_rates: &[u64]) -> Result<String> {
         let args = Query::with("id", self.id)
             .arg_list("bitrate", bit_rates)
             .build();
@@ -148,23 +146,23 @@ impl Song {
 }
 
 impl Streamable for Song {
-    fn stream(&self, client: &mut Client) -> Result<Vec<u8>> {
+    fn stream(&self, client: &Client) -> Result<Vec<u8>> {
         let mut q = Query::with("id", self.id);
         q.arg("maxBitRate", self.stream_br);
         client.get_bytes("stream", q)
     }
 
-    fn stream_url(&self, client: &mut Client) -> Result<String> {
+    fn stream_url(&self, client: &Client) -> Result<String> {
         let mut q = Query::with("id", self.id);
         q.arg("maxBitRate", self.stream_br);
         client.build_url("stream", q)
     }
 
-    fn download(&self, client: &mut Client) -> Result<Vec<u8>> {
+    fn download(&self, client: &Client) -> Result<Vec<u8>> {
         client.get_bytes("download", Query::with("id", self.id))
     }
 
-    fn download_url(&self, client: &mut Client) -> Result<String> {
+    fn download_url(&self, client: &Client) -> Result<String> {
         client.build_url("download", Query::with("id", self.id))
     }
 
@@ -192,7 +190,7 @@ impl Media for Song {
 
     fn cover_art<U: Into<Option<usize>>>(
         &self,
-        client: &mut Client,
+        client: &Client,
         size: U,
     ) -> Result<Vec<u8>> {
         let cover = self.cover_id()
@@ -204,7 +202,7 @@ impl Media for Song {
 
     fn cover_art_url<U: Into<Option<usize>>>(
         &self,
-        client: &mut Client,
+        client: &Client,
         size: U,
     ) -> Result<String> {
         let cover = self.cover_id()
@@ -289,15 +287,15 @@ pub struct Lyrics {
 
 /// A builder struct for a query of random songs.
 ///
-/// A `RandomSongs` can only be created with [`Song::random_with`]. This allows customisation of the
-/// results to return.
+/// A `RandomSongs` can only be created with [`Song::random_with`]. This allows
+/// customisation of the results to return.
 ///
-/// The builder holds an internal reference of the client that it will query using, so there's no
-/// need to provide it with one when sending the query.
+/// The builder holds an internal reference of the client that it will query
+/// using, so there's no need to provide it with one when sending the query.
 ///
-/// If you don't need to customise a query and just need a set of random songs, use
-/// [`Song::random`] instead, as it skips constructing the builder and directly queries the
-/// Subsonic server.
+/// If you don't need to customise a query and just need a set of random songs,
+/// use [`Song::random`] instead, as it skips constructing the builder and
+/// directly queries the Subsonic server.
 ///
 /// [`Song::random_with`]: struct.Song.html#method.random_with
 /// [`Song::random`]: struct.Song.html#method.random
@@ -328,7 +326,7 @@ pub struct Lyrics {
 /// ```
 #[derive(Debug)]
 pub struct RandomSongs<'a> {
-    client: &'a mut Client,
+    client: &'a Client,
     size: usize,
     genre: Option<&'a str>,
     from_year: Option<usize>,
@@ -338,7 +336,7 @@ pub struct RandomSongs<'a> {
 
 use std::ops::Range;
 impl<'a> RandomSongs<'a> {
-    fn new(client: &'a mut Client, n: usize) -> RandomSongs<'a> {
+    fn new(client: &'a Client, n: usize) -> RandomSongs<'a> {
         RandomSongs {
             client,
             size: n,
@@ -357,8 +355,8 @@ impl<'a> RandomSongs<'a> {
 
     /// Sets the genre that songs will be in.
     ///
-    /// Genres will vary between Subsonic instances, but can be found using the [`Client::genres`]
-    /// method.
+    /// Genres will vary between Subsonic instances, but can be found using the
+    /// [`Client::genres`] method.
     ///
     /// [`Client::genres`]: ../../client/struct.Client.html#method.genres
     pub fn genre(&mut self, genre: &'a str) -> &mut RandomSongs<'a> {
@@ -380,8 +378,9 @@ impl<'a> RandomSongs<'a> {
 
     /// Sets both the lower and upper year bounds using a range.
     ///
-    /// The range is set *inclusive* at both ends, unlike a standard Rust range. For example, a
-    /// range `2013..2016` will return songs that were released in 2013, 2014, 2015, and 2016.
+    /// The range is set *inclusive* at both ends, unlike a standard Rust
+    /// range. For example, a range `2013..2016` will return songs that
+    /// were released in 2013, 2014, 2015, and 2016.
     pub fn in_years(&mut self, years: Range<usize>) -> &mut RandomSongs<'a> {
         self.from_year = Some(years.start);
         self.to_year = Some(years.end);
@@ -390,18 +389,19 @@ impl<'a> RandomSongs<'a> {
 
     /// Sets the folder index that songs must be in.
     ///
-    /// Music folders are zero-indexed, and there will always be index `0` (provided the server
-    /// is configured at all) . A list of music folders can be found using the
-    /// [`Client::music_folders`] method.
+    /// Music folders are zero-indexed, and there will always be index `0`
+    /// (provided the server is configured at all) . A list of music
+    /// folders can be found using the [`Client::music_folders`] method.
     ///
-    /// [`Client::music_folders`]: ../../client/struct.Client.html#method.music_folders
+    /// [`Client::music_folders`]:
+    /// ../../client/struct.Client.html#method.music_folders
     pub fn in_folder(&mut self, id: usize) -> &mut RandomSongs<'a> {
         self.folder_id = Some(id);
         self
     }
 
-    /// Issues the query to the Subsonic server. Returns a list of random songs, modified by the
-    /// builder.
+    /// Issues the query to the Subsonic server. Returns a list of random
+    /// songs, modified by the builder.
     pub fn request(&mut self) -> Result<Vec<Song>> {
         let args = Query::with("size", self.size)
             .arg("genre", self.genre)

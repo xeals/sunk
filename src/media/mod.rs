@@ -21,7 +21,7 @@ use self::format::{AudioFormat, VideoFormat};
 /// Searches for lyrics matching the artist and title. Returns `None` if no
 /// lyrics are found.
 pub fn lyrics<'a, S>(
-    client: &mut Client,
+    client: &Client,
     artist: S,
     title: S,
 ) -> Result<Option<Lyrics>>
@@ -50,7 +50,7 @@ pub trait Streamable {
     ///
     /// The method does not provide any information about the encoding of the
     /// media without evaluating the stream itself.
-    fn stream(&self, client: &mut Client) -> Result<Vec<u8>>;
+    fn stream(&self, client: &Client) -> Result<Vec<u8>>;
 
     /// Returns a constructed URL for streaming.
     ///
@@ -60,16 +60,16 @@ pub trait Streamable {
     ///
     /// This would be used in conjunction with a streaming library to directly
     /// take the URI and stream it.
-    fn stream_url(&self, client: &mut Client) -> Result<String>;
+    fn stream_url(&self, client: &Client) -> Result<String>;
 
     /// Returns the raw bytes of the media.
     ///
     /// The method does not provide any information about the encoding of the
     /// media without evaluating the stream itself.
-    fn download(&self, client: &mut Client) -> Result<Vec<u8>>;
+    fn download(&self, client: &Client) -> Result<Vec<u8>>;
 
     /// Returns a constructed URL for downloading the song.
-    fn download_url(&self, client: &mut Client) -> Result<String>;
+    fn download_url(&self, client: &Client) -> Result<String>;
 
     /// Returns the default encoding of the media.
     ///
@@ -135,7 +135,7 @@ pub trait Media {
     /// [`Client`]: ../client/struct.Client.html
     fn cover_art<U: Into<Option<usize>>>(
         &self,
-        client: &mut Client,
+        client: &Client,
         size: U,
     ) -> Result<Vec<u8>>;
 
@@ -149,7 +149,7 @@ pub trait Media {
     /// [`Client`]: ../client/struct.Client.html
     fn cover_art_url<U: Into<Option<usize>>>(
         &self,
-        client: &mut Client,
+        client: &Client,
         size: U,
     ) -> Result<String>;
 }
@@ -182,7 +182,7 @@ impl NowPlaying {
     /// error if the `NowPlaying` is not a song.
     ///
     /// [`Client`]: ../client/struct.Client.html
-    pub fn song_info(&self, client: &mut Client) -> Result<Song> {
+    pub fn song_info(&self, client: &Client) -> Result<Song> {
         if self.is_video {
             Err(Error::Other("Now Playing info is not a song"))
         } else {
@@ -198,7 +198,7 @@ impl NowPlaying {
     /// error if the `NowPlaying` is not a video.
     ///
     /// [`Client`]: ../client/struct.Client.html
-    pub fn video_info(&self, client: &mut Client) -> Result<Video> {
+    pub fn video_info(&self, client: &Client) -> Result<Video> {
         if !self.is_video {
             Err(Error::Other("Now Playing info is not a video"))
         } else {

@@ -37,23 +37,19 @@ pub struct Video {
 }
 
 impl Video {
-    pub fn get(client: &mut Client, id: usize) -> Result<Video> {
+    pub fn get(client: &Client, id: usize) -> Result<Video> {
         Video::list(client)?
             .into_iter()
             .find(|v| v.id == id)
             .ok_or_else(|| Error::Other("no video found"))
     }
 
-    pub fn list(client: &mut Client) -> Result<Vec<Video>> {
+    pub fn list(client: &Client) -> Result<Vec<Video>> {
         let video = client.get("getVideos", Query::none())?;
         Ok(get_list_as!(video, Video))
     }
 
-    pub fn info<'a, S>(
-        &self,
-        client: &mut Client,
-        format: S,
-    ) -> Result<VideoInfo>
+    pub fn info<'a, S>(&self, client: &Client, format: S) -> Result<VideoInfo>
     where
         S: Into<Option<&'a str>>,
     {
@@ -65,11 +61,7 @@ impl Video {
     }
 
     /// Returns the raw video captions.
-    pub fn captions<'a, S>(
-        &self,
-        client: &mut Client,
-        format: S,
-    ) -> Result<String>
+    pub fn captions<'a, S>(&self, client: &Client, format: S) -> Result<String>
     where
         S: Into<Option<&'a str>>,
     {
@@ -96,7 +88,7 @@ impl Video {
 }
 
 impl Streamable for Video {
-    fn stream(&self, client: &mut Client) -> Result<Vec<u8>> {
+    fn stream(&self, client: &Client) -> Result<Vec<u8>> {
         let args = Query::with("id", self.id)
             .arg("maxBitRate", self.stream_br)
             .arg(
@@ -108,7 +100,7 @@ impl Streamable for Video {
         client.get_bytes("stream", args)
     }
 
-    fn stream_url(&self, client: &mut Client) -> Result<String> {
+    fn stream_url(&self, client: &Client) -> Result<String> {
         let args = Query::with("id", self.id)
             .arg("maxBitRate", self.stream_br)
             .arg(
@@ -120,11 +112,11 @@ impl Streamable for Video {
         client.build_url("stream", args)
     }
 
-    fn download(&self, client: &mut Client) -> Result<Vec<u8>> {
+    fn download(&self, client: &Client) -> Result<Vec<u8>> {
         client.get_bytes("download", Query::with("id", self.id))
     }
 
-    fn download_url(&self, client: &mut Client) -> Result<String> {
+    fn download_url(&self, client: &Client) -> Result<String> {
         client.build_url("download", Query::with("id", self.id))
     }
 
@@ -152,7 +144,7 @@ impl Media for Video {
 
     fn cover_art<U: Into<Option<usize>>>(
         &self,
-        client: &mut Client,
+        client: &Client,
         size: U,
     ) -> Result<Vec<u8>> {
         let cover = self.cover_id()
@@ -164,7 +156,7 @@ impl Media for Video {
 
     fn cover_art_url<U: Into<Option<usize>>>(
         &self,
-        client: &mut Client,
+        client: &Client,
         size: U,
     ) -> Result<String> {
         let cover = self.cover_id()

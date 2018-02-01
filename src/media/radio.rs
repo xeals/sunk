@@ -39,7 +39,7 @@ impl<'de> Deserialize<'de> for RadioStation {
 impl RadioStation {
     pub fn id(&self) -> usize { self.id }
 
-    pub fn list(client: &mut Client) -> Result<Vec<RadioStation>> {
+    pub fn list(client: &Client) -> Result<Vec<RadioStation>> {
         #[allow(non_snake_case)]
         let internetRadioStation =
             client.get("getInternetRadioStations", Query::none())?;
@@ -47,7 +47,7 @@ impl RadioStation {
     }
 
     pub fn create(
-        client: &mut Client,
+        client: &Client,
         name: &str,
         url: &str,
         homepage: Option<&str>,
@@ -60,7 +60,7 @@ impl RadioStation {
         Ok(())
     }
 
-    pub fn update(&self, client: &mut Client) -> Result<()> {
+    pub fn update(&self, client: &Client) -> Result<()> {
         let args = Query::with("id", self.id)
             .arg("streamUrl", self.stream_url.as_str())
             .arg("name", self.name.as_str())
@@ -73,7 +73,7 @@ impl RadioStation {
         Ok(())
     }
 
-    pub fn delete(&self, client: &mut Client) -> Result<()> {
+    pub fn delete(&self, client: &Client) -> Result<()> {
         client.get("deleteInternetRadioStation", Query::with("id", self.id))?;
         Ok(())
     }

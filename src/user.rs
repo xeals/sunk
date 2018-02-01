@@ -74,7 +74,7 @@ pub struct User {
 
 impl User {
     /// Fetches a single user's information from the server.
-    pub fn get(client: &mut Client, username: &str) -> Result<User> {
+    pub fn get(client: &Client, username: &str) -> Result<User> {
         let res = client.get("getUser", Query::with("username", username))?;
         Ok(serde_json::from_value::<User>(res)?)
     }
@@ -87,7 +87,7 @@ impl User {
     /// creating the `Client`) will result in a [`NotAuthorized`] error.
     ///
     /// [`NotAuthorized`]: ../error/enum.ApiError.html#variant.NotAuthorized
-    pub fn list(client: &mut Client) -> Result<Vec<User>> {
+    pub fn list(client: &Client) -> Result<Vec<User>> {
         let user = client.get("getUsers", Query::none())?;
         Ok(get_list_as!(user, User))
     }
@@ -100,7 +100,7 @@ impl User {
     /// `settings_role` permission, unless they are an administrator.
     pub fn change_password(
         &self,
-        client: &mut Client,
+        client: &Client,
         password: &str,
     ) -> Result<()> {
         let args = Query::with("username", self.username.as_str())
@@ -114,7 +114,7 @@ impl User {
     ///
     /// The method makes no guarantee as to the encoding of the image, but does
     /// guarantee that it is a valid image file.
-    pub fn avatar(&self, client: &mut Client) -> Result<Vec<u8>> {
+    pub fn avatar(&self, client: &Client) -> Result<Vec<u8>> {
         client.get_bytes(
             "getAvatar",
             Query::with("username", self.username.as_str()),
@@ -131,7 +131,7 @@ impl User {
     }
 
     /// Removes the user from the Subsonic server.
-    pub fn delete(&self, client: &mut Client) -> Result<()> {
+    pub fn delete(&self, client: &Client) -> Result<()> {
         client.get(
             "deleteUser",
             Query::with("username", self.username.as_str()),
@@ -164,7 +164,7 @@ impl User {
     /// #     run().unwrap();
     /// # }
     /// ```
-    pub fn update(&self, client: &mut Client) -> Result<()> {
+    pub fn update(&self, client: &Client) -> Result<()> {
         let args = Query::with("username", self.username.as_ref())
             .arg("email", self.email.as_ref())
             .arg("ldapAuthenticated", self.ldap_authenticated)
@@ -266,7 +266,7 @@ impl UserBuilder {
     build!(max_bit_rate: u64);
 
     /// Pushes a defined new user to the Subsonic server.
-    pub fn create(&self, client: &mut Client) -> Result<()> {
+    pub fn create(&self, client: &Client) -> Result<()> {
         let args = Query::with("username", self.username.as_ref())
             .arg("password", self.password.as_ref())
             .arg("email", self.email.as_ref())

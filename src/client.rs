@@ -139,7 +139,7 @@ impl Client {
     /// - connecting to the server fails
     /// - the server returns an API error
     pub(crate) fn get(
-        &mut self,
+        &self,
         query: &str,
         args: Query,
     ) -> Result<serde_json::Value> {
@@ -175,7 +175,7 @@ impl Client {
     /// Specifically, it will succeed if `serde_json::from_slice()` fails due
     /// to not receiving a valid JSON stream. It's assumed that the stream
     /// will be binary in this case.
-    pub fn try_binary(&mut self, query: &str, args: Query) -> Result<String> {
+    pub fn try_binary(&self, query: &str, args: Query) -> Result<String> {
         let raw_uri = self.build_url(query, args)?;
         let uri: Url = raw_uri.parse().unwrap();
 
@@ -189,13 +189,13 @@ impl Client {
 
     /// Fetches an unprocessed response from the server rather than a JSON- or
     /// XML-parsed one.
-    pub fn get_raw(&mut self, query: &str, args: Query) -> Result<String> {
+    pub fn get_raw(&self, query: &str, args: Query) -> Result<String> {
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
         let mut res = self.reqclient.get(uri).send()?;
         Ok(res.text()?)
     }
 
-    pub fn get_bytes(&mut self, query: &str, args: Query) -> Result<Vec<u8>> {
+    pub fn get_bytes(&self, query: &str, args: Query) -> Result<Vec<u8>> {
         use std::io::Read;
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
         let res = self.reqclient.get(uri).send()?;
@@ -203,7 +203,7 @@ impl Client {
     }
 
     /// Used to test connectivity with the server.
-    pub fn check_connection(&mut self) -> Result<()> {
+    pub fn check_connection(&self) -> Result<()> {
         self.get("ping", Query::none())?;
         Ok(())
     }
@@ -215,7 +215,7 @@ impl Client {
     /// Forks of Subsonic (Libresonic, Airsonic, etc.) do not require licenses;
     /// this method will always return a valid license and trial when attempting
     /// to connect to these services.
-    pub fn check_license(&mut self) -> Result<License> {
+    pub fn check_license(&self) -> Result<License> {
         let res = self.get("getLicense", Query::none())?;
         Ok(serde_json::from_value::<License>(res)?)
     }
@@ -226,7 +226,7 @@ impl Client {
     ///
     /// This method was introduced in version 1.15.0. It will not be supported
     /// on servers with earlier versions of the Subsonic API.
-    pub fn scan_library(&mut self) -> Result<()> {
+    pub fn scan_library(&self) -> Result<()> {
         self.get("startScan", Query::none())?;
         Ok(())
     }
@@ -238,7 +238,7 @@ impl Client {
     ///
     /// This method was introduced in version 1.15.0. It will not be supported
     /// on servers with earlier versions of the Subsonic API.
-    pub fn scan_status(&mut self) -> Result<(bool, u64)> {
+    pub fn scan_status(&self) -> Result<(bool, u64)> {
         let res = self.get("getScanStatus", Query::none())?;
 
         #[derive(Deserialize)]
@@ -252,7 +252,7 @@ impl Client {
     }
 
     /// Returns all configured top-level music folders.
-    pub fn music_folders(&mut self) -> Result<Vec<MusicFolder>> {
+    pub fn music_folders(&self) -> Result<Vec<MusicFolder>> {
         #[allow(non_snake_case)]
         let musicFolder = self.get("getMusicFolders", Query::none())?;
 
@@ -260,13 +260,13 @@ impl Client {
     }
 
     /// Returns all genres.
-    pub fn genres(&mut self) -> Result<Vec<Genre>> {
+    pub fn genres(&self) -> Result<Vec<Genre>> {
         let genre = self.get("getGenres", Query::none())?;
 
         Ok(get_list_as!(genre, Genre))
     }
 
-    pub fn now_playing(&mut self) -> Result<Vec<NowPlaying>> {
+    pub fn now_playing(&self) -> Result<Vec<NowPlaying>> {
         let entry = self.get("getNowPlaying", Query::none())?;
         Ok(get_list_as!(entry, NowPlaying))
     }
@@ -306,7 +306,7 @@ impl Client {
     /// version 1.8.0. This supports organising results by their ID3 tags,
     /// and paging through results.
     pub fn search(
-        &mut self,
+        &self,
         query: &str,
         artist_page: SearchPage,
         album_page: SearchPage,
@@ -337,7 +337,7 @@ impl Client {
 
     /// Returns a list of all starred artists, albums, and songs.
     pub fn starred<U>(
-        &mut self,
+        &self,
         folder_id: U,
     ) -> Result<(Vec<Artist>, Vec<Album>, Vec<Song>)>
     where
