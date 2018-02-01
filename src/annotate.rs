@@ -1,8 +1,4 @@
-use album::Album;
-use artist::Artist;
-use client::Client;
-use error::{Error, Result};
-use media::song::Song;
+use {Album, Artist, Client, Error, Result, Song};
 use query::Query;
 
 pub trait Annotatable {

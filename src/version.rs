@@ -1,10 +1,10 @@
 use std::{convert, fmt};
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Copy, Clone)]
-pub struct Api(u8, u8, u8);
+pub struct Version(u8, u8, u8);
 
-impl convert::From<String> for Api {
-    fn from(s: String) -> Api {
+impl convert::From<String> for Version {
+    fn from(s: String) -> Version {
         let mut spl = s.split('.');
 
         macro_rules! ver {
@@ -18,21 +18,21 @@ impl convert::From<String> for Api {
         ver!(minor);
         ver!(inc);
 
-        Api(major, minor, inc)
+        Version(major, minor, inc)
     }
 }
 
-impl<'a> convert::From<&'a str> for Api {
-    fn from(s: &'a str) -> Api { Api::from(s.to_string()) }
+impl<'a> convert::From<&'a str> for Version {
+    fn from(s: &'a str) -> Version { Version::from(s.to_string()) }
 }
 
-impl fmt::Debug for Api {
+impl fmt::Debug for Version {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Api: {{ {}.{}.{} }}", self.0, self.1, self.2)
     }
 }
 
-impl fmt::Display for Api {
+impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}.{}.{}", self.0, self.1, self.2)
     }
@@ -40,12 +40,12 @@ impl fmt::Display for Api {
 
 #[cfg(test)]
 mod tests {
-    use api::Api;
+    use super::Version;
 
     #[test]
     fn test_parse_api_full() {
         let s = "1.11.0";
-        let v = Api::from(s);
+        let v = Version::from(s);
         assert_eq!(v.0, 1);
         assert_eq!(v.1, 11);
         assert_eq!(v.2, 0);
@@ -54,7 +54,7 @@ mod tests {
     #[test]
     fn test_parse_api_no_inc() {
         let s = "1.12";
-        let v = Api::from(s);
+        let v = Version::from(s);
         assert_eq!(v.0, 1);
         assert_eq!(v.1, 12);
         assert_eq!(v.2, 0);

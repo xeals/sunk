@@ -1,13 +1,10 @@
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
-
-use client::Client;
-use error::{Error, Result};
-use media::Media;
-use media::song::Song;
-use query::{Arg, IntoArg, Query};
 use std::fmt;
 use std::result;
+
+use {Client, Error, Media, Result, Song};
+use query::{Arg, IntoArg, Query};
 
 #[derive(Debug, Clone, Copy)]
 pub enum ListType {

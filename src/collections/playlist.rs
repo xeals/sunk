@@ -1,12 +1,9 @@
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
+use std::result;
 
-use client::Client;
-use error::{Error, Result};
-use media::Media;
+use {Client, Error, Media, Result, Song};
 use query::Query;
-
-use media::song::Song;
 
 #[derive(Debug)]
 pub struct Playlist {
@@ -30,7 +27,7 @@ impl Playlist {
 }
 
 impl<'de> Deserialize<'de> for Playlist {
-    fn deserialize<D>(de: D) -> ::std::result::Result<Self, D::Error>
+    fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {

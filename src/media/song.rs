@@ -1,10 +1,8 @@
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
-use client::Client;
-use error::{Error, Result};
+use {Client, Error, Media, Result, Streamable};
 use library::search;
-use media::{Media, Streamable};
 use query::Query;
 
 /// A work of music contained on a Subsonic server.

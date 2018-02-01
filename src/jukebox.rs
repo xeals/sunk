@@ -2,9 +2,7 @@ use serde::de::{Deserialize, Deserializer};
 use serde_json;
 use std::result;
 
-use client::Client;
-use error::Result;
-use media::song::Song;
+use {Client, Result, Song};
 use query::Query;
 
 #[derive(Debug)]

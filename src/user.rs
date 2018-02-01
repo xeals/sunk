@@ -1,7 +1,7 @@
-use client::Client;
-use error::Result;
-use query::Query;
 use serde_json;
+
+use {Client, Result};
+use query::Query;
 
 /// A struct representing a Subsonic user.
 #[derive(Debug, Deserialize)]

@@ -15,24 +15,31 @@ extern crate serde_json;
 #[macro_use]
 mod macros;
 mod client;
+mod error;
 
-pub use client::Client;
-pub use error::{Error, Result};
+mod media;
+mod collections;
 
-pub mod error;
-pub mod media;
-
-pub mod album;
-pub mod artist;
-pub mod playlist;
-
-pub mod jukebox;
-pub mod annotate;
-pub mod library;
-pub mod query;
-pub mod api;
-pub mod response;
-pub mod user;
+mod jukebox;
+mod annotate;
+mod library;
+mod query;
+mod version;
+mod response;
+mod user;
 
 #[cfg(test)]
 mod test_util;
+
+pub use self::client::Client;
+pub use self::collections::{Album, AlbumInfo};
+pub use self::collections::{Artist, ArtistInfo, SimilarArtist};
+pub use self::collections::Playlist;
+pub use self::error::{ApiError, Error, Result, UriError};
+pub use self::jukebox::{Jukebox, JukeboxPlaylist, JukeboxStatus};
+pub use self::library::Genre;
+pub use self::media::{Lyrics, Media, NowPlaying, RadioStation, Song,
+                      Streamable, Video};
+pub use self::media::podcast;
+pub use self::user::{User, UserBuilder};
+pub use self::version::Version;

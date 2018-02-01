@@ -1,44 +1,21 @@
 use serde::de::{Deserialize, Deserializer};
-use serde_json;
 use std::result;
 
-use client::Client;
-use error::{Error, Result};
-use query::Query;
+use {Client, Error, Result};
 
-pub mod format;
+// pub mod format;
 pub mod podcast;
-pub mod song;
-pub mod video;
-pub mod radio;
+mod song;
+mod video;
+mod radio;
 
-use self::song::Lyrics;
+pub use self::radio::RadioStation;
+pub use self::song::Lyrics;
 pub use self::song::Song;
 pub use self::video::Video;
+// pub use self::podcast::{Podcast, Episode};
 
-use self::format::{AudioFormat, VideoFormat};
-
-/// Searches for lyrics matching the artist and title. Returns `None` if no
-/// lyrics are found.
-pub fn lyrics<'a, S>(
-    client: &Client,
-    artist: S,
-    title: S,
-) -> Result<Option<Lyrics>>
-where
-    S: Into<Option<&'a str>>,
-{
-    let args = Query::with("artist", artist.into())
-        .arg("title", title.into())
-        .build();
-    let res = client.get("getLyrics", args)?;
-
-    if res.get("value").is_some() {
-        Ok(Some(serde_json::from_value(res)?))
-    } else {
-        Ok(None)
-    }
-}
+// use self::format::{AudioFormat, VideoFormat};
 
 /// A trait for forms of streamable media.
 pub trait Streamable {

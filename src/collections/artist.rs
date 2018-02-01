@@ -3,13 +3,8 @@ use std::result;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
-use client::Client;
-use error::{Error, Result};
-use media::Media;
-use media::song::Song;
+use {Album, Client, Error, Media, Result, Song};
 use query::Query;
-
-use album::Album;
 
 #[derive(Debug)]
 pub struct Artist {
@@ -30,7 +25,7 @@ pub struct ArtistInfo {
 }
 
 #[derive(Debug)]
-struct SimilarArtist {
+pub struct SimilarArtist {
     id: u64,
     name: String,
     cover_art: Option<String>,

@@ -1,9 +1,8 @@
-use client::Client;
-use error::Result;
-use query::Query;
 use serde::de::{Deserialize, Deserializer};
-use serde_json;
 use std::result;
+
+use {Client, Result};
+use query::Query;
 
 #[derive(Debug)]
 pub struct Podcast {

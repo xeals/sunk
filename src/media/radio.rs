@@ -1,8 +1,7 @@
 use serde::de::{Deserialize, Deserializer};
 use std::result;
 
-use client::Client;
-use error::Result;
+use {Client, Result};
 use query::Query;
 
 #[derive(Debug)]

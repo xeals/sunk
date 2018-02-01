@@ -2,16 +2,13 @@ use reqwest::Client as ReqwestClient;
 use reqwest::Url;
 use serde_json;
 
-use album::Album;
-use api::Api;
-use artist::Artist;
-use error::{Error, Result, UriError};
-use library::{Genre, MusicFolder};
+use library::MusicFolder;
 use library::search::SearchPage;
 use media::NowPlaying;
-use media::song::Song;
+
+use {Album, Artist, Error, Genre, Lyrics, Result, Song, UriError, Version};
 use query::Query;
-use response;
+use response::Response;
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
@@ -33,7 +30,7 @@ const SALT_SIZE: usize = 36; // Minimum 6 characters.
 /// # let password = "guest";
 ///
 /// let mut server = Client::new(site, user, password)?;
-/// server.check_connection()?;
+/// server.ping()?;
 /// # Ok(())
 /// # }
 /// ```
@@ -42,7 +39,7 @@ pub struct Client {
     url: Url,
     auth: SubsonicAuth,
     reqclient: ReqwestClient,
-    api: Api,
+    pub ver: Version,
 }
 
 #[derive(Debug)]
@@ -60,9 +57,9 @@ impl SubsonicAuth {
     }
 
     // TODO Actual version comparison support
-    fn as_uri(&self, api: Api) -> String {
+    fn as_uri(&self, ver: Version) -> String {
         // First md5 support.
-        let auth = if api >= "1.13.0".into() {
+        let auth = if ver >= "1.13.0".into() {
             use md5;
             use rand::{thread_rng, Rng};
 
@@ -82,7 +79,7 @@ impl SubsonicAuth {
         format!(
             "{auth}&v={v}&c={c}&f={f}",
             auth = auth,
-            v = api,
+            v = ver,
             c = crate_name,
             f = format
         )
@@ -94,7 +91,7 @@ impl Client {
     pub fn new(url: &str, user: &str, password: &str) -> Result<Client> {
         let auth = SubsonicAuth::new(user, password);
         let url = url.parse::<Url>()?;
-        let api = Api::from("1.14.0");
+        let ver = Version::from("1.14.0");
 
         let reqclient = ReqwestClient::builder().build()?;
 
@@ -102,7 +99,7 @@ impl Client {
             url,
             auth,
             reqclient,
-            api,
+            ver,
         })
     }
 
@@ -118,7 +115,7 @@ impl Client {
         let mut url = [scheme, "://", addr, "/rest/"].concat();
         url.push_str(query);
         url.push_str("?");
-        url.push_str(&self.auth.as_uri(self.api));
+        url.push_str(&self.auth.as_uri(self.ver));
         url.push_str("&");
         url.push_str(&args.to_string());
 
@@ -149,7 +146,7 @@ impl Client {
         let mut res = self.reqclient.get(uri).send()?;
 
         if res.status().is_success() {
-            let response = res.json::<response::Response>()?;
+            let response = res.json::<Response>()?;
             if response.is_ok() {
                 Ok(match response.into_value() {
                     Some(v) => v,
@@ -166,36 +163,19 @@ impl Client {
         }
     }
 
-    /// Attempts to connect to the `Client` with the provided query and args.
-    ///
-    /// Returns the constructed, attempted URL on success, or an error if the
-    /// Subsonic instance refuses the connection (i.e., returns a failure
-    /// response).
-    ///
-    /// Specifically, it will succeed if `serde_json::from_slice()` fails due
-    /// to not receiving a valid JSON stream. It's assumed that the stream
-    /// will be binary in this case.
-    pub fn try_binary(&self, query: &str, args: Query) -> Result<String> {
-        let raw_uri = self.build_url(query, args)?;
-        let uri: Url = raw_uri.parse().unwrap();
-
-        info!("Connecting to {}", uri);
-        let mut res = self.reqclient.get(uri).send()?;
-        match res.json::<serde_json::Value>() {
-            Ok(_) => Err(Error::Other("Found valid JSON")),
-            Err(_) => Ok(raw_uri),
-        }
-    }
-
     /// Fetches an unprocessed response from the server rather than a JSON- or
     /// XML-parsed one.
-    pub fn get_raw(&self, query: &str, args: Query) -> Result<String> {
+    pub(crate) fn get_raw(&self, query: &str, args: Query) -> Result<String> {
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
         let mut res = self.reqclient.get(uri).send()?;
         Ok(res.text()?)
     }
 
-    pub fn get_bytes(&self, query: &str, args: Query) -> Result<Vec<u8>> {
+    pub(crate) fn get_bytes(
+        &self,
+        query: &str,
+        args: Query,
+    ) -> Result<Vec<u8>> {
         use std::io::Read;
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
         let res = self.reqclient.get(uri).send()?;
@@ -203,7 +183,7 @@ impl Client {
     }
 
     /// Used to test connectivity with the server.
-    pub fn check_connection(&self) -> Result<()> {
+    pub fn ping(&self) -> Result<()> {
         self.get("ping", Query::none())?;
         Ok(())
     }
@@ -269,6 +249,24 @@ impl Client {
     pub fn now_playing(&self) -> Result<Vec<NowPlaying>> {
         let entry = self.get("getNowPlaying", Query::none())?;
         Ok(get_list_as!(entry, NowPlaying))
+    }
+
+    /// Searches for lyrics matching the artist and title. Returns `None` if no
+    /// lyrics are found.
+    pub fn lyrics<'a, S>(&self, artist: S, title: S) -> Result<Option<Lyrics>>
+    where
+        S: Into<Option<&'a str>>,
+    {
+        let args = Query::with("artist", artist.into())
+            .arg("title", title.into())
+            .build();
+        let res = self.get("getLyrics", args)?;
+
+        if res.get("value").is_some() {
+            Ok(Some(serde_json::from_value(res)?))
+        } else {
+            Ok(None)
+        }
     }
 
     /// Returns albums, artists and songs matching the given search criteria.
@@ -377,13 +375,13 @@ pub struct License {
 
 #[cfg(test)]
 mod tests {
-    use client::*;
+    use super::*;
     use test_util;
 
     #[test]
     fn demo_ping() {
         let mut srv = test_util::demo_site().unwrap();
-        srv.check_connection().unwrap();
+        srv.ping().unwrap();
     }
 
     #[test]
@@ -393,13 +391,6 @@ mod tests {
 
         assert!(license.valid);
         assert_eq!(license.email, String::from("demo@subsonic.org"));
-    }
-
-    #[test]
-    fn demo_try_binary() {
-        let mut srv = test_util::demo_site().unwrap();
-        let res = srv.try_binary("stream", Query::with("id", 189));
-        assert!(res.is_ok())
     }
 
     #[test]

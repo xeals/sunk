@@ -1,5 +1,4 @@
-use std::fmt;
-use std::iter;
+use std::{fmt, iter};
 
 /// An expandable query set for an API call.
 #[derive(Debug, PartialEq, PartialOrd)]
