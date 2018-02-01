@@ -22,7 +22,7 @@ mod collections;
 
 mod jukebox;
 mod annotate;
-mod search;
+pub mod search;
 mod query;
 mod version;
 mod response;
@@ -32,7 +32,7 @@ mod user;
 mod test_util;
 
 pub use self::client::Client;
-pub use self::collections::{Album, AlbumInfo};
+pub use self::collections::{Album, AlbumInfo, ListType};
 pub use self::collections::{Artist, ArtistInfo, SimilarArtist};
 pub use self::collections::{Genre, MusicFolder};
 pub use self::collections::Playlist;
@@ -40,7 +40,6 @@ pub use self::error::{ApiError, Error, Result, UrlError};
 pub use self::jukebox::{Jukebox, JukeboxPlaylist, JukeboxStatus};
 pub use self::media::{Media, NowPlaying, RadioStation, Streamable};
 pub use self::media::{podcast, song, video};
-pub use self::search::*;
 pub use self::user::{User, UserBuilder};
 pub use self::version::Version;
 

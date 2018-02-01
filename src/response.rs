@@ -135,38 +135,6 @@ impl Response {
 
     /// Extracts the error struct of the response. Returns `None` if the
     /// response was not a failure.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// extern crate serde_json;
-    /// extern crate sunk;
-    /// use sunk::response::Response;
-    ///
-    /// # fn run() -> Result<(), sunk::Error> {
-    /// let fail = r#"{"subsonic-response": {
-    ///     "status": "failed",
-    ///     "version": "1.14.0",
-    ///     "error": {
-    ///         "code": 70,
-    ///         "message": "Requested resource not found"
-    ///     }
-    /// }}"#;
-    /// let fail = serde_json::from_str::<Response>(fail)?;
-    /// assert!(fail.into_error().is_some());
-    ///
-    /// let success = r#"{"subsonic-response": {
-    ///     "status": "ok",
-    ///     "version": "1.14.0"
-    /// }}"#;
-    /// let success = serde_json::from_str::<Response>(success)?;
-    /// assert!(success.into_error().is_none());
-    /// # Ok(())
-    /// # }
-    /// # fn main() {
-    /// #   run().unwrap();
-    /// # }
-    /// ```
     pub fn into_error(self) -> Option<ApiError> { self.inner.error }
 
     /// Returns `true` if the response is `"ok"`.
@@ -178,4 +146,30 @@ impl Response {
     // /// Returns `true` if the response is `"ok"`, but the response body
     // is empty. pub fn is_empty(&self) -> bool { self.is_ok() &&
     // self.into_value().is_none() }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn into_err_result() {
+        let fail = r#"{"subsonic-response": {
+            "status": "failed",
+            "version": "1.14.0",
+            "error": {
+                "code": 70,
+                "message": "Requested resource not found"
+            }
+        }}"#;
+        let fail = serde_json::from_str::<Response>(fail).unwrap();
+        assert!(fail.into_error().is_some());
+
+        let success = r#"{"subsonic-response": {
+            "status": "ok",
+            "version": "1.14.0"
+        }}"#;
+        let success = serde_json::from_str::<Response>(success).unwrap();
+        assert!(success.into_error().is_none());
+    }
 }

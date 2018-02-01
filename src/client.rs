@@ -7,7 +7,7 @@ use {Album, Artist, Error, Genre, Lyrics, MusicFolder, Result, Song, UrlError,
 use media::NowPlaying;
 use query::Query;
 use response::Response;
-use search::SearchPage;
+use search::{SearchPage, SearchResult};
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
@@ -23,13 +23,13 @@ const SALT_SIZE: usize = 36; // Minimum 6 characters.
 ///
 /// ```no_run
 /// use sunk::Client;
-/// # fn run() -> Result<(), sunk::error::Error> {
+/// # fn run() -> sunk::Result<()> {
 /// # let site = "http://demo.subsonic.org";
 /// # let user = "guest3";
 /// # let password = "guest";
 ///
-/// let mut server = Client::new(site, user, password)?;
-/// server.ping()?;
+/// let client = Client::new(site, user, password)?;
+/// client.ping()?;
 /// # Ok(())
 /// # }
 /// ```
@@ -282,10 +282,11 @@ impl Client {
         }
     }
 
-    // TODO Sort out what's happening with the library stuff
-    // TODO Make a SearchResult struct to handle this properly
     /// Returns albums, artists and songs matching the given search criteria.
-    /// Supports paging through the result.
+    /// Supports paging through the result. See the [search module] for
+    /// documentation.
+    ///
+    /// [search module]: ./search/index.html
     ///
     /// # Examples
     ///
@@ -293,38 +294,33 @@ impl Client {
     ///
     /// ```no_run
     /// use sunk::Client;
-    /// use sunk::library::search;
+    /// use sunk::search::{self, SearchPage};
     ///
-    /// # fn run() -> sunk::error::Result<()> {
+    /// # fn run() -> sunk::Result<()> {
     /// # let site = "http://demo.subsonic.org";
     /// # let user = "guest3";
     /// # let password = "guest";
-    /// let mut server = Client::new(site, user, password)?;
+    /// let client = Client::new(site, user, password)?;
     ///
-    /// let search_size = search::SearchPage::new();
+    /// let search_size = SearchPage::new();
     /// let ignore = search::NONE;
     ///
-    /// let (artists, albums, songs) = server.search("smile", ignore, ignore, search_size)?;
+    /// let result = client.search("smile", ignore, ignore, search_size)?;
     ///
-    /// assert!(artists.is_empty());
-    /// assert!(albums.is_empty());
-    /// assert!(!songs.is_empty());
+    /// assert!(result.artists.is_empty());
+    /// assert!(result.albums.is_empty());
+    /// assert!(!result.songs.is_empty());
     /// # Ok(())
     /// # }
+    /// # fn main() { }
     /// ```
-    ///
-    /// # Notes
-    ///
-    /// The current implementation uses the `search3` method, introduced in
-    /// version 1.8.0. This supports organising results by their ID3 tags,
-    /// and paging through results.
     pub fn search(
         &self,
         query: &str,
         artist_page: SearchPage,
         album_page: SearchPage,
         song_page: SearchPage,
-    ) -> Result<(Vec<Artist>, Vec<Album>, Vec<Song>)> {
+    ) -> Result<SearchResult> {
         // FIXME There has to be a way to make this nicer.
         let args = Query::with("query", query)
             .arg("artistCount", artist_page.count)
@@ -336,23 +332,11 @@ impl Client {
             .build();
 
         let res = self.get("search3", args)?;
-
-        #[derive(Deserialize)]
-        struct Output {
-            artist: Vec<Artist>,
-            album: Vec<Album>,
-            song: Vec<Song>,
-        }
-
-        let result = serde_json::from_value::<Output>(res)?;
-        Ok((result.artist, result.album, result.song))
+        Ok(serde_json::from_value::<SearchResult>(res)?)
     }
 
     /// Returns a list of all starred artists, albums, and songs.
-    pub fn starred<U>(
-        &self,
-        folder_id: U,
-    ) -> Result<(Vec<Artist>, Vec<Album>, Vec<Song>)>
+    pub fn starred<U>(&self, folder_id: U) -> Result<SearchResult>
     where
         U: Into<Option<usize>>,
     {
@@ -360,16 +344,7 @@ impl Client {
             "getStarred",
             Query::with("musicFolderId", folder_id.into()),
         )?;
-
-        #[derive(Deserialize)]
-        struct Output {
-            artist: Vec<Artist>,
-            album: Vec<Album>,
-            song: Vec<Song>,
-        }
-
-        let result = serde_json::from_value::<Output>(res)?;
-        Ok((result.artist, result.album, result.song))
+        Ok(serde_json::from_value::<SearchResult>(res)?)
     }
 }
 
@@ -395,14 +370,14 @@ mod tests {
 
     #[test]
     fn demo_ping() {
-        let mut srv = test_util::demo_site().unwrap();
-        srv.ping().unwrap();
+        let cli = test_util::demo_site().unwrap();
+        cli.ping().unwrap();
     }
 
     #[test]
     fn demo_license() {
-        let mut srv = test_util::demo_site().unwrap();
-        let license = srv.check_license().unwrap();
+        let cli = test_util::demo_site().unwrap();
+        let license = cli.check_license().unwrap();
 
         assert!(license.valid);
         assert_eq!(license.email, String::from("demo@subsonic.org"));
@@ -410,28 +385,26 @@ mod tests {
 
     #[test]
     fn demo_scan_status() {
-        let mut srv = test_util::demo_site().unwrap();
-        let (status, n) = srv.scan_status().unwrap();
+        let cli = test_util::demo_site().unwrap();
+        let (status, n) = cli.scan_status().unwrap();
         assert_eq!(status, false);
         assert_eq!(n, 521);
     }
 
     #[test]
     fn demo_search() {
-        use library::search;
+        let cli = test_util::demo_site().unwrap();
+        let s = SearchPage::new().with_size(1);
+        let r = cli.search("dada", s, s, s).unwrap();
 
-        let mut srv = test_util::demo_site().unwrap();
-        let s = search::SearchPage::new().with_size(1);
-        let (art, alb, son) = srv.search("dada", s, s, s).unwrap();
+        assert_eq!(r.artists[0].id, 14);
+        assert_eq!(r.artists[0].name, String::from("The Dada Weatherman"));
+        assert_eq!(r.artists[0].album_count, 4);
 
-        assert_eq!(art[0].id, 14);
-        assert_eq!(art[0].name, String::from("The Dada Weatherman"));
-        assert_eq!(art[0].album_count, 4);
+        assert_eq!(r.albums[0].id, 23);
+        assert_eq!(r.albums[0].name, String::from("The Green Waltz"));
 
-        assert_eq!(alb[0].id, 23);
-        assert_eq!(alb[0].name, String::from("The Green Waltz"));
-
-        assert_eq!(son[0].id, 222);
+        assert_eq!(r.songs[0].id, 222);
 
         // etc.
     }

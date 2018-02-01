@@ -5,6 +5,7 @@ use std::result;
 
 use {Client, Error, Media, Result, Song};
 use query::{Arg, IntoArg, Query};
+use search::SearchPage;
 
 #[derive(Debug, Clone, Copy)]
 pub enum ListType {
@@ -35,6 +36,10 @@ impl fmt::Display for ListType {
     }
 }
 
+impl Default for ListType {
+    fn default() -> Self { ListType::AlphaByArtist }
+}
+
 impl IntoArg for ListType {
     fn into_arg(self) -> Arg { self.to_string().into_arg() }
 }
@@ -54,14 +59,36 @@ pub struct Album {
 }
 
 impl Album {
+    /// Returns a single album from the Subsonic server.
+    ///
+    /// # Errors
+    ///
+    /// Aside from errors the `Client` may cause, the method will error if
+    /// there is no album matching the provided ID.
+    pub fn get(client: &Client, id: usize) -> Result<Album> {
+        self::get_album(client, id as u64)
+    }
+
+    /// Lists all albums on the server. Supports paging.
+    pub fn list(
+        client: &Client,
+        list_type: ListType,
+        page: SearchPage,
+        folder: usize,
+    ) -> Result<Vec<Album>> {
+        self::get_albums(client, list_type, page.count, page.offset, folder)
+    }
+
+    /// Returns all songs in the album.
     pub fn songs(&self, client: &Client) -> Result<Vec<Song>> {
         if self.songs.len() as u64 != self.song_count {
-            Ok(get_album(client, self.id)?.songs)
+            Ok(self::get_album(client, self.id)?.songs)
         } else {
             Ok(self.songs.clone())
         }
     }
 
+    /// Returns detailed information about the album.
     pub fn info(&self, client: &Client) -> Result<AlbumInfo> {
         let res = client.get("getArtistInfo", Query::with("id", self.id))?;
         Ok(serde_json::from_value(res)?)
@@ -178,12 +205,12 @@ impl<'de> Deserialize<'de> for AlbumInfo {
     }
 }
 
-pub fn get_album(client: &Client, id: u64) -> Result<Album> {
+fn get_album(client: &Client, id: u64) -> Result<Album> {
     let res = client.get("getAlbum", Query::with("id", id))?;
     Ok(serde_json::from_value::<Album>(res)?)
 }
 
-pub fn get_albums<U>(
+fn get_albums<U>(
     client: &Client,
     list_type: ListType,
     size: U,

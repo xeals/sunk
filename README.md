@@ -11,7 +11,7 @@ let username = "guest3";
 let password = "guest";
 let site = "http://demo.subsonic.org";
 
-let mut server = sunk::Client::new(site, username, password).unwrap();
+let client = sunk::Client::new(site, username, password).unwrap();
 
 // Take a look at the documentation for what you can do with a `Client`.
 
@@ -19,10 +19,10 @@ let mut server = sunk::Client::new(site, username, password).unwrap();
 server.scan_library().unwrap();
 
 // Fetch some songs and play them.
-let mut random = sunk::song::get_random_songs(&mut server, 20).unwrap();
+let mut random = sunk::song::get_random_songs(&client, 20).unwrap();
 for song in random {
     song.set_max_bit_rate(96);
-    let bytes: Vec<u8> = song.stream(&mut server);
+    let bytes: Vec<u8> = song.stream(&client);
     // Pass `bytes` to an audio library to actually play the song.
 }
 ```

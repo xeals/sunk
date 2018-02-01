@@ -145,19 +145,18 @@ impl User {
     ///
     /// ```no_run
     /// extern crate sunk;
-    /// use sunk::Client;
-    /// use sunk::user::User;
+    /// use sunk::{Client, User};
     ///
-    /// # fn run() -> sunk::error::Result<()> {
-    /// let mut server = Client::new("http://demo.subsonic.org", "guest3", "guest")?;
-    /// let mut user = User::get(&mut server, "guest")?;
+    /// # fn run() -> sunk::Result<()> {
+    /// let client = Client::new("http://demo.subsonic.org", "guest3", "guest")?;
+    /// let mut user = User::get(&client, "guest")?;
     ///
     /// // Update email
     /// user.email = "user@example.com".to_string();
     /// // Disable commenting
     /// user.comment_role = false;
     /// // Update on server
-    /// user.update(&mut server)?;
+    /// user.update(&client)?;
     /// # Ok(())
     /// # }
     /// # fn main() {

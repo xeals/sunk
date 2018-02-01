@@ -15,7 +15,7 @@ impl Query {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use sunk::query::Query;
     /// let query = Query::none();
     /// assert_eq!(query.to_string(), "");
@@ -30,7 +30,7 @@ impl Query {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use sunk::query::Query;
     /// let query = Query::new()
     ///                 .arg("key", "value")
@@ -48,7 +48,7 @@ impl Query {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use sunk::query::Query;
     /// let query_with = Query::with("key", "value");
     ///
@@ -67,7 +67,7 @@ impl Query {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use sunk::query::Query;
     /// let list = &[0, 1, 2];
     ///

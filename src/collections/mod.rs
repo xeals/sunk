@@ -5,18 +5,18 @@ mod album;
 mod artist;
 mod playlist;
 
-pub use self::album::{Album, AlbumInfo};
+pub use self::album::{Album, AlbumInfo, ListType};
 pub use self::artist::{Artist, ArtistInfo, SimilarArtist};
 pub use self::playlist::Playlist;
 
+/// A representation of a music folder on a Subsonic server.
 #[derive(Debug)]
 pub struct MusicFolder {
+    /// The index number of the folder.
     pub id: usize,
+    /// The name assigned to the folder.
     pub name: String,
-}
-
-impl MusicFolder {
-    fn from(id: usize, name: String) -> MusicFolder { MusicFolder { id, name } }
+    _private: bool,
 }
 
 impl<'de> Deserialize<'de> for MusicFolder {
@@ -34,14 +34,21 @@ impl<'de> Deserialize<'de> for MusicFolder {
         Ok(MusicFolder {
             id: raw.id.parse().unwrap(),
             name: raw.name,
+            _private: false,
         })
     }
 }
 
+/// A genre contained on a Subsonic server.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Genre {
+    /// The name of the genre.
     pub name: String,
+    /// The number of songs in the genre.
     pub song_count: u64,
+    /// The number of albums in the genre.
     pub album_count: u64,
+    #[serde(default)]
+    _private: bool,
 }

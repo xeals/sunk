@@ -16,9 +16,11 @@ pub struct Song {
     pub title: String,
     /// Album the song belongs to. Reads from the song's ID3 tags.
     pub album: Option<String>,
+    /// The ID of the released album.
     album_id: Option<u64>,
     /// Credited artist for the song. Reads from the song's ID3 tags.
     pub artist: Option<String>,
+    /// The ID of the releasing artist.
     artist_id: Option<u64>,
     /// Position of the song in the album.
     pub track: Option<u64>,
@@ -26,18 +28,27 @@ pub struct Song {
     pub year: Option<u64>,
     /// Genre of the song.
     pub genre: Option<String>,
+    /// ID of the song's cover art. Defaults to the parent album's cover.
     cover_id: Option<String>,
     /// File size of the song, in bytes.
     pub size: u64,
+    /// An audio MIME type.
     content_type: String,
+    /// The file extension of the song.
     suffix: String,
+    /// The MIME type that the song will be transcoded to.
     transcoded_content_type: Option<String>,
+    /// The file extension that the song will be transcoded to.
     transcoded_suffix: Option<String>,
     /// Duration of the song, in seconds.
     pub duration: Option<u64>,
+    /// The absolute path of the song in the server database.
     path: String,
+    /// Will always be "song".
     media_type: String,
+    /// Bit rate the song will be downsampled to.
     stream_br: Option<usize>,
+    /// Format the song will be transcoded to.
     stream_tc: Option<String>,
 }
 
@@ -47,9 +58,7 @@ impl Song {
     /// # Errors
     ///
     /// Aside from other errors the `Client` may cause, the server will return
-    /// an error if there is no song
-    /// matching the
-    /// provided ID.
+    /// an error if there is no song matching the provided ID.
     pub fn get(client: &Client, id: u64) -> Result<Song> {
         let res = client.get("getSong", Query::with("id", id))?;
         Ok(serde_json::from_value(res)?)
@@ -101,10 +110,9 @@ impl Song {
     /// Lists all the songs in a provided genre. Supports paging through the
     /// result.
     ///
-    /// See the documentation for [`SearchPage`] for paging.
+    /// See the [struct level documentation] about paging for more.
     ///
-    /// [`SearchPage`]: ../../search/struct.SearchPage.html
-    // TODO Solve where this is pointing to
+    /// [struct level documentation]: ../search/struct.SearchPage.html
     pub fn list_in_genre<U>(
         client: &Client,
         genre: &str,
@@ -310,24 +318,22 @@ pub struct Lyrics {
 /// ```no_run
 /// extern crate sunk;
 /// use sunk::Client;
-/// use sunk::media::Song;
+/// use sunk::song::Song;
 ///
-/// # fn run() -> sunk::error::Result<()> {
+/// # fn run() -> sunk::Result<()> {
 /// # let site = "http://demo.subsonic.org";
 /// # let user = "guest3";
 /// # let password = "guest";
-/// let mut server = Client::new(site, user, password)?;
+/// let client = Client::new(site, user, password)?;
 ///
 /// // Get 25 songs from the last 10 years
-/// let random = Song::random_with(&mut server)
+/// let random = Song::random_with(&client)
 ///                  .size(25)
 ///                  .in_years(2008..2018)
 ///                  .request()?;
 /// # Ok(())
 /// # }
-/// # fn main() {
-/// # run().unwrap();
-/// # }
+/// # fn main() { }
 /// ```
 #[derive(Debug)]
 pub struct RandomSongs<'a> {

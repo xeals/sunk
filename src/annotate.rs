@@ -1,6 +1,7 @@
 use {Album, Artist, Client, Error, Result, Song};
 use query::Query;
 
+/// Allows starring, rating, and scrobbling media.
 pub trait Annotatable {
     /// Attaches a star to the content.
     fn star(&self, client: &Client) -> Result<()>;
@@ -22,7 +23,7 @@ pub trait Annotatable {
     /// and appear in the list of songs returned by
     /// [`Client::now_playing()`] (since API version 1.11.0).
     ///
-    /// [`Client::now_playing()`]: ../struct.Client.html#method.now_playing
+    /// [`Client::now_playing()`]: ./struct.Client.html#method.now_playing
     ///
     /// `time` should be a valid ISO8601 timestamp. In the future, this will be
     /// validated.
