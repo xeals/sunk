@@ -69,7 +69,7 @@ impl Response {
     /// This method will error if the response contained an error (as defined by
     /// the [Subsonic API]).
     ///
-    /// [Subsonic API]: ../error/enum.ApiError.html
+    /// [Subsonic API]: ./enum.ApiError.html
     pub fn into_value(self) -> Option<serde_json::Value> {
         // TODO Big time; make this not an `if ... else if ...` mess.
         macro_rules! choose {

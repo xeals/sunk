@@ -45,7 +45,7 @@ const SALT_SIZE: usize = 36; // Minimum 6 characters.
 /// - connecting to the Subsonic server fails
 /// - the Subsonic server returns an [API error]
 ///
-/// [API error]: struct.ApiError.html
+/// [API error]: ./enum.ApiError.html
 #[derive(Debug)]
 pub struct Client {
     url: Url,
