@@ -5,14 +5,14 @@ use {Client, Error, Result};
 
 // pub mod format;
 pub mod podcast;
-mod song;
-mod video;
+pub mod song;
+pub mod video;
 mod radio;
 
 pub use self::radio::RadioStation;
-pub use self::song::Lyrics;
-pub use self::song::Song;
-pub use self::video::Video;
+
+use self::song::Song;
+use self::video::Video;
 // pub use self::podcast::{Podcast, Episode};
 
 // use self::format::{AudioFormat, VideoFormat};
@@ -106,10 +106,8 @@ pub trait Media {
     ///
     /// # Errors
     ///
-    /// Aside from errors that the [`Client`] may cause, the method will error
+    /// Aside from errors that the `Client` may cause, the method will error
     /// if the media does not have an associated cover art.
-    ///
-    /// [`Client`]: ../client/struct.Client.html
     fn cover_art<U: Into<Option<usize>>>(
         &self,
         client: &Client,
@@ -120,10 +118,8 @@ pub trait Media {
     ///
     /// # Errors
     ///
-    /// Aside from errors that the [`Client`] may cause, the method will error
+    /// Aside from errors that the `Client` may cause, the method will error
     /// if the media does not have an associated cover art.
-    ///
-    /// [`Client`]: ../client/struct.Client.html
     fn cover_art_url<U: Into<Option<usize>>>(
         &self,
         client: &Client,
@@ -136,8 +132,9 @@ pub trait Media {
 /// Due to the "now playing" information possibly containing both audio and
 /// video, compromises are made. `NowPlaying` only stores the ID, title, and
 /// content type of the media. This is most of the information afforded through
-/// the web interface. For more detailed information, `NowPlaying::info()` gives
-/// the full `Song` or `Video` struct, though requires another web reqeust.
+/// the web interface. For more detailed information, `song_info()` or
+/// `video_info()` gives the full `Song` or `Video` struct, though requires
+/// another web request.
 #[derive(Debug)]
 pub struct NowPlaying {
     /// The user streaming the current media.
@@ -158,7 +155,7 @@ impl NowPlaying {
     /// Aside from the inherent errors from the [`Client`], the method will
     /// error if the `NowPlaying` is not a song.
     ///
-    /// [`Client`]: ../client/struct.Client.html
+    /// [`Client`]: ../struct.Client.html
     pub fn song_info(&self, client: &Client) -> Result<Song> {
         if self.is_video {
             Err(Error::Other("Now Playing info is not a song"))
@@ -174,7 +171,7 @@ impl NowPlaying {
     /// Aside from the inherent errors from the [`Client`], the method will
     /// error if the `NowPlaying` is not a video.
     ///
-    /// [`Client`]: ../client/struct.Client.html
+    /// [`Client`]: ../struct.Client.html
     pub fn video_info(&self, client: &Client) -> Result<Video> {
         if !self.is_video {
             Err(Error::Other("Now Playing info is not a video"))

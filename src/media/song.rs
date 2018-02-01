@@ -1,9 +1,10 @@
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
+use std::ops::Range;
 
 use {Client, Error, Media, Result, Streamable};
-use library::search;
 use query::Query;
+use search::SearchPage;
 
 /// A work of music contained on a Subsonic server.
 #[derive(Debug, Clone)]
@@ -45,7 +46,9 @@ impl Song {
     ///
     /// # Errors
     ///
-    /// The server will return an error if there is no song matching the
+    /// Aside from other errors the `Client` may cause, the server will return
+    /// an error if there is no song
+    /// matching the
     /// provided ID.
     pub fn get(client: &Client, id: u64) -> Result<Song> {
         let res = client.get("getSong", Query::with("id", id))?;
@@ -90,7 +93,7 @@ impl Song {
     /// See the [struct level documentation] for more information on how to use
     /// the builder.
     ///
-    /// [struct level documentation]: struct.RandomSongs.html
+    /// [struct level documentation]: ./struct.RandomSongs.html
     pub fn random_with<'a>(client: &Client) -> RandomSongs {
         RandomSongs::new(client, 10)
     }
@@ -100,11 +103,12 @@ impl Song {
     ///
     /// See the documentation for [`SearchPage`] for paging.
     ///
-    /// [`SearchPage`]: ../../library/search/struct.SearchPage.html
+    /// [`SearchPage`]: ../../search/struct.SearchPage.html
+    // TODO Solve where this is pointing to
     pub fn list_in_genre<U>(
         client: &Client,
         genre: &str,
-        page: search::SearchPage,
+        page: SearchPage,
         folder_id: U,
     ) -> Result<Vec<Song>>
     where
@@ -277,8 +281,11 @@ impl<'de> Deserialize<'de> for Song {
 /// A struct matching a lyric search result.
 #[derive(Debug, Deserialize)]
 pub struct Lyrics {
+    /// Title of the song.
     pub title: String,
+    /// Artist that performed the song.
     pub artist: String,
+    /// Lyrics to the song.
     #[serde(rename = "value")]
     pub lyrics: String,
 }
@@ -295,8 +302,8 @@ pub struct Lyrics {
 /// use [`Song::random`] instead, as it skips constructing the builder and
 /// directly queries the Subsonic server.
 ///
-/// [`Song::random_with`]: struct.Song.html#method.random_with
-/// [`Song::random`]: struct.Song.html#method.random
+/// [`Song::random_with`]: ./struct.Song.html#method.random_with
+/// [`Song::random`]: ./struct.Song.html#method.random
 ///
 /// # Examples
 ///
@@ -332,7 +339,6 @@ pub struct RandomSongs<'a> {
     folder_id: Option<usize>,
 }
 
-use std::ops::Range;
 impl<'a> RandomSongs<'a> {
     fn new(client: &'a Client, n: usize) -> RandomSongs<'a> {
         RandomSongs {
@@ -356,7 +362,7 @@ impl<'a> RandomSongs<'a> {
     /// Genres will vary between Subsonic instances, but can be found using the
     /// [`Client::genres`] method.
     ///
-    /// [`Client::genres`]: ../../client/struct.Client.html#method.genres
+    /// [`Client::genres`]: ../struct.Client.html#method.genres
     pub fn genre(&mut self, genre: &'a str) -> &mut RandomSongs<'a> {
         self.genre = Some(genre);
         self
@@ -391,8 +397,7 @@ impl<'a> RandomSongs<'a> {
     /// (provided the server is configured at all) . A list of music
     /// folders can be found using the [`Client::music_folders`] method.
     ///
-    /// [`Client::music_folders`]:
-    /// ../../client/struct.Client.html#method.music_folders
+    /// [`Client::music_folders`]: ../struct.Client.html#method.music_folders
     pub fn in_folder(&mut self, id: usize) -> &mut RandomSongs<'a> {
         self.folder_id = Some(id);
         self

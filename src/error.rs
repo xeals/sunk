@@ -12,27 +12,27 @@ pub type Result<T> = result::Result<T, self::Error>;
 pub enum Error {
     /// Unable to connect to the Subsonic server.
     #[fail(display = "Unable to connect to server: received {}", _0)]
-    ConnectionError(reqwest::StatusCode),
+    Connection(reqwest::StatusCode),
 
     /// Unable to recognize the URL provided in `Client` setup.
     #[fail(display = "Invalid URL: {}", _0)]
-    Uri(UriError),
+    Url(UrlError),
     /// The Subsonic server returned an error.
     #[fail(display = "{}", _0)]
     Api(#[cause] ApiError),
 
-    #[doc(hidden)]
+    /// A number conversion failed.
     #[fail(display = "Failed to parse int: {}", _0)]
-    ParError(#[cause] num::ParseIntError),
+    Parse(#[cause] num::ParseIntError),
     /// An IO issue occurred.
     #[fail(display = "IO error: {}", _0)]
     Io(#[cause] io::Error),
     /// An error in the web framework occurred.
     #[fail(display = "Connection error: {}", _0)]
-    ReqwestError(#[cause] reqwest::Error),
+    Reqwest(#[cause] reqwest::Error),
     /// An error occurred in serialization.
     #[fail(display = "Error serialising: {}", _0)]
-    SerdeError(#[cause] serde_json::Error),
+    Serde(#[cause] serde_json::Error),
 
     /// For general, one-off errors.
     #[fail(display = "{}", _0)]
@@ -41,7 +41,7 @@ pub enum Error {
 
 /// Possible errors when initializing a `Client`.
 #[derive(Debug, Fail)]
-pub enum UriError {
+pub enum UrlError {
     /// Unable to parse the URL.
     #[fail(display = "{}", _0)]
     Reqwest(#[cause] reqwest::UrlError),
@@ -173,17 +173,17 @@ macro_rules! box_err {
     }
 }
 
-box_err!(reqwest::Error, ReqwestError);
+box_err!(reqwest::Error, Reqwest);
 box_err!(io::Error, Io);
-box_err!(num::ParseIntError, ParError);
-box_err!(serde_json::Error, SerdeError);
-box_err!(UriError, Uri);
+box_err!(num::ParseIntError, Parse);
+box_err!(serde_json::Error, Serde);
+box_err!(UrlError, Url);
 box_err!(ApiError, Api);
 
-impl From<reqwest::UrlError> for UriError {
-    fn from(err: reqwest::UrlError) -> UriError { UriError::Reqwest(err) }
+impl From<reqwest::UrlError> for UrlError {
+    fn from(err: reqwest::UrlError) -> UrlError { UrlError::Reqwest(err) }
 }
 
 impl From<reqwest::UrlError> for Error {
-    fn from(err: reqwest::UrlError) -> Error { Error::Uri(err.into()) }
+    fn from(err: reqwest::UrlError) -> Error { Error::Url(err.into()) }
 }

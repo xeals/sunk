@@ -1,4 +1,4 @@
-#![recursion_limit = "128"]
+#![warn(missing_docs)]
 
 #[macro_use]
 extern crate failure;
@@ -22,7 +22,7 @@ mod collections;
 
 mod jukebox;
 mod annotate;
-mod library;
+mod search;
 mod query;
 mod version;
 mod response;
@@ -34,12 +34,15 @@ mod test_util;
 pub use self::client::Client;
 pub use self::collections::{Album, AlbumInfo};
 pub use self::collections::{Artist, ArtistInfo, SimilarArtist};
+pub use self::collections::{Genre, MusicFolder};
 pub use self::collections::Playlist;
-pub use self::error::{ApiError, Error, Result, UriError};
+pub use self::error::{ApiError, Error, Result, UrlError};
 pub use self::jukebox::{Jukebox, JukeboxPlaylist, JukeboxStatus};
-pub use self::library::Genre;
-pub use self::media::{Lyrics, Media, NowPlaying, RadioStation, Song,
-                      Streamable, Video};
-pub use self::media::podcast;
+pub use self::media::{Media, NowPlaying, RadioStation, Streamable};
+pub use self::media::{podcast, song, video};
+pub use self::search::*;
 pub use self::user::{User, UserBuilder};
 pub use self::version::Version;
+
+use self::song::{Lyrics, RandomSongs, Song};
+use self::video::Video;

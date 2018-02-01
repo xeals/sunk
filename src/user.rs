@@ -86,7 +86,7 @@ impl User {
     /// Attempting to use this method as a non-administrative user (when
     /// creating the `Client`) will result in a [`NotAuthorized`] error.
     ///
-    /// [`NotAuthorized`]: ../error/enum.ApiError.html#variant.NotAuthorized
+    /// [`NotAuthorized`]: ../enum.ApiError.html#variant.NotAuthorized
     pub fn list(client: &Client) -> Result<Vec<User>> {
         let user = client.get("getUsers", Query::none())?;
         Ok(get_list_as!(user, User))

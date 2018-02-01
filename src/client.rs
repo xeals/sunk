@@ -2,13 +2,12 @@ use reqwest::Client as ReqwestClient;
 use reqwest::Url;
 use serde_json;
 
-use library::MusicFolder;
-use library::search::SearchPage;
+use {Album, Artist, Error, Genre, Lyrics, MusicFolder, Result, Song, UrlError,
+     Version};
 use media::NowPlaying;
-
-use {Album, Artist, Error, Genre, Lyrics, Result, Song, UriError, Version};
 use query::Query;
 use response::Response;
+use search::SearchPage;
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
@@ -34,6 +33,19 @@ const SALT_SIZE: usize = 36; // Minimum 6 characters.
 /// # Ok(())
 /// # }
 /// ```
+///
+/// # Notes
+///
+/// Generally, any method that requires a response from a Subsonic server will
+/// require a `Client` . Any method that issues a request will have the
+/// possiblity to return an error. A request will result in an error if any of
+/// the following occurs:
+///
+/// - the `Client` is built with an unrecognised URL
+/// - connecting to the Subsonic server fails
+/// - the Subsonic server returns an [API error]
+///
+/// [API error]: struct.ApiError.html
 #[derive(Debug)]
 pub struct Client {
     url: Url,
@@ -56,8 +68,7 @@ impl SubsonicAuth {
         }
     }
 
-    // TODO Actual version comparison support
-    fn as_uri(&self, ver: Version) -> String {
+    fn to_url(&self, ver: Version) -> String {
         // First md5 support.
         let auth = if ver >= "1.13.0".into() {
             use md5;
@@ -110,12 +121,12 @@ impl Client {
         let scheme = self.url.scheme();
         let addr = self.url
             .host_str()
-            .ok_or_else(|| Error::Uri(UriError::Address))?;
+            .ok_or_else(|| Error::Url(UrlError::Address))?;
 
         let mut url = [scheme, "://", addr, "/rest/"].concat();
         url.push_str(query);
         url.push_str("?");
-        url.push_str(&self.auth.as_uri(self.ver));
+        url.push_str(&self.auth.to_url(self.ver));
         url.push_str("&");
         url.push_str(&args.to_string());
 
@@ -159,7 +170,7 @@ impl Client {
                     .ok_or_else(|| Error::Other("unable to retrieve error"))?)
             }
         } else {
-            Err(Error::ConnectionError(res.status()))
+            Err(Error::Connection(res.status()))
         }
     }
 
@@ -171,6 +182,7 @@ impl Client {
         Ok(res.text()?)
     }
 
+    /// Returns a response as a vector of bytes rather than serialising it.
     pub(crate) fn get_bytes(
         &self,
         query: &str,
@@ -182,7 +194,7 @@ impl Client {
         Ok(res.bytes().map(|b| b.unwrap()).collect())
     }
 
-    /// Used to test connectivity with the server.
+    /// Tests a connection with the server.
     pub fn ping(&self) -> Result<()> {
         self.get("ping", Query::none())?;
         Ok(())
@@ -246,6 +258,7 @@ impl Client {
         Ok(get_list_as!(genre, Genre))
     }
 
+    /// Returns all currently playing media on the server.
     pub fn now_playing(&self) -> Result<Vec<NowPlaying>> {
         let entry = self.get("getNowPlaying", Query::none())?;
         Ok(get_list_as!(entry, NowPlaying))
@@ -269,6 +282,8 @@ impl Client {
         }
     }
 
+    // TODO Sort out what's happening with the library stuff
+    // TODO Make a SearchResult struct to handle this properly
     /// Returns albums, artists and songs matching the given search criteria.
     /// Supports paging through the result.
     ///

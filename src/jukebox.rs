@@ -5,24 +5,37 @@ use std::result;
 use {Client, Result, Song};
 use query::Query;
 
+/// A wrapper on a `Client` to control just the jukebox.
+///
+/// Any method invoked on a `Jukebox` will fail if the user that created the
+/// `Client` is not authorized to control the jukebox.
 #[derive(Debug)]
 pub struct Jukebox<'a> {
     client: &'a Client,
 }
 
+/// A representation of the jukebox's current status.
 #[derive(Debug, Deserialize)]
 pub struct JukeboxStatus {
+    /// Current index in the playlist (zero-indexed). `-1` means that the
+    /// jukebox has had its playlist cleared and has not since been played.
     #[serde(rename = "currentIndex")]
     pub index: isize,
+    /// Whether or not the jukebox is currently active.
     pub playing: bool,
+    /// Volume level of the jukebox, from `0` to `1.0`.
     #[serde(rename = "gain")]
     pub volume: f32,
     pub position: usize,
 }
 
+/// A more detailed representation of the jukebox's status. Includes its
+/// current playlist.
 #[derive(Debug)]
 pub struct JukeboxPlaylist {
+    /// The jukebox's status.
     pub status: JukeboxStatus,
+    /// The jukebox's current playlist.
     pub songs: Vec<Song>,
 }
 
@@ -78,16 +91,22 @@ impl<'a> Jukebox<'a> {
         self.send_action_with(action, None, &[])
     }
 
+    /// Returns the current playlist of the jukebox, as well as its status. The
+    /// status is also returned as it contains the position of the jukebox
+    /// in its playlist.
     pub fn playlist(&self) -> Result<JukeboxPlaylist> {
         let res = self.client
             .get("jukeboxControl", Query::with("action", "get"))?;
         Ok(serde_json::from_value::<JukeboxPlaylist>(res)?)
     }
 
+    /// Returns the status of the jukebox.
     pub fn status(&self) -> Result<JukeboxStatus> { self.send_action("status") }
 
+    /// Tells the jukebox to start playing.
     pub fn play(&self) -> Result<JukeboxStatus> { self.send_action("start") }
 
+    /// Tells the jukebox to pause playback.
     pub fn stop(&self) -> Result<JukeboxStatus> { self.send_action("stop") }
 
     /// Moves the jukebox's currently playing song to the provided index
@@ -99,14 +118,22 @@ impl<'a> Jukebox<'a> {
         self.send_action_with("skip", n, &[])
     }
 
+    /// Adds the song to the jukebox's playlist.
     pub fn add(&self, song: &Song) -> Result<JukeboxStatus> {
         self.send_action_with("add", None, &[song.id as usize])
     }
 
+    /// Adds a song matching the provided ID to the playlist.
+    ///
+    /// # Errors
+    ///
+    /// The method will return an error if a song matching the provided ID
+    /// cannot be found.
     pub fn add_id(&self, id: usize) -> Result<JukeboxStatus> {
         self.send_action_with("add", None, &[id])
     }
 
+    /// Adds all the songs to the jukebox's playlist.
     pub fn add_all(&self, songs: &[Song]) -> Result<JukeboxStatus> {
         self.send_action_with(
             "add",
@@ -115,24 +142,32 @@ impl<'a> Jukebox<'a> {
         )
     }
 
+    /// Adds multiple songs matching the provided IDs to the playlist.
+    ///
+    /// # Errors
+    ///
+    /// The method will return an error if at least one ID cannot be matched to
+    /// a song.
     pub fn add_all_ids(&self, ids: &[usize]) -> Result<JukeboxStatus> {
         self.send_action_with("add", None, ids)
     }
 
+    /// Clears the jukebox's playlist.
     pub fn clear(&self) -> Result<JukeboxStatus> { self.send_action("clear") }
 
-    pub fn remove(&self, song: &Song) -> Result<JukeboxStatus> {
-        self.send_action_with("remove", song.id as usize, &[])
+    /// Removes the song at the provided index from the playlist.
+    pub fn remove_id(&self, idx: usize) -> Result<JukeboxStatus> {
+        self.send_action_with("remove", idx, &[])
     }
 
-    pub fn remove_id(&self, id: usize) -> Result<JukeboxStatus> {
-        self.send_action_with("remove", id, &[])
-    }
-
+    /// Shuffles the jukebox's playlist.
     pub fn shuffle(&self) -> Result<JukeboxStatus> {
         self.send_action("shuffle")
     }
 
+    /// Sets the jukebox's playback volume.
+    ///
+    /// Seting the volume above `1.0` will have no effect.
     pub fn set_volume(&self, volume: f32) -> Result<JukeboxStatus> {
         let args = Query::with("action", "setGain").arg("gain", volume).build();
         let res = self.client.get("jukeboxControl", args)?;
