@@ -6,6 +6,7 @@ use serde_json;
 use {Album, Client, Error, Media, Result, Song};
 use query::Query;
 
+/// Basic information about an artist.
 #[derive(Debug)]
 pub struct Artist {
     pub id: u64,
@@ -15,21 +16,30 @@ pub struct Artist {
     pub album_count: u64,
 }
 
+/// Detailed information about an artist.
 #[derive(Debug)]
 pub struct ArtistInfo {
-    biography: String,
-    musicbrainz_id: String,
-    lastfm_url: String,
-    image_urls: (String, String, String),
-    similar_artists: Vec<SimilarArtist>,
+    /// A blurb about the artist.
+    pub biography: String,
+    /// The artist's [MusicBrainz](https://musicbrainz.org/) ID.
+    pub musicbrainz_id: String,
+    /// The artist's [last.fm](https://last.fm) landing page.
+    pub lastfm_url: String,
+    /// URLs for the artist's image; available in small, medium, and large.
+    pub image_urls: (String, String, String),
+    /// Artists similar to this one. Provided by last.fm.
+    pub similar_artists: Vec<SimilarArtist>,
 }
 
+/// An artist suggested by last.fm.
 #[derive(Debug)]
 pub struct SimilarArtist {
     id: u64,
-    name: String,
+    /// The artist's name.
+    pub name: String,
     cover_art: Option<String>,
-    album_count: u64,
+    /// The number of albums contained in the Subsonic server released by the artist.
+    pub album_count: u64,
 }
 
 impl<'de> Deserialize<'de> for SimilarArtist {
@@ -58,6 +68,7 @@ impl<'de> Deserialize<'de> for SimilarArtist {
 }
 
 impl Artist {
+    /// Returns a list of albums released by the artist.
     pub fn albums(&self, client: &Client) -> Result<Vec<Album>> {
         if self.albums.len() as u64 != self.album_count {
             Ok(get_artist(client, self.id)?.albums)
@@ -66,6 +77,10 @@ impl Artist {
         }
     }
 
+    /// Queries last.fm for more information about the artist.
+    ///
+    /// Optionally accepts a maximum number of similar artists to return, and whether to include
+    /// artists that are not present on the Subsonic server.
     pub fn info<B, U>(
         &self,
         client: &Client,
@@ -84,6 +99,7 @@ impl Artist {
         Ok(serde_json::from_value(res)?)
     }
 
+    /// Returns the top `count` most played songs released by the artist.
     pub fn top_songs<U>(&self, client: &Client, count: U) -> Result<Vec<Song>>
     where
         U: Into<Option<usize>>,
@@ -190,7 +206,41 @@ impl<'de> Deserialize<'de> for ArtistInfo {
     }
 }
 
-pub fn get_artist(client: &Client, id: u64) -> Result<Artist> {
+impl Media for SimilarArtist {
+    fn has_cover_art(&self) -> bool {
+        self.cover_art.is_some()
+    }
+
+    fn cover_id(&self) -> Option<&str> {
+        self.cover_art.as_ref().map(|s| s.as_str())
+    }
+
+    fn cover_art<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<Vec<u8>> {
+        let cover = self.cover_id()
+            .ok_or_else(|| Error::Other("no cover art found"))?;
+        let query = Query::with("id", cover).arg("size", size.into()).build();
+
+        client.get_bytes("getCoverArt", query)
+    }
+
+    fn cover_art_url<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<String> {
+        let cover = self.cover_id()
+            .ok_or_else(|| Error::Other("no cover art found"))?;
+        let query = Query::with("id", cover).arg("size", size.into()).build();
+
+        client.build_url("getCoverArt", query)
+    }
+}
+
+impl SimilarArtist {
+    /// Queries the Subsonic server to return full information about the artist.
+    pub fn into_artist(self, client: &Client) -> Result<Artist> {
+        self::get_artist(client, self.id)
+    }
+}
+
+/// Fetches an artist from the Subsonic server.
+fn get_artist(client: &Client, id: u64) -> Result<Artist> {
     let res = client.get("getArtist", Query::with("id", id))?;
     Ok(serde_json::from_value::<Artist>(res)?)
 }
