@@ -1,10 +1,15 @@
 # sunk
 
+[![crates.io](https://img.shields.io/crates/v/sunk.svg)](https://crates.io/crates/sunk)
+
 A library for interfacing with the Subsonic API.
 
 The library is designed to be as ergonomic and feel as natural as to Rust as possible.
 
 It aims to support any version of the Subsonic API from 1.8.0 onwards.
+
+- [Documentation](https://docs.rs/sunk)
+- [Changelog](CHANGELOG.md)
 
 ## Quick usage
 

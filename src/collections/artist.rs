@@ -57,7 +57,12 @@ impl Artist {
     /// called on. Optionally takes a `count` to specify the maximum number of
     /// results to return, and whether to only include artists in the Subsonic
     /// library (defaults to true).
-    pub fn similar<B, U>(&self, client: &Client, count: U, include_not_present: B) -> Result<Vec<Artist>>
+    pub fn similar<B, U>(
+        &self,
+        client: &Client,
+        count: U,
+        include_not_present: B,
+    ) -> Result<Vec<Artist>>
     where
         B: Into<Option<bool>>,
         U: Into<Option<usize>>,

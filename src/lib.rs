@@ -1,3 +1,8 @@
+#![warn(missing_docs)]
+#![doc(html_root_url = "https://docs.rs/sunk/0.1.0")]
+
+//! # sunk
+//!
 //! `sunk` provides natural Rust bindings to the [Subsonic] music server API.
 //! Many other popular music servers, such as Libresonic and Airsonic, also use
 //! the Subsonic API, so this crate can stretch far beyond just Subsonic.
@@ -94,8 +99,6 @@
 //!
 //! Bug reports and broken features are encouraged to be reported! **If
 //! something does not work as reported, it's probably broken.**
-
-#![warn(missing_docs)]
 
 #[macro_use]
 extern crate failure;
