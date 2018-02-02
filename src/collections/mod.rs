@@ -6,7 +6,7 @@ mod artist;
 mod playlist;
 
 pub use self::album::{Album, AlbumInfo, ListType};
-pub use self::artist::{Artist, ArtistInfo, SimilarArtist};
+pub use self::artist::{Artist, ArtistInfo};
 pub use self::playlist::Playlist;
 
 /// A representation of a music folder on a Subsonic server.

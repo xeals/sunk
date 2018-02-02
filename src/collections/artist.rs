@@ -28,44 +28,7 @@ pub struct ArtistInfo {
     /// URLs for the artist's image; available in small, medium, and large.
     pub image_urls: (String, String, String),
     /// Artists similar to this one. Provided by last.fm.
-    pub similar_artists: Vec<SimilarArtist>,
-}
-
-/// An artist suggested by last.fm.
-#[derive(Debug, Clone)]
-pub struct SimilarArtist {
-    id: usize,
-    /// The artist's name.
-    pub name: String,
-    cover_art: Option<String>,
-    /// The number of albums contained in the Subsonic server released by
-    /// the artist.
-    pub album_count: usize,
-}
-
-impl<'de> Deserialize<'de> for SimilarArtist {
-    fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        #[derive(Debug, Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct _SimilarArtist {
-            id: String,
-            name: String,
-            cover_art: Option<String>,
-            album_count: String,
-        }
-
-        let raw = _SimilarArtist::deserialize(de)?;
-
-        Ok(SimilarArtist {
-            id: raw.id.parse().unwrap(),
-            name: raw.name,
-            cover_art: raw.cover_art,
-            album_count: raw.album_count.parse().unwrap(),
-        })
-    }
+    similar_artists: Vec<Artist>,
 }
 
 impl Artist {
@@ -83,16 +46,18 @@ impl Artist {
     }
 
     /// Queries last.fm for more information about the artist.
+    pub fn info(&self, client: &Client) -> Result<ArtistInfo> {
+        let res = client.get("getArtistInfo", Query::with("id", self.id))?;
+        Ok(serde_json::from_value(res)?)
+    }
+
+    /// Returns a number of random artists similar to this one.
     ///
-    /// Optionally accepts a maximum number of similar artists to return, and
-    /// whether to include artists that are not present on the Subsonic
-    /// server.
-    pub fn info<B, U>(
-        &self,
-        client: &Client,
-        count: U,
-        include_not_present: B,
-    ) -> Result<ArtistInfo>
+    /// last.fm suggests a number of similar artists to the one the method is
+    /// called on. Optionally takes a `count` to specify the maximum number of
+    /// results to return, and whether to only include artists in the Subsonic
+    /// library (defaults to true).
+    pub fn similar<B, U>(&self, client: &Client, count: U, include_not_present: B) -> Result<Vec<Artist>>
     where
         B: Into<Option<bool>>,
         U: Into<Option<usize>>,
@@ -101,8 +66,8 @@ impl Artist {
             .arg("count", count.into())
             .arg("includeNotPresent", include_not_present.into())
             .build();
-        let res = client.get("getArtistInfo", args)?;
-        Ok(serde_json::from_value(res)?)
+        let res = serde_json::from_value::<ArtistInfo>(client.get("getArtistInfo", args)?)?;
+        Ok(res.similar_artists)
     }
 
     /// Returns the top `count` most played songs released by the artist.
@@ -193,7 +158,7 @@ impl<'de> Deserialize<'de> for ArtistInfo {
             small_image_url: String,
             medium_image_url: String,
             large_image_url: String,
-            similar_artist: Vec<SimilarArtist>,
+            similar_artist: Vec<Artist>,
         }
 
         let raw = _ArtistInfo::deserialize(de)?;
@@ -209,46 +174,6 @@ impl<'de> Deserialize<'de> for ArtistInfo {
             ),
             similar_artists: raw.similar_artist,
         })
-    }
-}
-
-impl Media for SimilarArtist {
-    fn has_cover_art(&self) -> bool { self.cover_art.is_some() }
-
-    fn cover_id(&self) -> Option<&str> {
-        self.cover_art.as_ref().map(|s| s.as_str())
-    }
-
-    fn cover_art<U: Into<Option<usize>>>(
-        &self,
-        client: &Client,
-        size: U,
-    ) -> Result<Vec<u8>> {
-        let cover = self.cover_id()
-            .ok_or_else(|| Error::Other("no cover art found"))?;
-        let query = Query::with("id", cover).arg("size", size.into()).build();
-
-        client.get_bytes("getCoverArt", query)
-    }
-
-    fn cover_art_url<U: Into<Option<usize>>>(
-        &self,
-        client: &Client,
-        size: U,
-    ) -> Result<String> {
-        let cover = self.cover_id()
-            .ok_or_else(|| Error::Other("no cover art found"))?;
-        let query = Query::with("id", cover).arg("size", size.into()).build();
-
-        client.build_url("getCoverArt", query)
-    }
-}
-
-impl SimilarArtist {
-    /// Queries the Subsonic server to return full information about the
-    /// artist.
-    pub fn into_artist(self, client: &Client) -> Result<Artist> {
-        self::get_artist(client, self.id)
     }
 }
 

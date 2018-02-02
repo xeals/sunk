@@ -50,7 +50,7 @@
 //!
 //! // I want to play some <insert artist here>.
 //! let an_artist = Artist::get(&client, 20)?;
-//! let artist_info = an_artist.info(&client, 5, false)?;
+//! let artist_info = an_artist.info(&client)?;
 //! let artists_albums = an_artist.albums(&client)?;
 //!
 //! // I love this album. Let's download it.
@@ -130,7 +130,7 @@ mod test_util;
 
 pub use self::client::Client;
 pub use self::collections::{Album, AlbumInfo, ListType};
-pub use self::collections::{Artist, ArtistInfo, SimilarArtist};
+pub use self::collections::{Artist, ArtistInfo};
 pub use self::collections::{Genre, MusicFolder};
 pub use self::collections::Playlist;
 pub use self::error::{ApiError, Error, Result, UrlError};
