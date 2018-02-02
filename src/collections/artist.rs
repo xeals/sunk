@@ -9,11 +9,11 @@ use query::Query;
 /// Basic information about an artist.
 #[derive(Debug, Clone)]
 pub struct Artist {
-    pub id: u64,
+    pub id: usize,
     pub name: String,
     cover_id: Option<String>,
     albums: Vec<Album>,
-    pub album_count: u64,
+    pub album_count: usize,
 }
 
 /// Detailed information about an artist.
@@ -34,13 +34,13 @@ pub struct ArtistInfo {
 /// An artist suggested by last.fm.
 #[derive(Debug, Clone)]
 pub struct SimilarArtist {
-    id: u64,
+    id: usize,
     /// The artist's name.
     pub name: String,
     cover_art: Option<String>,
     /// The number of albums contained in the Subsonic server released by
     /// the artist.
-    pub album_count: u64,
+    pub album_count: usize,
 }
 
 impl<'de> Deserialize<'de> for SimilarArtist {
@@ -69,10 +69,14 @@ impl<'de> Deserialize<'de> for SimilarArtist {
 }
 
 impl Artist {
+    pub fn get(client: &Client, id: usize) -> Result<Artist> {
+        self::get_artist(client, id)
+    }
+
     /// Returns a list of albums released by the artist.
     pub fn albums(&self, client: &Client) -> Result<Vec<Album>> {
-        if self.albums.len() as u64 != self.album_count {
-            Ok(get_artist(client, self.id)?.albums)
+        if self.albums.len() != self.album_count {
+            Ok(self::get_artist(client, self.id)?.albums)
         } else {
             Ok(self.albums.clone())
         }
@@ -126,7 +130,7 @@ impl<'de> Deserialize<'de> for Artist {
             id: String,
             name: String,
             cover_art: Option<String>,
-            album_count: u64,
+            album_count: usize,
             #[serde(default)]
             album: Vec<Album>,
         }
@@ -249,7 +253,7 @@ impl SimilarArtist {
 }
 
 /// Fetches an artist from the Subsonic server.
-fn get_artist(client: &Client, id: u64) -> Result<Artist> {
+fn get_artist(client: &Client, id: usize) -> Result<Artist> {
     let res = client.get("getArtist", Query::with("id", id))?;
     Ok(serde_json::from_value::<Artist>(res)?)
 }
@@ -272,7 +276,7 @@ mod tests {
     fn parse_artist_deep() {
         let parsed = serde_json::from_value::<Artist>(raw()).unwrap();
 
-        assert_eq!(parsed.albums.len() as u64, parsed.album_count);
+        assert_eq!(parsed.albums.len(), parsed.album_count);
         assert_eq!(parsed.albums[0].id, 1);
         assert_eq!(parsed.albums[0].name, String::from("Bellevue"));
         assert_eq!(parsed.albums[0].song_count, 9);

@@ -88,7 +88,7 @@ impl Song {
     /// to set these optional fields.
     ///
     /// [`random_with`]: #method.random_with
-    pub fn random<S, U>(client: &Client, size: U) -> Result<Vec<Song>>
+    pub fn random<U>(client: &Client, size: U) -> Result<Vec<Song>>
     where
         U: Into<Option<usize>>,
     {
