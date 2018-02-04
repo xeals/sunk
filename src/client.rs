@@ -3,7 +3,7 @@ use reqwest::Url;
 use serde_json;
 
 use {Album, Artist, Error, Genre, Lyrics, MusicFolder, Result, Song, UrlError,
-     Version};
+     Version, Hls};
 use media::NowPlaying;
 use query::Query;
 use response::Response;
@@ -191,6 +191,14 @@ impl Client {
         use std::io::Read;
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
         let res = self.reqclient.get(uri).send()?;
+        Ok(res.bytes().map(|b| b.unwrap()).collect())
+    }
+
+    /// Returns the raw bytes of a HLS slice.
+    pub fn hls_bytes(&self, hls: &Hls) -> Result<Vec<u8>> {
+        use std::io::Read;
+        let url: Url = self.url.join(&hls.url)?;
+        let res = self.reqclient.get(url).send()?;
         Ok(res.bytes().map(|b| b.unwrap()).collect())
     }
 

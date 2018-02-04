@@ -1,5 +1,7 @@
 use serde::de::{Deserialize, Deserializer};
+use std::ops::Index;
 use std::result;
+use std::str::FromStr;
 
 use {Client, Error, Result};
 
@@ -187,6 +189,108 @@ impl NowPlaying {
     pub fn is_video(&self) -> bool { self.is_video }
 }
 
+/// A HLS playlist file.
+#[derive(Debug)]
+pub struct HlsPlaylist {
+    /// The extension of the playlist metadata. Typically `M3U` or `M3U8`.
+    pub extension: String,
+    /// The version of the HLS specification.
+    pub version: usize,
+    /// The target duration for HLS slices.
+    pub target_duration: usize,
+    hls: Vec<Hls>,
+}
+
+impl HlsPlaylist {
+    /// Returns the number of slices in the playlist.
+    pub fn len(&self) -> usize {
+        self.hls.len()
+    }
+
+    /// Returns the total duration of the playlist.
+    pub fn duration(&self) -> usize {
+        self.hls.iter().fold(0, |c, h| c + h.inc)
+    }
+}
+
+/// A slice of a media for use in a HLS playlist.
+#[derive(Debug)]
+pub struct Hls {
+    /// The duration increment of the slice.
+    pub inc: usize,
+    /// The path of the slice relative to the server.
+    pub url: String,
+}
+
+impl Hls {
+    /// Fetches the raw bytes of the slice from the `Client`.
+    ///
+    /// Will likely error if the `Client` is not the same one that the HLS slice
+    /// was generated from.
+    fn get_bytes(&self, client: &Client) -> Result<Vec<u8>> {
+        client.hls_bytes(self)
+    }
+}
+
+impl FromStr for HlsPlaylist {
+    type Err = Error;
+    fn from_str(s: &str) -> result::Result<Self, Self::Err> {
+        fn chew<'a, 'b>(
+            s: &'a str,
+            head: &'b str,
+        ) -> result::Result<&'a str, Error> {
+            if s.starts_with(head) {
+                return Ok(s.trim_left_matches(head))
+            } else {
+                Err(Error::Other("missing required field"))
+            }
+        }
+
+        let mut split = s.split('\n');
+
+        let _ext = split.next().unwrap();
+        let extension = chew(_ext, "#EXT")?.to_owned();
+        let _ver = split.next().unwrap();
+        let version = chew(_ver, "#EXT-X-VERSION:")?.parse::<usize>()?;
+        let _tar = split.next().unwrap();
+        let target_duration =
+            chew(_tar, "#EXT-X-TARGETDURATION:")?.parse::<usize>()?;
+
+        let mut hls = Vec::new();
+        loop {
+            let _inc = split.next().unwrap();
+            if _inc == "#EXT-X-ENDLIST" {
+                break
+            }
+            let inc = chew(_inc, "#EXTINF:")?
+                .trim_right_matches(",")
+                .parse::<usize>()?;
+            hls.push(Hls {
+                inc,
+                url: split.next().unwrap().to_owned(),
+            });
+        }
+
+        Ok(HlsPlaylist {
+            extension,
+            version,
+            target_duration,
+            hls,
+        })
+    }
+}
+
+impl Index<usize> for HlsPlaylist {
+    type Output = Hls;
+    fn index(&self, index: usize) -> &Hls { self.hls.index(index) }
+}
+
+impl IntoIterator for HlsPlaylist {
+    type Item = Hls;
+    type IntoIter = ::std::vec::IntoIter<Hls>;
+    fn into_iter(self) -> Self::IntoIter { self.hls.into_iter() }
+}
+
 impl<'de> Deserialize<'de> for NowPlaying {
     fn deserialize<D>(de: D) -> result::Result<Self, D::Error>
     where
@@ -222,5 +326,74 @@ impl<'de> Deserialize<'de> for NowPlaying {
             id: raw.id.parse().unwrap(),
             is_video: raw.is_video,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_hls() {
+        let hls = hls();
+        let p = hls.parse::<HlsPlaylist>().unwrap();
+
+        assert_eq!(p.extension, "M3U");
+        assert_eq!(p.version, 1);
+        assert_eq!(p.target_duration, 10);
+        assert_eq!(p.hls.len(), 23);
+    }
+
+    fn hls() -> &'static str {
+        "#EXTM3U
+#EXT-X-VERSION:1
+#EXT-X-TARGETDURATION:10
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=0&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0wJnBsYXllcj0xOSZkdXJhdGlvbj0xMCIsImV4cCI6MTUxODMxMDEzM30.eLUUHn12c_aU_bof3k3vq7VpCXFAbghufzqGDPlGdl8
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=10&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0xMCZwbGF5ZXI9MTkmZHVyYXRpb249MTAiLCJleHAiOjE1MTgzMTAxMzN9.1us0LtCuIfxzj_35gNRuxSUMbcECX3OQSMT0cxLvpxM
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=20&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0yMCZwbGF5ZXI9MTkmZHVyYXRpb249MTAiLCJleHAiOjE1MTgzMTAxMzN9.jFPkjqLWzlC0IwVq4wi2ZUQSjR6nyXIghB5s4UjKoUQ
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=30&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0zMCZwbGF5ZXI9MTkmZHVyYXRpb249MTAiLCJleHAiOjE1MTgzMTAxMzN9.2otBcvLoPSyoAeyPjPwZvxSoKmoFzhkAQJkiGsI5jpI
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=40&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD00MCZwbGF5ZXI9MTkmZHVyYXRpb249MTAiLCJleHAiOjE1MTgzMTAxMzN9.bbNcug62sXX7tUlo_Iqi7-WJNbZw6shava3kM9-ZFxA
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=50&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD01MCZwbGF5ZXI9MTkmZHVyYXRpb249MTAiLCJleHAiOjE1MTgzMTAxMzN9.i5_XHzLmgqMoHGcuux-U162Tgpx3DHaX4pULYRQDzF4
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=60&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD02MCZwbGF5ZXI9MTkmZHVyYXRpb249MTAiLCJleHAiOjE1MTgzMTAxMzN9.ZNvqTAfTQZUse46c5m2d9R0N_2qIld59zbNkT6yXVZ0
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=70&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD03MCZwbGF5ZXI9MTkmZHVyYXRpb249MTAiLCJleHAiOjE1MTgzMTAxMzN9.pLylLGg6RyNg3ug1LZG0QnzBYwMe3hXYpv2oz8nXOL4
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=80&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD04MCZwbGF5ZXI9MTkmZHVyYXRpb249MTAiLCJleHAiOjE1MTgzMTAxMzN9.lThUtAUp-K2Ty7eUMwQc2RGQBhuckGOoFKfOlrEXkLw
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=90&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD05MCZwbGF5ZXI9MTkmZHVyYXRpb249MTAiLCJleHAiOjE1MTgzMTAxMzN9.JCeL-BBf54awlMEb9k-ziprKYKHmdKWzgwY90ad1u9A
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=100&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0xMDAmcGxheWVyPTE5JmR1cmF0aW9uPTEwIiwiZXhwIjoxNTE4MzEwMTMzfQ.nPBiEM6cnYXOM3GwAf6lrMBoG9dR45Y2OPPVm0VCfvg
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=110&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0xMTAmcGxheWVyPTE5JmR1cmF0aW9uPTEwIiwiZXhwIjoxNTE4MzEwMTMzfQ.qSvmeXbmsd9cACBzPdLJQ6y5rc8rWgqZV1KyR0U3I50
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=120&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0xMjAmcGxheWVyPTE5JmR1cmF0aW9uPTEwIiwiZXhwIjoxNTE4MzEwMTMzfQ.l1eNMaUSFnb_Vlsb1rFEjAo6uukWsRJPZftNl7571bA
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=130&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0xMzAmcGxheWVyPTE5JmR1cmF0aW9uPTEwIiwiZXhwIjoxNTE4MzEwMTMzfQ.j5eMrPZTVoFqQkIehAjfhAohnRK9d5ZzJm3bEbsZLt0
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=140&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0xNDAmcGxheWVyPTE5JmR1cmF0aW9uPTEwIiwiZXhwIjoxNTE4MzEwMTMzfQ.301E8HCxYC6f8rw32AKmZh5PIwElck7oPzpseqafY-s
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=150&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0xNTAmcGxheWVyPTE5JmR1cmF0aW9uPTEwIiwiZXhwIjoxNTE4MzEwMTMzfQ.xSCS47HuPLLzP_Qw1f0Vj1aj4ntRNcw46iTU2UmJUog
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=160&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0xNjAmcGxheWVyPTE5JmR1cmF0aW9uPTEwIiwiZXhwIjoxNTE4MzEwMTMzfQ.h5bNql36E9nbH3d5Kh9_2QNAOV12MY-c-UzaA7j_N3g
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=170&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0xNzAmcGxheWVyPTE5JmR1cmF0aW9uPTEwIiwiZXhwIjoxNTE4MzEwMTMzfQ.fc83sb-WJjbinSzA3cXLGnvTkaIbMxTgX1UfM_mjy4g
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=180&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0xODAmcGxheWVyPTE5JmR1cmF0aW9uPTEwIiwiZXhwIjoxNTE4MzEwMTMzfQ.14-xaOOLGYNmT2ML9szneFLYz9wiYnJZyBW3xD2AnKQ
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=190&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0xOTAmcGxheWVyPTE5JmR1cmF0aW9uPTEwIiwiZXhwIjoxNTE4MzEwMTMzfQ.3oGWdaQOc6GZ97ihy26rL4onVE0HSoqdJjVyuub9qbw
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=200&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0yMDAmcGxheWVyPTE5JmR1cmF0aW9uPTEwIiwiZXhwIjoxNTE4MzEwMTMzfQ.zbrfVTgKvj4NAPklbcXEiGczz901tUha8hScjcrCNbo
+#EXTINF:10,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=210&player=19&duration=10&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0yMTAmcGxheWVyPTE5JmR1cmF0aW9uPTEwIiwiZXhwIjoxNTE4MzEwMTMzfQ.MgBWDScW-zQh12N6-NlI3eJ-NQMIm6i0Q5JlDQTaLNg
+#EXTINF:7,
+/ext/stream/stream.ts?id=1887&hls=true&timeOffset=220&player=19&duration=7&jwt=eyJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2V4dC9zdHJlYW0vc3RyZWFtLnRzP2lkPTE4ODcmaGxzPXRydWUmdGltZU9mZnNldD0yMjAmcGxheWVyPTE5JmR1cmF0aW9uPTciLCJleHAiOjE1MTgzMTAxMzN9.bUpkgSlaNDK2YJvUCf6ucfyOSxMNtPyPudfo0N5qBzA
+#EXT-X-ENDLIST"
     }
 }

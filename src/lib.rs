@@ -1,5 +1,5 @@
 #![warn(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/sunk/0.1.0")]
+#![doc(html_root_url = "https://docs.rs/sunk/0.1.1")]
 
 //! # sunk
 //!
@@ -138,7 +138,7 @@ pub use self::collections::{Genre, MusicFolder};
 pub use self::collections::Playlist;
 pub use self::error::{ApiError, Error, Result, UrlError};
 pub use self::jukebox::{Jukebox, JukeboxPlaylist, JukeboxStatus};
-pub use self::media::{Media, NowPlaying, RadioStation, Streamable};
+pub use self::media::{Media, NowPlaying, RadioStation, Streamable, HlsPlaylist, Hls};
 pub use self::media::{podcast, song, video};
 pub use self::user::{User, UserBuilder};
 pub use self::version::Version;

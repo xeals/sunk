@@ -2,7 +2,7 @@ use serde::de::{Deserialize, Deserializer};
 use serde_json;
 use std::ops::Range;
 
-use {Client, Error, Media, Result, Streamable};
+use {Client, Error, Media, Result, Streamable, HlsPlaylist};
 use query::Query;
 use search::SearchPage;
 
@@ -146,12 +146,13 @@ impl Song {
     /// the specified bitrates. The `bit_rate` parameter can be omitted (with an
     /// empty array) to disable adaptive streaming, or given a single value to
     /// force streaming at that bit rate.
-    pub fn hls(&self, client: &Client, bit_rates: &[u64]) -> Result<String> {
+    pub fn hls(&self, client: &Client, bit_rates: &[u64]) -> Result<HlsPlaylist> {
         let args = Query::with("id", self.id)
             .arg_list("bitrate", bit_rates)
             .build();
 
-        client.get_raw("hls", args)
+        let raw = client.get_raw("hls", args)?;
+        Ok(raw.parse::<HlsPlaylist>()?)
     }
 }
 
@@ -443,8 +444,8 @@ mod tests {
         let mut srv = test_util::demo_site().unwrap();
         let song = serde_json::from_value::<Song>(raw()).unwrap();
 
-        let hls = song.hls(&mut srv, &[]);
-        assert!(hls.is_ok());
+        let hls = song.hls(&mut srv, &[]).unwrap();
+        assert_eq!(hls.len(), 20)
     }
 
     fn raw() -> serde_json::Value {

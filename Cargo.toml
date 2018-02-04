@@ -1,6 +1,6 @@
 [package]
 name = "sunk"
-version = "0.1.0" # remember to update html_url_root
+version = "0.1.1" # remember to update html_url_root
 authors = ["alex-smith <azphreal19@protonmail.com>"]
 description = "Rust bindings for the Subsonic music streaming API"
 homepage = "https://github.com/Azphreal/sunk"
