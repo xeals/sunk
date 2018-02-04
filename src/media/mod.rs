@@ -227,7 +227,7 @@ impl Hls {
     ///
     /// Will likely error if the `Client` is not the same one that the HLS slice
     /// was generated from.
-    fn get_bytes(&self, client: &Client) -> Result<Vec<u8>> {
+    pub fn get_bytes(&self, client: &Client) -> Result<Vec<u8>> {
         client.hls_bytes(self)
     }
 }
