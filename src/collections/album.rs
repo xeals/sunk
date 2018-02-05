@@ -1,7 +1,6 @@
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
-use std::fmt;
-use std::result;
+use std::{fmt, result};
 
 use {Client, Error, Media, Result, Song};
 use query::{Arg, IntoArg, Query};
@@ -92,6 +91,24 @@ impl Album {
     pub fn info(&self, client: &Client) -> Result<AlbumInfo> {
         let res = client.get("getArtistInfo", Query::with("id", self.id))?;
         Ok(serde_json::from_value(res)?)
+    }
+}
+
+impl fmt::Display for Album {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(ref artist) = self.artist {
+            write!(f, "{} - ", artist)?;
+        } else {
+            write!(f, "Unknown Artist - ")?;
+        }
+
+        write!(f, "{}", self.name)?;
+
+        if let Some(year) = self.year {
+            write!(f, " [{}] ", year)?;
+        }
+
+        Ok(())
     }
 }
 

@@ -1,4 +1,4 @@
-use std::result;
+use std::{fmt, result};
 
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
@@ -146,6 +146,12 @@ impl Media for Artist {
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
         client.build_url("getCoverArt", query)
+    }
+}
+
+impl fmt::Display for Artist {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.name)
     }
 }
 

@@ -246,11 +246,14 @@ impl fmt::Display for SearchPage {
 pub struct SearchResult {
     /// Artists found in the search.
     #[serde(rename = "artist")]
+    #[serde(default)]
     pub artists: Vec<Artist>,
     /// Albums found in the search.
     #[serde(rename = "album")]
+    #[serde(default)]
     pub albums: Vec<Album>,
     /// Songs found in the search.
     #[serde(rename = "song")]
+    #[serde(default)]
     pub songs: Vec<Song>,
 }

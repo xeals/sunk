@@ -1,8 +1,9 @@
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
+use std::fmt;
 use std::ops::Range;
 
-use {Client, Error, Media, Result, Streamable, HlsPlaylist};
+use {Client, Error, HlsPlaylist, Media, Result, Streamable};
 use query::Query;
 use search::SearchPage;
 
@@ -146,7 +147,11 @@ impl Song {
     /// the specified bitrates. The `bit_rate` parameter can be omitted (with an
     /// empty array) to disable adaptive streaming, or given a single value to
     /// force streaming at that bit rate.
-    pub fn hls(&self, client: &Client, bit_rates: &[u64]) -> Result<HlsPlaylist> {
+    pub fn hls(
+        &self,
+        client: &Client,
+        bit_rates: &[u64],
+    ) -> Result<HlsPlaylist> {
         let args = Query::with("id", self.id)
             .arg_list("bitrate", bit_rates)
             .build();
@@ -221,6 +226,30 @@ impl Media for Song {
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
         client.build_url("getCoverArt", query)
+    }
+}
+
+impl fmt::Display for Song {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(ref artist) = self.artist {
+            write!(f, "{} - ", artist)?;
+        } else {
+            write!(f, "Unknown Artist - ")?;
+        }
+
+        if let Some(ref album) = self.album {
+            write!(f, "{}", album)?;
+        } else {
+            write!(f, "Unknown Album")?;
+        }
+
+        if let Some(year) = self.year {
+            write!(f, " [{}]", year)?;
+        }
+
+        write!(f, " - {}", self.title)?;
+
+        Ok(())
     }
 }
 
