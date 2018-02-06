@@ -277,7 +277,7 @@ impl<'de> Deserialize<'de> for Song {
             transcoded_content_type: Option<String>,
             transcoded_suffix: Option<String>,
             duration: Option<u64>,
-            bit_rate: u64,
+            bit_rate: Option<u64>,
             path: String,
             is_video: Option<bool>,
             play_count: u64,
