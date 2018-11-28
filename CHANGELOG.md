@@ -4,6 +4,7 @@
 
 - Fix panic on missing bitrate for a song
   - Mostly encountered on non-FLAC/MPEG source files (ogg, etc.)
+- Add `with_target` method to the `Client` to set target API version
 
 ## 0.1.1
 
