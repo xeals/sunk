@@ -51,7 +51,11 @@ pub struct Client {
     url: Url,
     auth: SubsonicAuth,
     reqclient: ReqwestClient,
+    /// Version that the `Client` supports.
     pub ver: Version,
+    /// Version that the `Client` is targeting; currently only has an effect on
+    /// the authentication method.
+    pub target_ver: Version,
 }
 
 #[derive(Debug)]
@@ -107,6 +111,7 @@ impl Client {
         let auth = SubsonicAuth::new(user, password);
         let url = url.parse::<Url>()?;
         let ver = Version::from("1.14.0");
+        let target_ver = ver;
 
         let reqclient = ReqwestClient::builder().build()?;
 
@@ -115,7 +120,26 @@ impl Client {
             auth,
             reqclient,
             ver,
+            target_ver,
         })
+    }
+
+    /// Adjusts the client to target a specific version.
+    ///
+    /// By default, the client will target version 1.14.0, as built by `sunk`.
+    /// However, this means that any servers that don't implement advanced
+    /// features that `sunk` does automatically, such as token-based
+    /// authentication, will be incompatible. The target version allows setting
+    /// an override on these features by making the client limit itself to
+    /// features that the target will support.
+    ///
+    /// Note that (currently) the client does not provide any sanity-checking
+    /// on which methods are called; attempting to access an endpoint not
+    /// supported by the server will fail after the call, not before.
+    pub fn with_target(self, ver: Version) -> Client {
+        let mut cli = self;
+        cli.target_ver = ver;
+        cli
     }
 
     /// Internal helper function to construct a URL when the actual fetching is
@@ -130,7 +154,7 @@ impl Client {
         let mut url = [scheme, "://", addr, "/rest/"].concat();
         url.push_str(query);
         url.push_str("?");
-        url.push_str(&self.auth.to_url(self.ver));
+        url.push_str(&self.auth.to_url(self.target_ver));
         url.push_str("&");
         url.push_str(&args.to_string());
 
@@ -379,6 +403,20 @@ pub struct License {
 mod tests {
     use super::*;
     use test_util;
+
+    #[test]
+    fn test_token_auth() {
+        let cli = test_util::demo_site().unwrap();
+        let token_addr = cli.build_url("ping", Query::none()).unwrap();
+        let legacy_cli = cli.with_target("1.8.0".into());
+        let legacy_addr = legacy_cli.build_url("ping", Query::none()).unwrap();
+
+        assert!(token_addr != legacy_addr);
+        assert_eq!(
+            legacy_addr,
+            "http://demo.subsonic.org/rest/ping?u=guest3&p=guest&v=1.8.0&c=sunk&f=json&"
+        );
+    }
 
     #[test]
     fn demo_ping() {
