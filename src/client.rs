@@ -71,11 +71,15 @@ impl SubsonicAuth {
     fn to_url(&self, ver: Version) -> String {
         // First md5 support.
         let auth = if ver >= "1.13.0".into() {
+            use std::iter;
             use md5;
-            use rand::{thread_rng, Rng};
+            use rand::{thread_rng, Rng, distributions::Alphanumeric};
 
-            let salt: String =
-                thread_rng().gen_ascii_chars().take(SALT_SIZE).collect();
+            let mut rng = thread_rng();
+            let salt: String = iter::repeat(())
+                .map(|()| rng.sample(Alphanumeric))
+                .take(SALT_SIZE)
+                .collect();
             let pre_t = self.password.to_string() + &salt;
             let token = format!("{:x}", md5::compute(pre_t.as_bytes()));
 
