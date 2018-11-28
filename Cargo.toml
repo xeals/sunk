@@ -1,10 +1,10 @@
 [package]
 name = "sunk"
-version = "0.1.1" # remember to update html_url_root
-authors = ["alex-smith <azphreal19@protonmail.com>"]
+version = "0.1.2" # remember to update html_root_url
+authors = ["xeals <xeals@pm.me>"]
 description = "Rust bindings for the Subsonic music streaming API"
-homepage = "https://github.com/Azphreal/sunk"
-repository = "https://github.com/Azphreal/sunk"
+homepage = "https://github.com/xeals/sunk"
+repository = "https://github.com/xeals/sunk"
 documentation = "https://docs.rs/sunk/"
 readme = "README.md"
 keywords = ["subsonic", "airsonic", "music", "api", "webapi"]

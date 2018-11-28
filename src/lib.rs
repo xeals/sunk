@@ -1,5 +1,5 @@
 #![warn(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/sunk/0.1.1")]
+#![doc(html_root_url = "https://docs.rs/sunk/0.1.2")]
 
 //! # sunk
 //!
