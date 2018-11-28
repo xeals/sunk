@@ -2,8 +2,8 @@ use serde::de::{Deserialize, Deserializer};
 use serde_json;
 use std::result;
 
-use {Client, Error, Media, Result, Song};
 use query::Query;
+use {Client, Error, Media, Result, Song};
 
 #[derive(Debug)]
 pub struct Playlist {
@@ -62,28 +62,26 @@ impl<'de> Deserialize<'de> for Playlist {
 }
 
 impl Media for Playlist {
-    fn has_cover_art(&self) -> bool { !self.cover_id.is_empty() }
+    fn has_cover_art(&self) -> bool {
+        !self.cover_id.is_empty()
+    }
 
-    fn cover_id(&self) -> Option<&str> { Some(self.cover_id.as_ref()) }
+    fn cover_id(&self) -> Option<&str> {
+        Some(self.cover_id.as_ref())
+    }
 
-    fn cover_art<U: Into<Option<usize>>>(
-        &self,
-        client: &Client,
-        size: U,
-    ) -> Result<Vec<u8>> {
-        let cover = self.cover_id()
+    fn cover_art<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<Vec<u8>> {
+        let cover = self
+            .cover_id()
             .ok_or_else(|| Error::Other("no cover art found"))?;
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
         client.get_bytes("getCoverArt", query)
     }
 
-    fn cover_art_url<U: Into<Option<usize>>>(
-        &self,
-        client: &Client,
-        size: U,
-    ) -> Result<String> {
-        let cover = self.cover_id()
+    fn cover_art_url<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<String> {
+        let cover = self
+            .cover_id()
             .ok_or_else(|| Error::Other("no cover art found"))?;
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
@@ -91,10 +89,7 @@ impl Media for Playlist {
     }
 }
 
-fn get_playlists(
-    client: &Client,
-    user: Option<String>,
-) -> Result<Vec<Playlist>> {
+fn get_playlists(client: &Client, user: Option<String>) -> Result<Vec<Playlist>> {
     let playlist = client.get("getPlaylists", Query::with("username", user))?;
     Ok(get_list_as!(playlist, Playlist))
 }
@@ -108,11 +103,7 @@ fn get_playlist(client: &Client, id: u64) -> Result<Playlist> {
 ///
 /// Since API version 1.14.0, the newly created playlist is returned. In earlier
 /// versions, an empty response is returned.
-fn create_playlist(
-    client: &Client,
-    name: String,
-    songs: &[u64],
-) -> Result<Option<Playlist>> {
+fn create_playlist(client: &Client, name: String, songs: &[u64]) -> Result<Option<Playlist>> {
     let args = Query::new()
         .arg("name", name)
         .arg_list("songId", songs)
@@ -173,9 +164,7 @@ mod tests {
         let songs = parsed.songs(&mut srv);
 
         match songs {
-            Err(::error::Error::Api(::error::ApiError::NotAuthorized(_))) => {
-                assert!(true)
-            }
+            Err(::error::Error::Api(::error::ApiError::NotAuthorized(_))) => assert!(true),
             Err(e) => panic!("unexpected error: {}", e),
             Ok(_) => panic!("test should have failed; insufficient privilege"),
         }
@@ -194,6 +183,7 @@ mod tests {
             "changed" : "2018-01-01T14:45:07.478Z",
             "coverArt" : "pl-2"
         }"#,
-        ).unwrap()
+        )
+        .unwrap()
     }
 }

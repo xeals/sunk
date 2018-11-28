@@ -13,8 +13,8 @@
 //!
 //! ```no_run
 //! extern crate sunk;
-//! use sunk::{Client, Album, Artist, Streamable};
 //! use sunk::song::Song;
+//! use sunk::{Album, Artist, Client, Streamable};
 //!
 //! # fn run() -> sunk::Result<()> {
 //! let site = "http://subsonic.example.com";
@@ -67,7 +67,8 @@
 //! use std::io::Write;
 //! for song in &album_songs {
 //!     let bytes = song.download(&client)?;
-//!     let mut file = File::create(song.title.clone() + "." + song.encoding())?;
+//!     let mut file =
+//!         File::create(song.title.clone() + "." + song.encoding())?;
 //!     file.write(&bytes)?;
 //! }
 //!
@@ -117,29 +118,29 @@ mod macros;
 mod client;
 mod error;
 
-mod media;
 mod collections;
+mod media;
 
-mod jukebox;
 mod annotate;
-pub mod search;
+mod jukebox;
 mod query;
-mod version;
 mod response;
+pub mod search;
 mod user;
+mod version;
 
 #[cfg(test)]
 mod test_util;
 
 pub use self::client::Client;
+pub use self::collections::Playlist;
 pub use self::collections::{Album, AlbumInfo, ListType};
 pub use self::collections::{Artist, ArtistInfo};
 pub use self::collections::{Genre, MusicFolder};
-pub use self::collections::Playlist;
 pub use self::error::{ApiError, Error, Result, UrlError};
 pub use self::jukebox::{Jukebox, JukeboxPlaylist, JukeboxStatus};
-pub use self::media::{Media, NowPlaying, RadioStation, Streamable, HlsPlaylist, Hls};
 pub use self::media::{podcast, song, video};
+pub use self::media::{Hls, HlsPlaylist, Media, NowPlaying, RadioStation, Streamable};
 pub use self::user::{User, UserBuilder};
 pub use self::version::Version;
 

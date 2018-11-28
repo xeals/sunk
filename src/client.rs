@@ -2,12 +2,11 @@ use reqwest::Client as ReqwestClient;
 use reqwest::Url;
 use serde_json;
 
-use {Album, Artist, Error, Genre, Lyrics, MusicFolder, Result, Song, UrlError,
-     Version, Hls};
 use media::NowPlaying;
 use query::Query;
 use response::Response;
 use search::{SearchPage, SearchResult};
+use {Album, Artist, Error, Genre, Hls, Lyrics, MusicFolder, Result, Song, UrlError, Version};
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
@@ -75,9 +74,9 @@ impl SubsonicAuth {
     fn to_url(&self, ver: Version) -> String {
         // First md5 support.
         let auth = if ver >= "1.13.0".into() {
-            use std::iter;
             use md5;
-            use rand::{thread_rng, Rng, distributions::Alphanumeric};
+            use rand::{distributions::Alphanumeric, thread_rng, Rng};
+            use std::iter;
 
             let mut rng = thread_rng();
             let salt: String = iter::repeat(())
@@ -147,7 +146,8 @@ impl Client {
     #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
     pub(crate) fn build_url(&self, query: &str, args: Query) -> Result<String> {
         let scheme = self.url.scheme();
-        let addr = self.url
+        let addr = self
+            .url
             .host_str()
             .ok_or_else(|| Error::Url(UrlError::Address))?;
 
@@ -174,11 +174,7 @@ impl Client {
     /// - server is built with an incomplete URL
     /// - connecting to the server fails
     /// - the server returns an API error
-    pub(crate) fn get(
-        &self,
-        query: &str,
-        args: Query,
-    ) -> Result<serde_json::Value> {
+    pub(crate) fn get(&self, query: &str, args: Query) -> Result<serde_json::Value> {
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
 
         info!("Connecting to {}", uri);
@@ -211,11 +207,7 @@ impl Client {
     }
 
     /// Returns a response as a vector of bytes rather than serialising it.
-    pub(crate) fn get_bytes(
-        &self,
-        query: &str,
-        args: Query,
-    ) -> Result<Vec<u8>> {
+    pub(crate) fn get_bytes(&self, query: &str, args: Query) -> Result<Vec<u8>> {
         use std::io::Read;
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
         let res = self.reqclient.get(uri).send()?;
@@ -329,8 +321,8 @@ impl Client {
     /// Basic usage:
     ///
     /// ```no_run
-    /// use sunk::Client;
     /// use sunk::search::{self, SearchPage};
+    /// use sunk::Client;
     ///
     /// # fn run() -> sunk::Result<()> {
     /// # let site = "http://demo.subsonic.org";
@@ -376,10 +368,7 @@ impl Client {
     where
         U: Into<Option<usize>>,
     {
-        let res = self.get(
-            "getStarred",
-            Query::with("musicFolderId", folder_id.into()),
-        )?;
+        let res = self.get("getStarred", Query::with("musicFolderId", folder_id.into()))?;
         Ok(serde_json::from_value::<SearchResult>(res)?)
     }
 }

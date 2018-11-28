@@ -1,5 +1,5 @@
-use {Album, Artist, Client, Error, Result, Song};
 use query::Query;
+use {Album, Artist, Client, Error, Result, Song};
 
 /// Allows starring, rating, and scrobbling media.
 pub trait Annotatable {
@@ -27,12 +27,7 @@ pub trait Annotatable {
     ///
     /// `time` should be a valid ISO8601 timestamp. In the future, this will be
     /// validated.
-    fn scrobble<'a, B, T>(
-        &self,
-        client: &Client,
-        time: T,
-        now_playing: B,
-    ) -> Result<()>
+    fn scrobble<'a, B, T>(&self, client: &Client, time: T, now_playing: B) -> Result<()>
     where
         B: Into<Option<bool>>,
         T: Into<Option<&'a str>>;
@@ -51,7 +46,7 @@ impl Annotatable for Artist {
 
     fn set_rating(&self, client: &Client, rating: u8) -> Result<()> {
         if rating > 5 {
-            return Err(Error::Other("rating must be between 0 and 5 inclusive"))
+            return Err(Error::Other("rating must be between 0 and 5 inclusive"));
         }
 
         let args = Query::with("id", self.id).arg("rating", rating).build();
@@ -59,12 +54,7 @@ impl Annotatable for Artist {
         Ok(())
     }
 
-    fn scrobble<'a, B, T>(
-        &self,
-        client: &Client,
-        time: T,
-        now_playing: B,
-    ) -> Result<()>
+    fn scrobble<'a, B, T>(&self, client: &Client, time: T, now_playing: B) -> Result<()>
     where
         B: Into<Option<bool>>,
         T: Into<Option<&'a str>>,
@@ -91,7 +81,7 @@ impl Annotatable for Album {
 
     fn set_rating(&self, client: &Client, rating: u8) -> Result<()> {
         if rating > 5 {
-            return Err(Error::Other("rating must be between 0 and 5 inclusive"))
+            return Err(Error::Other("rating must be between 0 and 5 inclusive"));
         }
 
         let args = Query::with("id", self.id).arg("rating", rating).build();
@@ -99,12 +89,7 @@ impl Annotatable for Album {
         Ok(())
     }
 
-    fn scrobble<'a, B, T>(
-        &self,
-        client: &Client,
-        time: T,
-        now_playing: B,
-    ) -> Result<()>
+    fn scrobble<'a, B, T>(&self, client: &Client, time: T, now_playing: B) -> Result<()>
     where
         B: Into<Option<bool>>,
         T: Into<Option<&'a str>>,
@@ -131,7 +116,7 @@ impl Annotatable for Song {
 
     fn set_rating(&self, client: &Client, rating: u8) -> Result<()> {
         if rating > 5 {
-            return Err(Error::Other("rating must be between 0 and 5 inclusive"))
+            return Err(Error::Other("rating must be between 0 and 5 inclusive"));
         }
 
         let args = Query::with("id", self.id).arg("rating", rating).build();
@@ -139,12 +124,7 @@ impl Annotatable for Song {
         Ok(())
     }
 
-    fn scrobble<'a, B, T>(
-        &self,
-        client: &Client,
-        time: T,
-        now_playing: B,
-    ) -> Result<()>
+    fn scrobble<'a, B, T>(&self, client: &Client, time: T, now_playing: B) -> Result<()>
     where
         B: Into<Option<bool>>,
         T: Into<Option<&'a str>>,

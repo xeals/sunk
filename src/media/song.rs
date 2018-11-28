@@ -3,9 +3,9 @@ use serde_json;
 use std::fmt;
 use std::ops::Range;
 
-use {Client, Error, HlsPlaylist, Media, Result, Streamable};
 use query::Query;
 use search::SearchPage;
+use {Client, Error, HlsPlaylist, Media, Result, Streamable};
 
 /// A work of music contained on a Subsonic server.
 #[derive(Debug, Clone)]
@@ -147,11 +147,7 @@ impl Song {
     /// the specified bitrates. The `bit_rate` parameter can be omitted (with an
     /// empty array) to disable adaptive streaming, or given a single value to
     /// force streaming at that bit rate.
-    pub fn hls(
-        &self,
-        client: &Client,
-        bit_rates: &[u64],
-    ) -> Result<HlsPlaylist> {
+    pub fn hls(&self, client: &Client, bit_rates: &[u64]) -> Result<HlsPlaylist> {
         let args = Query::with("id", self.id)
             .arg_list("bitrate", bit_rates)
             .build();
@@ -198,30 +194,26 @@ impl Streamable for Song {
 }
 
 impl Media for Song {
-    fn has_cover_art(&self) -> bool { self.cover_id.is_some() }
+    fn has_cover_art(&self) -> bool {
+        self.cover_id.is_some()
+    }
 
     fn cover_id(&self) -> Option<&str> {
         self.cover_id.as_ref().map(|s| s.as_str())
     }
 
-    fn cover_art<U: Into<Option<usize>>>(
-        &self,
-        client: &Client,
-        size: U,
-    ) -> Result<Vec<u8>> {
-        let cover = self.cover_id()
+    fn cover_art<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<Vec<u8>> {
+        let cover = self
+            .cover_id()
             .ok_or_else(|| Error::Other("no cover art found"))?;
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
         client.get_bytes("getCoverArt", query)
     }
 
-    fn cover_art_url<U: Into<Option<usize>>>(
-        &self,
-        client: &Client,
-        size: U,
-    ) -> Result<String> {
-        let cover = self.cover_id()
+    fn cover_art_url<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<String> {
+        let cover = self
+            .cover_id()
             .ok_or_else(|| Error::Other("no cover art found"))?;
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
@@ -347,8 +339,8 @@ pub struct Lyrics {
 ///
 /// ```no_run
 /// extern crate sunk;
-/// use sunk::Client;
 /// use sunk::song::Song;
+/// use sunk::Client;
 ///
 /// # fn run() -> sunk::Result<()> {
 /// # let site = "http://demo.subsonic.org";
@@ -358,9 +350,9 @@ pub struct Lyrics {
 ///
 /// // Get 25 songs from the last 10 years
 /// let random = Song::random_with(&client)
-///                  .size(25)
-///                  .in_years(2008..2018)
-///                  .request()?;
+///     .size(25)
+///     .in_years(2008 .. 2018)
+///     .request()?;
 /// # Ok(())
 /// # }
 /// # fn main() { }
@@ -478,7 +470,8 @@ mod tests {
     }
 
     fn raw() -> serde_json::Value {
-        serde_json::from_str(r#"{
+        serde_json::from_str(
+            r#"{
             "id" : "27",
             "parent" : "25",
             "isDir" : false,
@@ -501,6 +494,8 @@ mod tests {
             "albumId" : "1",
             "artistId" : "1",
             "type" : "music"
-        }"#).unwrap()
+        }"#,
+        )
+        .unwrap()
     }
 }

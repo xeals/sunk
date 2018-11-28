@@ -2,8 +2,8 @@ use serde::de::{Deserialize, Deserializer};
 use serde_json;
 use std::result;
 
-use {Client, Result, Song};
 use query::Query;
+use {Client, Result, Song};
 
 /// A wrapper on a `Client` to control just the jukebox.
 ///
@@ -68,14 +68,11 @@ impl<'de> Deserialize<'de> for JukeboxPlaylist {
 
 impl<'a> Jukebox<'a> {
     /// Creates a new handler to the jukebox of the client.
-    pub fn start(client: &'a Client) -> Jukebox { Jukebox { client } }
+    pub fn start(client: &'a Client) -> Jukebox {
+        Jukebox { client }
+    }
 
-    fn send_action_with<U>(
-        &self,
-        action: &str,
-        index: U,
-        ids: &[usize],
-    ) -> Result<JukeboxStatus>
+    fn send_action_with<U>(&self, action: &str, index: U, ids: &[usize]) -> Result<JukeboxStatus>
     where
         U: Into<Option<usize>>,
     {
@@ -95,19 +92,26 @@ impl<'a> Jukebox<'a> {
     /// status is also returned as it contains the position of the jukebox
     /// in its playlist.
     pub fn playlist(&self) -> Result<JukeboxPlaylist> {
-        let res = self.client
+        let res = self
+            .client
             .get("jukeboxControl", Query::with("action", "get"))?;
         Ok(serde_json::from_value::<JukeboxPlaylist>(res)?)
     }
 
     /// Returns the status of the jukebox.
-    pub fn status(&self) -> Result<JukeboxStatus> { self.send_action("status") }
+    pub fn status(&self) -> Result<JukeboxStatus> {
+        self.send_action("status")
+    }
 
     /// Tells the jukebox to start playing.
-    pub fn play(&self) -> Result<JukeboxStatus> { self.send_action("start") }
+    pub fn play(&self) -> Result<JukeboxStatus> {
+        self.send_action("start")
+    }
 
     /// Tells the jukebox to pause playback.
-    pub fn stop(&self) -> Result<JukeboxStatus> { self.send_action("stop") }
+    pub fn stop(&self) -> Result<JukeboxStatus> {
+        self.send_action("stop")
+    }
 
     /// Moves the jukebox's currently playing song to the provided index
     /// (zero-indexed).
@@ -153,7 +157,9 @@ impl<'a> Jukebox<'a> {
     }
 
     /// Clears the jukebox's playlist.
-    pub fn clear(&self) -> Result<JukeboxStatus> { self.send_action("clear") }
+    pub fn clear(&self) -> Result<JukeboxStatus> {
+        self.send_action("clear")
+    }
 
     /// Removes the song at the provided index from the playlist.
     pub fn remove_id(&self, idx: usize) -> Result<JukeboxStatus> {
@@ -181,7 +187,8 @@ mod tests {
 
     #[test]
     fn parse_playlist() {
-        let parsed = serde_json::from_str::<JukeboxPlaylist>(r#"{
+        let parsed = serde_json::from_str::<JukeboxPlaylist>(
+            r#"{
             "currentIndex" : 0,
             "playing" : false,
             "gain" : 0.75,
@@ -237,7 +244,9 @@ mod tests {
                 "artistId" : "147",
                 "type" : "music"
             } ]
-         }"#).unwrap();
+         }"#,
+        )
+        .unwrap();
 
         assert_eq!(parsed.songs.len(), 2);
         assert!(!parsed.status.playing);

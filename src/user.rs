@@ -1,7 +1,7 @@
 use serde_json;
 
-use {Client, Result};
 use query::Query;
+use {Client, Result};
 
 /// A struct representing a Subsonic user.
 #[derive(Debug, Deserialize)]
@@ -98,11 +98,7 @@ impl User {
     ///
     /// A user may only change their own password, and only if they have the
     /// `settings_role` permission, unless they are an administrator.
-    pub fn change_password(
-        &self,
-        client: &Client,
-        password: &str,
-    ) -> Result<()> {
+    pub fn change_password(&self, client: &Client, password: &str) -> Result<()> {
         let args = Query::with("username", self.username.as_str())
             .arg("password", password)
             .build();
@@ -115,10 +111,7 @@ impl User {
     /// The method makes no guarantee as to the encoding of the image, but does
     /// guarantee that it is a valid image file.
     pub fn avatar(&self, client: &Client) -> Result<Vec<u8>> {
-        client.get_bytes(
-            "getAvatar",
-            Query::with("username", self.username.as_str()),
-        )
+        client.get_bytes("getAvatar", Query::with("username", self.username.as_str()))
     }
 
     /// Creates a new local user to be pushed to the server.

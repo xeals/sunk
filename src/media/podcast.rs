@@ -1,8 +1,8 @@
 use serde::de::{Deserialize, Deserializer};
 use std::result;
 
-use {Client, Result};
 use query::Query;
+use {Client, Result};
 
 #[derive(Debug)]
 pub struct Podcast {
@@ -54,10 +54,7 @@ impl Podcast {
     }
     /// Returns a list of all podcasts the server subscribes to and,
     /// optionally, their episodes.
-    pub fn list<B, U>(
-        client: &Client,
-        include_episodes: B,
-    ) -> Result<Vec<Podcast>>
+    pub fn list<B, U>(client: &Client, include_episodes: B) -> Result<Vec<Podcast>>
     where
         B: Into<Option<bool>>,
         U: Into<Option<usize>>,
@@ -77,8 +74,7 @@ impl Episode {
     where
         U: Into<Option<usize>>,
     {
-        let episode = client
-            .get("getNewestPodcasts", Query::with("count", count.into()))?;
+        let episode = client.get("getNewestPodcasts", Query::with("count", count.into()))?;
         Ok(get_list_as!(episode, Episode))
     }
 }

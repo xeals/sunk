@@ -8,10 +8,12 @@ impl convert::From<String> for Version {
         let mut spl = s.split('.');
 
         macro_rules! ver {
-            ($v:ident) => (let $v = match spl.next() {
-                Some(n) => n.parse::<u8>().unwrap(),
-                None => 0,
-            };)
+            ($v:ident) => {
+                let $v = match spl.next() {
+                    Some(n) => n.parse::<u8>().unwrap(),
+                    None => 0,
+                };
+            };
         }
 
         ver!(major);
@@ -23,7 +25,9 @@ impl convert::From<String> for Version {
 }
 
 impl<'a> convert::From<&'a str> for Version {
-    fn from(s: &'a str) -> Version { Version::from(s.to_string()) }
+    fn from(s: &'a str) -> Version {
+        Version::from(s.to_string())
+    }
 }
 
 impl fmt::Debug for Version {

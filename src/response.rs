@@ -81,7 +81,7 @@ impl Response {
         }
 
         if self.inner.error.is_some() {
-            return None
+            return None;
         }
 
         choose!(
@@ -135,13 +135,19 @@ impl Response {
 
     /// Extracts the error struct of the response. Returns `None` if the
     /// response was not a failure.
-    pub fn into_error(self) -> Option<ApiError> { self.inner.error }
+    pub fn into_error(self) -> Option<ApiError> {
+        self.inner.error
+    }
 
     /// Returns `true` if the response is `"ok"`.
-    pub fn is_ok(&self) -> bool { self.inner.error.is_none() }
+    pub fn is_ok(&self) -> bool {
+        self.inner.error.is_none()
+    }
 
     /// Returns `true` if the response is `"failed"`.
-    pub fn is_err(&self) -> bool { !self.is_ok() }
+    pub fn is_err(&self) -> bool {
+        !self.is_ok()
+    }
 
     // /// Returns `true` if the response is `"ok"`, but the response body
     // is empty. pub fn is_empty(&self) -> bool { self.is_ok() &&

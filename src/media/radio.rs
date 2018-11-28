@@ -1,8 +1,8 @@
 use serde::de::{Deserialize, Deserializer};
 use std::result;
 
-use {Client, Result};
 use query::Query;
+use {Client, Result};
 
 #[derive(Debug)]
 pub struct RadioStation {
@@ -36,21 +36,17 @@ impl<'de> Deserialize<'de> for RadioStation {
 }
 
 impl RadioStation {
-    pub fn id(&self) -> usize { self.id }
+    pub fn id(&self) -> usize {
+        self.id
+    }
 
     pub fn list(client: &Client) -> Result<Vec<RadioStation>> {
         #[allow(non_snake_case)]
-        let internetRadioStation =
-            client.get("getInternetRadioStations", Query::none())?;
+        let internetRadioStation = client.get("getInternetRadioStations", Query::none())?;
         Ok(get_list_as!(internetRadioStation, RadioStation))
     }
 
-    pub fn create(
-        client: &Client,
-        name: &str,
-        url: &str,
-        homepage: Option<&str>,
-    ) -> Result<()> {
+    pub fn create(client: &Client, name: &str, url: &str, homepage: Option<&str>) -> Result<()> {
         let args = Query::with("name", name)
             .arg("streamUrl", url)
             .arg("homepageUrl", homepage)

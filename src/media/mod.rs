@@ -7,9 +7,9 @@ use {Client, Error, Result};
 
 // pub mod format;
 pub mod podcast;
+mod radio;
 pub mod song;
 pub mod video;
-mod radio;
 
 pub use self::radio::RadioStation;
 
@@ -110,11 +110,7 @@ pub trait Media {
     ///
     /// Aside from errors that the `Client` may cause, the method will error
     /// if the media does not have an associated cover art.
-    fn cover_art<U: Into<Option<usize>>>(
-        &self,
-        client: &Client,
-        size: U,
-    ) -> Result<Vec<u8>>;
+    fn cover_art<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<Vec<u8>>;
 
     /// Returns the URL pointing to the cover art of the media.
     ///
@@ -122,11 +118,7 @@ pub trait Media {
     ///
     /// Aside from errors that the `Client` may cause, the method will error
     /// if the media does not have an associated cover art.
-    fn cover_art_url<U: Into<Option<usize>>>(
-        &self,
-        client: &Client,
-        size: U,
-    ) -> Result<String>;
+    fn cover_art_url<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<String>;
 }
 
 /// Information about currently playing media.
@@ -183,10 +175,14 @@ impl NowPlaying {
     }
 
     /// Returns `true` if the currently playing media is a song.
-    pub fn is_song(&self) -> bool { !self.is_video }
+    pub fn is_song(&self) -> bool {
+        !self.is_video
+    }
 
     /// Returns `true` if the currently playing media is a video.
-    pub fn is_video(&self) -> bool { self.is_video }
+    pub fn is_video(&self) -> bool {
+        self.is_video
+    }
 }
 
 /// A HLS playlist file.
@@ -235,12 +231,9 @@ impl Hls {
 impl FromStr for HlsPlaylist {
     type Err = Error;
     fn from_str(s: &str) -> result::Result<Self, Self::Err> {
-        fn chew<'a, 'b>(
-            s: &'a str,
-            head: &'b str,
-        ) -> result::Result<&'a str, Error> {
+        fn chew<'a, 'b>(s: &'a str, head: &'b str) -> result::Result<&'a str, Error> {
             if s.starts_with(head) {
-                return Ok(s.trim_left_matches(head))
+                return Ok(s.trim_left_matches(head));
             } else {
                 Err(Error::Other("missing required field"))
             }
@@ -253,14 +246,13 @@ impl FromStr for HlsPlaylist {
         let _ver = split.next().unwrap();
         let version = chew(_ver, "#EXT-X-VERSION:")?.parse::<usize>()?;
         let _tar = split.next().unwrap();
-        let target_duration =
-            chew(_tar, "#EXT-X-TARGETDURATION:")?.parse::<usize>()?;
+        let target_duration = chew(_tar, "#EXT-X-TARGETDURATION:")?.parse::<usize>()?;
 
         let mut hls = Vec::new();
         loop {
             let _inc = split.next().unwrap();
             if _inc == "#EXT-X-ENDLIST" {
-                break
+                break;
             }
             let inc = chew(_inc, "#EXTINF:")?
                 .trim_right_matches(",")
@@ -282,13 +274,17 @@ impl FromStr for HlsPlaylist {
 
 impl Index<usize> for HlsPlaylist {
     type Output = Hls;
-    fn index(&self, index: usize) -> &Hls { self.hls.index(index) }
+    fn index(&self, index: usize) -> &Hls {
+        self.hls.index(index)
+    }
 }
 
 impl IntoIterator for HlsPlaylist {
     type Item = Hls;
     type IntoIter = ::std::vec::IntoIter<Hls>;
-    fn into_iter(self) -> Self::IntoIter { self.hls.into_iter() }
+    fn into_iter(self) -> Self::IntoIter {
+        self.hls.into_iter()
+    }
 }
 
 impl<'de> Deserialize<'de> for NowPlaying {

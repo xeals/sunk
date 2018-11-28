@@ -1,8 +1,8 @@
 use reqwest;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
-use std::{fmt, io, num, result};
 use std::convert::From;
+use std::{fmt, io, num, result};
 
 /// An alias for `sunk`'s error result type.
 pub type Result<T> = result::Result<T, self::Error>;
@@ -147,16 +147,10 @@ impl fmt::Display for ApiError {
         match *self {
             Generic(ref s) => write!(f, "Generic error: {}", s),
             MissingParameter => write!(f, "Missing a required parameter"),
-            ClientMustUpgrade => {
-                write!(f, "Incompatible protocol; client must upgrade")
-            }
-            ServerMustUpgrade => {
-                write!(f, "Incompatible protocol; server must upgrade")
-            }
+            ClientMustUpgrade => write!(f, "Incompatible protocol; client must upgrade"),
+            ServerMustUpgrade => write!(f, "Incompatible protocol; server must upgrade"),
             WrongAuth => write!(f, "Wrong username or password"),
-            Ldap => {
-                write!(f, "Token authentication not supported for LDAP users")
-            }
+            Ldap => write!(f, "Token authentication not supported for LDAP users"),
             NotAuthorized(ref s) => write!(f, "Not authorized: {}", s),
             TrialExpired => write!(f, "Subsonic trial period has expired"),
             NotFound => write!(f, "Requested data not found"),
@@ -170,7 +164,7 @@ macro_rules! box_err {
                 Error::$to(err)
             }
         }
-    }
+    };
 }
 
 box_err!(reqwest::Error, Reqwest);
@@ -181,9 +175,13 @@ box_err!(UrlError, Url);
 box_err!(ApiError, Api);
 
 impl From<reqwest::UrlError> for UrlError {
-    fn from(err: reqwest::UrlError) -> UrlError { UrlError::Reqwest(err) }
+    fn from(err: reqwest::UrlError) -> UrlError {
+        UrlError::Reqwest(err)
+    }
 }
 
 impl From<reqwest::UrlError> for Error {
-    fn from(err: reqwest::UrlError) -> Error { Error::Url(err.into()) }
+    fn from(err: reqwest::UrlError) -> Error {
+        Error::Url(err.into())
+    }
 }

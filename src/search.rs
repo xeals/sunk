@@ -170,9 +170,9 @@
 //! # fn main() { }
 //! ```
 
-use {Album, Artist};
 use song::Song;
 use std::fmt;
+use {Album, Artist};
 
 /// The maximum number of results most searches will accept.
 pub const ALL: SearchPage = SearchPage {
@@ -220,14 +220,20 @@ impl SearchPage {
     }
 
     /// Advances the page.
-    pub fn next(&mut self) { self.offset += 1; }
+    pub fn next(&mut self) {
+        self.offset += 1;
+    }
 
     /// Decrements the page.
-    pub fn prev(&mut self) { self.offset -= 1; }
+    pub fn prev(&mut self) {
+        self.offset -= 1;
+    }
 }
 
 impl Default for SearchPage {
-    fn default() -> SearchPage { SearchPage::new() }
+    fn default() -> SearchPage {
+        SearchPage::new()
+    }
 }
 
 impl fmt::Display for SearchPage {

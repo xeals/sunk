@@ -8,7 +8,9 @@ pub struct Query {
 
 impl Query {
     /// Creates an empty query set to be built on.
-    pub fn new() -> Query { Query { inner: Vec::new() } }
+    pub fn new() -> Query {
+        Query { inner: Vec::new() }
+    }
 
     /// A blank query to be used where an API call doesn't require additional
     /// arguments.
@@ -81,11 +83,7 @@ impl Query {
     ///
     /// assert_eq!(query_list, query_manual);
     /// ```
-    pub fn arg_list<A: IntoArg + Clone>(
-        &mut self,
-        key: &str,
-        values: &[A],
-    ) -> &mut Query {
+    pub fn arg_list<A: IntoArg + Clone>(&mut self, key: &str, values: &[A]) -> &mut Query {
         for v in values.to_owned() {
             self.inner.push((key.to_string(), v.into_arg()))
         }
@@ -121,14 +119,18 @@ impl fmt::Display for Query {
 }
 
 impl Default for Query {
-    fn default() -> Query { Query::new() }
+    fn default() -> Query {
+        Query::new()
+    }
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct Arg(Option<String>);
 
 impl Arg {
-    fn is_some(&self) -> bool { self.0.is_some() }
+    fn is_some(&self) -> bool {
+        self.0.is_some()
+    }
 }
 
 impl fmt::Display for Arg {
@@ -158,13 +160,19 @@ where
 }
 
 impl IntoArg for Arg {
-    fn into_arg(self) -> Arg { self }
+    fn into_arg(self) -> Arg {
+        self
+    }
 }
 
 macro_rules! impl_arg {
-    ($t:ty) => {impl IntoArg for $t {
-        fn into_arg(self) -> Arg { Arg(Some(self.to_string())) }
-    }};
+    ($t:ty) => {
+        impl IntoArg for $t {
+            fn into_arg(self) -> Arg {
+                Arg(Some(self.to_string()))
+            }
+        }
+    };
 }
 
 impl_arg!(i8);
@@ -182,11 +190,15 @@ impl_arg!(usize);
 impl_arg!(bool);
 
 impl<'a> IntoArg for &'a str {
-    fn into_arg(self) -> Arg { Arg(Some(self.to_owned())) }
+    fn into_arg(self) -> Arg {
+        Arg(Some(self.to_owned()))
+    }
 }
 
 impl IntoArg for String {
-    fn into_arg(self) -> Arg { Arg(Some(self)) }
+    fn into_arg(self) -> Arg {
+        Arg(Some(self))
+    }
 }
 
 #[cfg(test)]
