@@ -254,7 +254,7 @@ impl FromStr for HlsPlaylist {
                 break;
             }
             let inc = chew(_inc, "#EXTINF:")?
-                .trim_end_matches(",")
+                .trim_end_matches(',')
                 .parse::<usize>()?;
             hls.push(Hls {
                 inc,

@@ -61,7 +61,7 @@ impl RadioStation {
             .arg("name", self.name.as_str())
             .arg(
                 "homepageUrl",
-                self.homepage_url.as_ref().map(|s| s.as_str()),
+                self.homepage_url.as_deref(),
             )
             .build();
         client.get("updateInternetRadioStation", args)?;

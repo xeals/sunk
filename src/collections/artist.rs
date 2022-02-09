@@ -122,13 +122,12 @@ impl Media for Artist {
     }
 
     fn cover_id(&self) -> Option<&str> {
-        self.cover_id.as_ref().map(|s| s.as_str())
+        self.cover_id.as_deref()
     }
 
     fn cover_art<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<Vec<u8>> {
         let cover = self
-            .cover_id()
-            .ok_or_else(|| Error::Other("no cover art found"))?;
+            .cover_id().ok_or(Error::Other("no cover art found"))?;
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
         client.get_bytes("getCoverArt", query)
@@ -136,8 +135,7 @@ impl Media for Artist {
 
     fn cover_art_url<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<String> {
         let cover = self
-            .cover_id()
-            .ok_or_else(|| Error::Other("no cover art found"))?;
+            .cover_id().ok_or(Error::Other("no cover art found"))?;
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
         client.build_url("getCoverArt", query)

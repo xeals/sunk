@@ -143,19 +143,18 @@ impl Client {
 
     /// Internal helper function to construct a URL when the actual fetching is
     /// not required.
-    #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+    #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
     pub(crate) fn build_url(&self, query: &str, args: Query) -> Result<String> {
         let scheme = self.url.scheme();
         let addr = self
             .url
-            .host_str()
-            .ok_or_else(|| Error::Url(UrlError::Address))?;
+            .host_str().ok_or(Error::Url(UrlError::Address))?;
 
         let mut url = [scheme, "://", addr, "/rest/"].concat();
         url.push_str(query);
-        url.push_str("?");
+        url.push('?');
         url.push_str(&self.auth.to_url(self.target_ver));
-        url.push_str("&");
+        url.push('&');
         url.push_str(&args.to_string());
 
         Ok(url)
@@ -190,8 +189,7 @@ impl Client {
             } else {
                 Err(response
                     .into_error()
-                    .map(|e| e.into())
-                    .ok_or_else(|| Error::Other("unable to retrieve error"))?)
+                    .map(|e| e.into()).ok_or(Error::Other("unable to retrieve error"))?)
             }
         } else {
             Err(Error::Connection(res.status()))
