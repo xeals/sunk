@@ -5,7 +5,7 @@ use reqwest::Url;
 use response::Response;
 use search::{SearchPage, SearchResult};
 use serde_json;
-use {Album, Artist, Error, Genre, Hls, Lyrics, MusicFolder, Result, Song, UrlError, Version};
+use {Error, Genre, Hls, Lyrics, MusicFolder, Result, UrlError, Version};
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 

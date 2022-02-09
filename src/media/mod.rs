@@ -232,7 +232,7 @@ impl FromStr for HlsPlaylist {
     fn from_str(s: &str) -> result::Result<Self, Self::Err> {
         fn chew<'a, 'b>(s: &'a str, head: &'b str) -> result::Result<&'a str, Error> {
             if s.starts_with(head) {
-                return Ok(s.trim_left_matches(head));
+                return Ok(s.trim_start_matches(head));
             } else {
                 Err(Error::Other("missing required field"))
             }
@@ -254,7 +254,7 @@ impl FromStr for HlsPlaylist {
                 break;
             }
             let inc = chew(_inc, "#EXTINF:")?
-                .trim_right_matches(",")
+                .trim_end_matches(",")
                 .parse::<usize>()?;
             hls.push(Hls {
                 inc,
