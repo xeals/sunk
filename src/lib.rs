@@ -144,4 +144,3 @@ pub use self::media::{Hls, HlsPlaylist, Media, NowPlaying, RadioStation, Streama
 use self::song::{Lyrics, Song};
 pub use self::user::{User, UserBuilder};
 pub use self::version::Version;
-

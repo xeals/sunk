@@ -38,7 +38,8 @@ impl Video {
     pub fn get(client: &Client, id: usize) -> Result<Video> {
         Video::list(client)?
             .into_iter()
-            .find(|v| v.id == id).ok_or(Error::Other("no video found"))
+            .find(|v| v.id == id)
+            .ok_or(Error::Other("no video found"))
     }
 
     pub fn list(client: &Client) -> Result<Vec<Video>> {
@@ -142,16 +143,14 @@ impl Media for Video {
     }
 
     fn cover_art<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<Vec<u8>> {
-        let cover = self
-            .cover_id().ok_or(Error::Other("no cover art found"))?;
+        let cover = self.cover_id().ok_or(Error::Other("no cover art found"))?;
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
         client.get_bytes("getCoverArt", query)
     }
 
     fn cover_art_url<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<String> {
-        let cover = self
-            .cover_id().ok_or(Error::Other("no cover art found"))?;
+        let cover = self.cover_id().ok_or(Error::Other("no cover art found"))?;
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
         client.build_url("getCoverArt", query)

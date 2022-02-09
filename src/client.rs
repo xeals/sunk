@@ -146,9 +146,7 @@ impl Client {
     #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
     pub(crate) fn build_url(&self, query: &str, args: Query) -> Result<String> {
         let scheme = self.url.scheme();
-        let addr = self
-            .url
-            .host_str().ok_or(Error::Url(UrlError::Address))?;
+        let addr = self.url.host_str().ok_or(Error::Url(UrlError::Address))?;
 
         let mut url = [scheme, "://", addr, "/rest/"].concat();
         url.push_str(query);
@@ -189,7 +187,8 @@ impl Client {
             } else {
                 Err(response
                     .into_error()
-                    .map(|e| e.into()).ok_or(Error::Other("unable to retrieve error"))?)
+                    .map(|e| e.into())
+                    .ok_or(Error::Other("unable to retrieve error"))?)
             }
         } else {
             Err(Error::Connection(res.status()))
