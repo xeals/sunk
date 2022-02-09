@@ -1,11 +1,10 @@
-use reqwest::Client as ReqwestClient;
-use reqwest::Url;
-use serde_json;
-
 use media::NowPlaying;
 use query::Query;
+use reqwest::Client as ReqwestClient;
+use reqwest::Url;
 use response::Response;
 use search::{SearchPage, SearchResult};
+use serde_json;
 use {Album, Artist, Error, Genre, Hls, Lyrics, MusicFolder, Result, Song, UrlError, Version};
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
@@ -74,9 +73,10 @@ impl SubsonicAuth {
     fn to_url(&self, ver: Version) -> String {
         // First md5 support.
         let auth = if ver >= "1.13.0".into() {
+            use std::iter;
+
             use md5;
             use rand::{distributions::Alphanumeric, thread_rng, Rng};
-            use std::iter;
 
             let mut rng = thread_rng();
             let salt: String = iter::repeat(())
@@ -390,8 +390,9 @@ pub struct License {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_util;
+
+    use super::*;
 
     #[test]
     fn test_token_auth() {

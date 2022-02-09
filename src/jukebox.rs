@@ -1,8 +1,8 @@
-use serde::de::{Deserialize, Deserializer};
-use serde_json;
 use std::result;
 
 use query::Query;
+use serde::de::{Deserialize, Deserializer};
+use serde_json;
 use {Client, Result, Song};
 
 /// A wrapper on a `Client` to control just the jukebox.

@@ -1,8 +1,8 @@
-use serde::de::{Deserialize, Deserializer};
 use std::ops::Index;
 use std::result;
 use std::str::FromStr;
 
+use serde::de::{Deserialize, Deserializer};
 use {Client, Error, Result};
 
 // pub mod format;
@@ -12,7 +12,6 @@ pub mod song;
 pub mod video;
 
 pub use self::radio::RadioStation;
-
 use self::song::Song;
 use self::video::Video;
 // pub use self::podcast::{Podcast, Episode};

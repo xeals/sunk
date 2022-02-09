@@ -1,8 +1,9 @@
+use std::convert::From;
+use std::{fmt, io, num, result};
+
 use reqwest;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
-use std::convert::From;
-use std::{fmt, io, num, result};
 
 /// An alias for `sunk`'s error result type.
 pub type Result<T> = result::Result<T, self::Error>;

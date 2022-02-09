@@ -1,8 +1,8 @@
-use serde::de::{Deserialize, Deserializer};
-use serde_json;
 use std::result;
 
 use query::Query;
+use serde::de::{Deserialize, Deserializer};
+use serde_json;
 use {Client, Error, Media, Result, Song};
 
 #[derive(Debug)]
@@ -153,8 +153,9 @@ fn delete_playlist(client: &Client, id: u64) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_util;
+
+    use super::*;
 
     // The demo playlist exists, but can't be accessed
     #[test]

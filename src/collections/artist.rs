@@ -1,9 +1,8 @@
 use std::{fmt, result};
 
+use query::Query;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
-
-use query::Query;
 use {Album, Client, Error, Media, Result, Song};
 
 /// Basic information about an artist.
@@ -192,8 +191,9 @@ fn get_artist(client: &Client, id: usize) -> Result<Artist> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_util;
+
+    use super::*;
 
     #[test]
     fn parse_artist() {
@@ -258,5 +258,4 @@ mod tests {
         )
         .unwrap()
     }
-
 }

@@ -1,10 +1,10 @@
-use serde::de::{Deserialize, Deserializer};
-use serde_json;
 use std::fmt;
 use std::ops::Range;
 
 use query::Query;
 use search::SearchPage;
+use serde::de::{Deserialize, Deserializer};
+use serde_json;
 use {Client, Error, HlsPlaylist, Media, Result, Streamable};
 
 /// A work of music contained on a Subsonic server.
@@ -448,8 +448,9 @@ impl<'a> RandomSongs<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_util;
+
+    use super::*;
 
     #[test]
     fn parse_song() {
