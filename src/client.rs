@@ -1,12 +1,11 @@
-use reqwest::Client as ReqwestClient;
-use reqwest::Url;
-use serde_json;
-
 use media::NowPlaying;
 use query::Query;
+use reqwest::Client as ReqwestClient;
+use reqwest::Url;
 use response::Response;
 use search::{SearchPage, SearchResult};
-use {Album, Artist, Error, Genre, Hls, Lyrics, MusicFolder, Result, Song, UrlError, Version};
+use serde_json;
+use {Error, Genre, Hls, Lyrics, MusicFolder, Result, UrlError, Version};
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
@@ -74,9 +73,10 @@ impl SubsonicAuth {
     fn to_url(&self, ver: Version) -> String {
         // First md5 support.
         let auth = if ver >= "1.13.0".into() {
+            use std::iter;
+
             use md5;
             use rand::{distributions::Alphanumeric, thread_rng, Rng};
-            use std::iter;
 
             let mut rng = thread_rng();
             let salt: String = iter::repeat(())
@@ -143,19 +143,16 @@ impl Client {
 
     /// Internal helper function to construct a URL when the actual fetching is
     /// not required.
-    #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+    #[cfg_attr(feature = "cargo-clippy", allow(clippy::needless_pass_by_value))]
     pub(crate) fn build_url(&self, query: &str, args: Query) -> Result<String> {
         let scheme = self.url.scheme();
-        let addr = self
-            .url
-            .host_str()
-            .ok_or_else(|| Error::Url(UrlError::Address))?;
+        let addr = self.url.host_str().ok_or(Error::Url(UrlError::Address))?;
 
         let mut url = [scheme, "://", addr, "/rest/"].concat();
         url.push_str(query);
-        url.push_str("?");
+        url.push('?');
         url.push_str(&self.auth.to_url(self.target_ver));
-        url.push_str("&");
+        url.push('&');
         url.push_str(&args.to_string());
 
         Ok(url)
@@ -191,7 +188,7 @@ impl Client {
                 Err(response
                     .into_error()
                     .map(|e| e.into())
-                    .ok_or_else(|| Error::Other("unable to retrieve error"))?)
+                    .ok_or(Error::Other("unable to retrieve error"))?)
             }
         } else {
             Err(Error::Connection(res.status()))
@@ -390,8 +387,9 @@ pub struct License {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_util;
+
+    use super::*;
 
     #[test]
     fn test_token_auth() {

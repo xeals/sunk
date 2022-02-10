@@ -1,8 +1,8 @@
-use serde::de::{Deserialize, Deserializer};
-use serde_json;
 use std::result;
 
 use query::Query;
+use serde::de::{Deserialize, Deserializer};
+use serde_json;
 use {Client, Error, Media, Result, Song};
 
 #[derive(Debug)]
@@ -71,18 +71,14 @@ impl Media for Playlist {
     }
 
     fn cover_art<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<Vec<u8>> {
-        let cover = self
-            .cover_id()
-            .ok_or_else(|| Error::Other("no cover art found"))?;
+        let cover = self.cover_id().ok_or(Error::Other("no cover art found"))?;
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
         client.get_bytes("getCoverArt", query)
     }
 
     fn cover_art_url<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<String> {
-        let cover = self
-            .cover_id()
-            .ok_or_else(|| Error::Other("no cover art found"))?;
+        let cover = self.cover_id().ok_or(Error::Other("no cover art found"))?;
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
         client.build_url("getCoverArt", query)
@@ -153,8 +149,9 @@ fn delete_playlist(client: &Client, id: u64) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_util;
+
+    use super::*;
 
     // The demo playlist exists, but can't be accessed
     #[test]

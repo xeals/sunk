@@ -1,6 +1,5 @@
-use serde_json;
-
 use query::Query;
+use serde_json;
 use {Client, Result};
 
 /// A struct representing a Subsonic user.
@@ -284,8 +283,9 @@ impl UserBuilder {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_util;
+
+    use super::*;
 
     #[test]
     fn remote_parse_user() {

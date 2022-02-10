@@ -170,8 +170,9 @@
 //! # fn main() { }
 //! ```
 
-use song::Song;
 use std::fmt;
+
+use song::Song;
 use {Album, Artist};
 
 /// The maximum number of results most searches will accept.

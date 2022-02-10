@@ -1,5 +1,6 @@
-use serde::de::{Deserialize, Deserializer};
 use std::result;
+
+use serde::de::{Deserialize, Deserializer};
 
 mod album;
 mod artist;

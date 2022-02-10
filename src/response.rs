@@ -1,5 +1,4 @@
 use serde_json;
-
 use ApiError;
 
 /// A top-level response from a Subsonic server.

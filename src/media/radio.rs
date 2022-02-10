@@ -1,7 +1,7 @@
-use serde::de::{Deserialize, Deserializer};
 use std::result;
 
 use query::Query;
+use serde::de::{Deserialize, Deserializer};
 use {Client, Result};
 
 #[derive(Debug)]
@@ -59,10 +59,7 @@ impl RadioStation {
         let args = Query::with("id", self.id)
             .arg("streamUrl", self.stream_url.as_str())
             .arg("name", self.name.as_str())
-            .arg(
-                "homepageUrl",
-                self.homepage_url.as_ref().map(|s| s.as_str()),
-            )
+            .arg("homepageUrl", self.homepage_url.as_deref())
             .build();
         client.get("updateInternetRadioStation", args)?;
         Ok(())

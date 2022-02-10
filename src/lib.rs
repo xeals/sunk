@@ -141,8 +141,6 @@ pub use self::error::{ApiError, Error, Result, UrlError};
 pub use self::jukebox::{Jukebox, JukeboxPlaylist, JukeboxStatus};
 pub use self::media::{podcast, song, video};
 pub use self::media::{Hls, HlsPlaylist, Media, NowPlaying, RadioStation, Streamable};
+use self::song::{Lyrics, Song};
 pub use self::user::{User, UserBuilder};
 pub use self::version::Version;
-
-use self::song::{Lyrics, RandomSongs, Song};
-use self::video::Video;

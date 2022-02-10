@@ -1,9 +1,8 @@
 use std::{fmt, result};
 
+use query::Query;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
-
-use query::Query;
 use {Album, Client, Error, Media, Result, Song};
 
 /// Basic information about an artist.
@@ -123,22 +122,18 @@ impl Media for Artist {
     }
 
     fn cover_id(&self) -> Option<&str> {
-        self.cover_id.as_ref().map(|s| s.as_str())
+        self.cover_id.as_deref()
     }
 
     fn cover_art<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<Vec<u8>> {
-        let cover = self
-            .cover_id()
-            .ok_or_else(|| Error::Other("no cover art found"))?;
+        let cover = self.cover_id().ok_or(Error::Other("no cover art found"))?;
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
         client.get_bytes("getCoverArt", query)
     }
 
     fn cover_art_url<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<String> {
-        let cover = self
-            .cover_id()
-            .ok_or_else(|| Error::Other("no cover art found"))?;
+        let cover = self.cover_id().ok_or(Error::Other("no cover art found"))?;
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
         client.build_url("getCoverArt", query)
@@ -192,8 +187,9 @@ fn get_artist(client: &Client, id: usize) -> Result<Artist> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_util;
+
+    use super::*;
 
     #[test]
     fn parse_artist() {
@@ -258,5 +254,4 @@ mod tests {
         )
         .unwrap()
     }
-
 }

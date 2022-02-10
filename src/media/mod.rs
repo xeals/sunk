@@ -1,8 +1,8 @@
-use serde::de::{Deserialize, Deserializer};
 use std::ops::Index;
 use std::result;
 use std::str::FromStr;
 
+use serde::de::{Deserialize, Deserializer};
 use {Client, Error, Result};
 
 // pub mod format;
@@ -12,7 +12,6 @@ pub mod song;
 pub mod video;
 
 pub use self::radio::RadioStation;
-
 use self::song::Song;
 use self::video::Video;
 // pub use self::podcast::{Podcast, Episode};
@@ -233,7 +232,7 @@ impl FromStr for HlsPlaylist {
     fn from_str(s: &str) -> result::Result<Self, Self::Err> {
         fn chew<'a, 'b>(s: &'a str, head: &'b str) -> result::Result<&'a str, Error> {
             if s.starts_with(head) {
-                return Ok(s.trim_left_matches(head));
+                return Ok(s.trim_start_matches(head));
             } else {
                 Err(Error::Other("missing required field"))
             }
@@ -255,7 +254,7 @@ impl FromStr for HlsPlaylist {
                 break;
             }
             let inc = chew(_inc, "#EXTINF:")?
-                .trim_right_matches(",")
+                .trim_end_matches(',')
                 .parse::<usize>()?;
             hls.push(Hls {
                 inc,
