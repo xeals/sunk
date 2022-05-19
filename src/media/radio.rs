@@ -5,8 +5,9 @@ use serde::de::{Deserialize, Deserializer};
 use {Client, Result};
 
 #[derive(Debug)]
+#[readonly::make]
 pub struct RadioStation {
-    id: usize,
+    pub id: usize,
     pub name: String,
     pub stream_url: String,
     pub homepage_url: Option<String>,

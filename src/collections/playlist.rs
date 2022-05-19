@@ -6,13 +6,14 @@ use serde_json;
 use {Client, Error, Media, Result, Song};
 
 #[derive(Debug)]
+#[readonly::make]
 pub struct Playlist {
-    id: u64,
-    name: String,
-    duration: u64,
-    cover_id: String,
-    song_count: u64,
-    songs: Vec<Song>,
+    pub id: u64,
+    pub name: String,
+    pub duration: u64,
+    pub cover_id: String,
+    pub song_count: u64,
+    pub songs: Vec<Song>,
 }
 
 impl Playlist {
@@ -31,7 +32,7 @@ impl<'de> Deserialize<'de> for Playlist {
     where
         D: Deserializer<'de>,
     {
-        #[derive(Debug, Deserialize)]
+        #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
         struct _Playlist {
             id: String,
@@ -85,12 +86,12 @@ impl Media for Playlist {
     }
 }
 
-fn get_playlists(client: &Client, user: Option<String>) -> Result<Vec<Playlist>> {
+pub fn get_playlists(client: &Client, user: Option<String>) -> Result<Vec<Playlist>> {
     let playlist = client.get("getPlaylists", Query::with("username", user))?;
     Ok(get_list_as!(playlist, Playlist))
 }
 
-fn get_playlist(client: &Client, id: u64) -> Result<Playlist> {
+pub fn get_playlist(client: &Client, id: u64) -> Result<Playlist> {
     let res = client.get("getPlaylist", Query::with("id", id))?;
     Ok(serde_json::from_value::<Playlist>(res)?)
 }
@@ -99,7 +100,7 @@ fn get_playlist(client: &Client, id: u64) -> Result<Playlist> {
 ///
 /// Since API version 1.14.0, the newly created playlist is returned. In earlier
 /// versions, an empty response is returned.
-fn create_playlist(client: &Client, name: String, songs: &[u64]) -> Result<Option<Playlist>> {
+pub fn create_playlist(client: &Client, name: String, songs: &[u64]) -> Result<Option<Playlist>> {
     let args = Query::new()
         .arg("name", name)
         .arg_list("songId", songs)
@@ -116,7 +117,7 @@ fn create_playlist(client: &Client, name: String, songs: &[u64]) -> Result<Optio
 }
 
 /// Updates a playlist. Only the owner of the playlist is privileged to do so.
-fn update_playlist<'a, B, S>(
+pub fn update_playlist<'a, B, S>(
     client: &Client,
     id: u64,
     name: S,
@@ -142,7 +143,7 @@ where
     Ok(())
 }
 
-fn delete_playlist(client: &Client, id: u64) -> Result<()> {
+pub fn delete_playlist(client: &Client, id: u64) -> Result<()> {
     client.get("deletePlaylist", Query::with("id", id))?;
     Ok(())
 }

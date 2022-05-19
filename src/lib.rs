@@ -1,6 +1,3 @@
-#![warn(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/sunk/0.1.2")]
-
 //! # sunk
 //!
 //! `sunk` provides natural Rust bindings to the [Subsonic] music server API.

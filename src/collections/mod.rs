@@ -2,9 +2,9 @@ use std::result;
 
 use serde::de::{Deserialize, Deserializer};
 
-mod album;
-mod artist;
-mod playlist;
+pub mod album;
+pub mod artist;
+pub mod playlist;
 
 pub use self::album::{Album, AlbumInfo, ListType};
 pub use self::artist::{Artist, ArtistInfo};

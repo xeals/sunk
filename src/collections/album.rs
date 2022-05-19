@@ -48,17 +48,18 @@ impl IntoArg for ListType {
 }
 
 #[derive(Debug, Clone)]
+#[readonly::make]
 pub struct Album {
     pub id: u64,
     pub name: String,
     pub artist: Option<String>,
-    artist_id: Option<u64>,
-    cover_id: Option<String>,
+    pub artist_id: Option<u64>,
+    pub cover_id: Option<String>,
     pub duration: u64,
     pub year: Option<u64>,
     pub genre: Option<String>,
     pub song_count: u64,
-    songs: Vec<Song>,
+    pub songs: Vec<Song>,
 }
 
 impl Album {
@@ -121,7 +122,7 @@ impl<'de> Deserialize<'de> for Album {
     where
         D: Deserializer<'de>,
     {
-        #[derive(Debug, Deserialize)]
+        #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
         struct _Album {
             id: String,

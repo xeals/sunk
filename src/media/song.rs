@@ -9,6 +9,7 @@ use {Client, Error, HlsPlaylist, Media, Result, Streamable};
 
 /// A work of music contained on a Subsonic server.
 #[derive(Debug, Clone)]
+#[readonly::make]
 pub struct Song {
     /// Unique identifier for the song.
     pub id: u64,
@@ -18,11 +19,11 @@ pub struct Song {
     /// Album the song belongs to. Reads from the song's ID3 tags.
     pub album: Option<String>,
     /// The ID of the released album.
-    album_id: Option<u64>,
+    pub album_id: Option<u64>,
     /// Credited artist for the song. Reads from the song's ID3 tags.
     pub artist: Option<String>,
     /// The ID of the releasing artist.
-    artist_id: Option<u64>,
+    pub artist_id: Option<u64>,
     /// Position of the song in the album.
     pub track: Option<u64>,
     /// Year the song was released.
@@ -30,27 +31,27 @@ pub struct Song {
     /// Genre of the song.
     pub genre: Option<String>,
     /// ID of the song's cover art. Defaults to the parent album's cover.
-    cover_id: Option<String>,
+    pub cover_id: Option<String>,
     /// File size of the song, in bytes.
     pub size: u64,
     /// An audio MIME type.
-    content_type: String,
+    pub content_type: String,
     /// The file extension of the song.
-    suffix: String,
+    pub suffix: String,
     /// The MIME type that the song will be transcoded to.
-    transcoded_content_type: Option<String>,
+    pub transcoded_content_type: Option<String>,
     /// The file extension that the song will be transcoded to.
-    transcoded_suffix: Option<String>,
+    pub transcoded_suffix: Option<String>,
     /// Duration of the song, in seconds.
     pub duration: Option<u64>,
     /// The absolute path of the song in the server database.
-    path: String,
+    pub path: String,
     /// Will always be "song".
-    media_type: String,
+    pub media_type: String,
     /// Bit rate the song will be downsampled to.
-    stream_br: Option<usize>,
+    pub stream_br: Option<usize>,
     /// Format the song will be transcoded to.
-    stream_tc: Option<String>,
+    pub stream_tc: Option<String>,
 }
 
 impl Song {
@@ -246,7 +247,7 @@ impl<'de> Deserialize<'de> for Song {
     where
         D: Deserializer<'de>,
     {
-        #[derive(Debug, Deserialize)]
+        #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
         struct _Song {
             id: String,
