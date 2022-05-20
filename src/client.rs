@@ -1,5 +1,10 @@
+use std::io::Read;
+use std::iter;
+
+use md5;
 use media::NowPlaying;
 use query::Query;
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use reqwest::Client as ReqwestClient;
 use reqwest::Url;
 use response::Response;
@@ -73,11 +78,6 @@ impl SubsonicAuth {
     fn to_url(&self, ver: Version) -> String {
         // First md5 support.
         let auth = if ver >= "1.13.0".into() {
-            use std::iter;
-
-            use md5;
-            use rand::{distributions::Alphanumeric, thread_rng, Rng};
-
             let mut rng = thread_rng();
             let salt: String = iter::repeat(())
                 .map(|()| rng.sample(Alphanumeric))
@@ -205,7 +205,6 @@ impl Client {
 
     /// Returns a response as a vector of bytes rather than serialising it.
     pub(crate) fn get_bytes(&self, query: &str, args: Query) -> Result<Vec<u8>> {
-        use std::io::Read;
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
         let res = self.reqclient.get(uri).send()?;
         Ok(res.bytes().map(|b| b.unwrap()).collect())
@@ -213,7 +212,6 @@ impl Client {
 
     /// Returns the raw bytes of a HLS slice.
     pub fn hls_bytes(&self, hls: &Hls) -> Result<Vec<u8>> {
-        use std::io::Read;
         let url: Url = self.url.join(&hls.url)?;
         let res = self.reqclient.get(url).send()?;
         Ok(res.bytes().map(|b| b.unwrap()).collect())

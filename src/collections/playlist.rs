@@ -37,13 +37,13 @@ impl<'de> Deserialize<'de> for Playlist {
         struct _Playlist {
             id: String,
             name: String,
-            #[serde(default)]
-            comment: String,
-            owner: String,
+            // #[serde(default)]
+            // comment: String,
+            // owner: String,
             song_count: u64,
             duration: u64,
-            created: String,
-            changed: String,
+            // created: String,
+            // changed: String,
             cover_art: String,
             #[serde(default)]
             songs: Vec<Song>,

@@ -298,18 +298,18 @@ impl<'de> Deserialize<'de> for NowPlaying {
             minutes_ago: usize,
             player_id: usize,
             id: String,
-            is_dir: bool,
-            title: String,
-            size: usize,
-            content_type: String,
-            suffix: String,
-            transcoded_content_type: Option<String>,
-            transcoded_suffix: Option<String>,
-            path: String,
+            // is_dir: bool,
+            // title: String,
+            // size: usize,
+            // content_type: String,
+            // suffix: String,
+            // transcoded_content_type: Option<String>,
+            // transcoded_suffix: Option<String>,
+            // path: String,
             is_video: bool,
-            created: String,
-            #[serde(rename = "type")]
-            media_type: String,
+            // created: String,
+            // #[serde(rename = "type")]
+            // media_type: String,
         }
 
         let raw = _NowPlaying::deserialize(de)?;

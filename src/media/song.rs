@@ -251,8 +251,8 @@ impl<'de> Deserialize<'de> for Song {
         #[serde(rename_all = "camelCase")]
         struct _Song {
             id: String,
-            parent: String,
-            is_dir: bool,
+            // parent: String,
+            // is_dir: bool,
             title: String,
             album: Option<String>,
             artist: Option<String>,
@@ -266,12 +266,12 @@ impl<'de> Deserialize<'de> for Song {
             transcoded_content_type: Option<String>,
             transcoded_suffix: Option<String>,
             duration: Option<u64>,
-            bit_rate: Option<u64>,
+            // bit_rate: Option<u64>,
             path: String,
-            is_video: Option<bool>,
-            play_count: u64,
-            disc_number: Option<u64>,
-            created: String,
+            // is_video: Option<bool>,
+            // play_count: u64,
+            // disc_number: Option<u64>,
+            // created: String,
             album_id: Option<String>,
             artist_id: Option<String>,
             #[serde(rename = "type")]

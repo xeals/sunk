@@ -115,16 +115,16 @@ mod macros;
 mod client;
 mod error;
 
-mod collections;
-mod media;
+pub mod collections;
+pub mod media;
 
-mod annotate;
-mod jukebox;
-mod query;
-mod response;
+pub mod annotate;
+pub mod jukebox;
+pub mod query;
+pub mod response;
 pub mod search;
-mod user;
-mod version;
+pub mod user;
+pub mod version;
 
 #[cfg(test)]
 mod test_util;
