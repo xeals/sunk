@@ -422,7 +422,7 @@ mod tests {
     fn demo_scan_status() {
         let cli = test_util::demo_site().unwrap();
         let (status, n) = cli.scan_status().unwrap();
-        assert_eq!(status, false);
+        assert!(!status);
         assert_eq!(n, 525);
     }
 

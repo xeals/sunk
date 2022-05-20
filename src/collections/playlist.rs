@@ -158,14 +158,13 @@ mod tests {
     #[test]
     fn remote_playlist_songs() {
         let parsed = serde_json::from_value::<Playlist>(raw()).unwrap();
-        let mut srv = test_util::demo_site().unwrap();
-        let songs = parsed.songs(&mut srv);
+        let srv = test_util::demo_site().unwrap();
+        let songs = parsed.songs(&srv);
 
-        match songs {
-            Err(::error::Error::Api(::error::ApiError::NotAuthorized(_))) => assert!(true),
-            Err(e) => panic!("unexpected error: {}", e),
-            Ok(_) => panic!("test should have failed; insufficient privilege"),
-        }
+        assert!(matches!(
+            songs,
+            Err(::error::Error::Api(::error::ApiError::NotAuthorized(_)))
+        ));
     }
 
     fn raw() -> serde_json::Value {

@@ -253,8 +253,8 @@ mod tests {
 
     #[test]
     fn demo_get_albums() {
-        let mut srv = test_util::demo_site().unwrap();
-        let albums = get_albums(&mut srv, ListType::AlphaByArtist, None, None, None).unwrap();
+        let srv = test_util::demo_site().unwrap();
+        let albums = get_albums(&srv, ListType::AlphaByArtist, None, None, None).unwrap();
 
         assert!(!albums.is_empty())
     }

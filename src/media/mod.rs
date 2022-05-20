@@ -202,6 +202,11 @@ impl HlsPlaylist {
         self.hls.len()
     }
 
+    /// Returns whether this playlist is empty.
+    pub fn is_empty(&self) -> bool {
+        self.hls.is_empty()
+    }
+
     /// Returns the total duration of the playlist.
     pub fn duration(&self) -> usize {
         self.hls.iter().fold(0, |c, h| c + h.inc)

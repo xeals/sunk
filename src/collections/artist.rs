@@ -212,9 +212,9 @@ mod tests {
 
     #[test]
     fn remote_artist_album_list() {
-        let mut srv = test_util::demo_site().unwrap();
+        let srv = test_util::demo_site().unwrap();
         let parsed = serde_json::from_value::<Artist>(raw()).unwrap();
-        let albums = parsed.albums(&mut srv).unwrap();
+        let albums = parsed.albums(&srv).unwrap();
 
         assert_eq!(albums[0].id, 1);
         assert_eq!(albums[0].name, String::from("Bellevue"));
@@ -223,11 +223,11 @@ mod tests {
 
     #[test]
     fn remote_artist_cover_art() {
-        let mut srv = test_util::demo_site().unwrap();
+        let srv = test_util::demo_site().unwrap();
         let parsed = serde_json::from_value::<Artist>(raw()).unwrap();
         assert_eq!(parsed.cover_id, Some(String::from("ar-1")));
 
-        let cover = parsed.cover_art(&mut srv, None).unwrap();
+        let cover = parsed.cover_art(&srv, None).unwrap();
         assert!(!cover.is_empty())
     }
 

@@ -105,7 +105,7 @@ impl Song {
     /// the builder.
     ///
     /// [struct level documentation]: ./struct.RandomSongs.html
-    pub fn random_with<'a>(client: &Client) -> RandomSongs {
+    pub fn random_with(client: &Client) -> RandomSongs {
         RandomSongs::new(client, 10)
     }
 
@@ -460,10 +460,10 @@ mod tests {
 
     #[test]
     fn get_hls() {
-        let mut srv = test_util::demo_site().unwrap();
+        let srv = test_util::demo_site().unwrap();
         let song = serde_json::from_value::<Song>(raw()).unwrap();
 
-        let hls = song.hls(&mut srv, &[]).unwrap();
+        let hls = song.hls(&srv, &[]).unwrap();
         assert_eq!(hls.len(), 20)
     }
 

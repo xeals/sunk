@@ -289,8 +289,8 @@ mod tests {
 
     #[test]
     fn remote_parse_user() {
-        let mut srv = test_util::demo_site().unwrap();
-        let guest = User::get(&mut srv, "guest3").unwrap();
+        let srv = test_util::demo_site().unwrap();
+        let guest = User::get(&srv, "guest3").unwrap();
 
         assert_eq!(guest.username, "guest3");
         assert!(guest.stream_role);

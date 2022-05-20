@@ -84,7 +84,7 @@ impl Query {
     /// assert_eq!(query_list, query_manual);
     /// ```
     pub fn arg_list<A: IntoArg + Clone>(&mut self, key: &str, values: &[A]) -> &mut Query {
-        for v in values.to_owned() {
+        for v in values.iter().cloned() {
             self.inner.push((key.to_string(), v.into_arg()))
         }
         self
