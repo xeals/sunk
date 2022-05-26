@@ -172,8 +172,8 @@
 
 use std::fmt;
 
-use song::Song;
-use {Album, Artist};
+use crate::song::Song;
+use crate::{Album, Artist};
 
 /// The maximum number of results most searches will accept.
 pub const ALL: SearchPage = SearchPage {

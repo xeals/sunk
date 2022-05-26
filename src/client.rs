@@ -2,15 +2,16 @@ use std::io::Read;
 use std::iter;
 
 use md5;
-use media::NowPlaying;
-use query::Query;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use reqwest::Client as ReqwestClient;
 use reqwest::Url;
-use response::Response;
-use search::{SearchPage, SearchResult};
 use serde_json;
-use {Error, Genre, Hls, Lyrics, MusicFolder, Result, UrlError, Version};
+
+use crate::media::NowPlaying;
+use crate::query::Query;
+use crate::response::Response;
+use crate::search::{SearchPage, SearchResult};
+use crate::{Error, Genre, Hls, Lyrics, MusicFolder, Result, UrlError, Version};
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
@@ -385,9 +386,8 @@ pub struct License {
 
 #[cfg(test)]
 mod tests {
-    use test_util;
-
     use super::*;
+    use crate::test_util;
 
     #[test]
     fn test_token_auth() {

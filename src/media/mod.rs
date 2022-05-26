@@ -3,7 +3,8 @@ use std::result;
 use std::str::FromStr;
 
 use serde::de::{Deserialize, Deserializer};
-use {Client, Error, Result};
+
+use crate::{Client, Error, Result};
 
 // pub mod format;
 pub mod podcast;

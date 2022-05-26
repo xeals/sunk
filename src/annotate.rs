@@ -1,5 +1,5 @@
-use query::Query;
-use {Album, Artist, Client, Error, Result, Song};
+use crate::query::Query;
+use crate::{Album, Artist, Client, Error, Result, Song};
 
 /// Allows starring, rating, and scrobbling media.
 pub trait Annotatable {

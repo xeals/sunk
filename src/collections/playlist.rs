@@ -1,9 +1,10 @@
 use std::result;
 
-use query::Query;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
-use {Client, Error, Media, Result, Song};
+
+use crate::query::Query;
+use crate::{Client, Error, Media, Result, Song};
 
 #[derive(Debug)]
 #[readonly::make]
@@ -150,9 +151,8 @@ pub fn delete_playlist(client: &Client, id: u64) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use test_util;
-
     use super::*;
+    use crate::test_util;
 
     // The demo playlist exists, but can't be accessed
     #[test]
@@ -163,7 +163,9 @@ mod tests {
 
         assert!(matches!(
             songs,
-            Err(::error::Error::Api(::error::ApiError::NotAuthorized(_)))
+            Err(crate::error::Error::Api(
+                crate::error::ApiError::NotAuthorized(_)
+            ))
         ));
     }
 

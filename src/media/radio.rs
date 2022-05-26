@@ -1,8 +1,9 @@
 use std::result;
 
-use query::Query;
 use serde::de::{Deserialize, Deserializer};
-use {Client, Result};
+
+use crate::query::Query;
+use crate::{Client, Result};
 
 #[derive(Debug)]
 #[readonly::make]

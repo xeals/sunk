@@ -1,10 +1,11 @@
 use std::{fmt, result};
 
-use query::{Arg, IntoArg, Query};
-use search::SearchPage;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
-use {Client, Error, Media, Result, Song};
+
+use crate::query::{Arg, IntoArg, Query};
+use crate::search::SearchPage;
+use crate::{Client, Error, Media, Result, Song};
 
 #[derive(Debug, Clone, Copy)]
 pub enum ListType {
@@ -247,9 +248,8 @@ where
 
 #[cfg(test)]
 mod tests {
-    use test_util;
-
     use super::*;
+    use crate::test_util;
 
     #[test]
     fn demo_get_albums() {

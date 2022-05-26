@@ -1,5 +1,6 @@
 use serde_json;
-use ApiError;
+
+use crate::ApiError;
 
 /// A top-level response from a Subsonic server.
 #[derive(Deserialize)]
