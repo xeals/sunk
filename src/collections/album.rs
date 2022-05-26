@@ -1,3 +1,5 @@
+//! Album APIs.
+
 use std::{fmt, result};
 
 use serde::de::{Deserialize, Deserializer};
@@ -7,6 +9,7 @@ use crate::query::{Arg, IntoArg, Query};
 use crate::search::SearchPage;
 use crate::{Client, Error, Media, Result, Song};
 
+#[allow(missing_docs)]
 #[derive(Debug, Clone, Copy)]
 pub enum ListType {
     AlphaByArtist,
@@ -48,6 +51,7 @@ impl IntoArg for ListType {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug, Clone)]
 #[readonly::make]
 pub struct Album {
@@ -181,6 +185,7 @@ impl Media for Album {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub struct AlbumInfo {
     pub notes: String,

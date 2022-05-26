@@ -1,3 +1,5 @@
+//! Annotation APIs.
+
 use crate::query::Query;
 use crate::{Album, Artist, Client, Error, Result, Song};
 

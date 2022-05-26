@@ -1,5 +1,8 @@
+//! Subsonic API version APIs.
+
 use std::{convert, fmt};
 
+#[allow(missing_docs)]
 #[derive(PartialEq, PartialOrd, Eq, Ord, Copy, Clone)]
 pub struct Version(u8, u8, u8);
 

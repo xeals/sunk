@@ -1,3 +1,5 @@
+//! Individual media APIs.
+
 use std::ops::Index;
 use std::result;
 use std::str::FromStr;
@@ -6,7 +8,7 @@ use serde::de::{Deserialize, Deserializer};
 
 use crate::{Client, Error, Result};
 
-// pub mod format;
+pub mod format;
 pub mod podcast;
 mod radio;
 pub mod song;

@@ -1,3 +1,5 @@
+//! Song APIs.
+
 use std::fmt;
 use std::ops::Range;
 

@@ -1,3 +1,5 @@
+//! Podcast APIs.
+
 use std::result;
 
 use serde::de::{Deserialize, Deserializer};
@@ -5,6 +7,7 @@ use serde::de::{Deserialize, Deserializer};
 use crate::query::Query;
 use crate::{Client, Result};
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 #[readonly::make]
 pub struct Podcast {
@@ -19,6 +22,7 @@ pub struct Podcast {
     pub error: Option<String>,
 }
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 #[readonly::make]
 pub struct Episode {

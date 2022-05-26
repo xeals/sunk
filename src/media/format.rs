@@ -1,9 +1,13 @@
-use query::{Arg, IntoArg};
+//! Audio and video format APIs.
+
 use std::fmt;
+
+use crate::query::{Arg, IntoArg};
 
 /// Audio encoding format.
 ///
 /// Recognises all of Subsonic's default transcoding formats.
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub enum AudioFormat {
     Aac,
@@ -32,9 +36,12 @@ impl fmt::Display for AudioFormat {
 }
 
 impl IntoArg for AudioFormat {
-    fn into_arg(self) -> Arg { self.to_string().into_arg() }
+    fn into_arg(self) -> Arg {
+        self.to_string().into_arg()
+    }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub enum VideoFormat {
     Avi,
@@ -57,5 +64,7 @@ impl fmt::Display for VideoFormat {
 }
 
 impl IntoArg for VideoFormat {
-    fn into_arg(self) -> Arg { self.to_string().into_arg() }
+    fn into_arg(self) -> Arg {
+        self.to_string().into_arg()
+    }
 }

@@ -1,3 +1,5 @@
+//! Video APIs.
+
 use std::result;
 
 use serde::de::{Deserialize, Deserializer};
@@ -6,6 +8,7 @@ use serde_json;
 use crate::query::Query;
 use crate::{Client, Error, Media, Result, Streamable};
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 #[readonly::make]
 pub struct Video {
@@ -37,6 +40,7 @@ pub struct Video {
 }
 
 impl Video {
+    #[allow(missing_docs)]
     pub fn get(client: &Client, id: usize) -> Result<Video> {
         Video::list(client)?
             .into_iter()
@@ -44,11 +48,13 @@ impl Video {
             .ok_or(Error::Other("no video found"))
     }
 
+    #[allow(missing_docs)]
     pub fn list(client: &Client) -> Result<Vec<Video>> {
         let video = client.get("getVideos", Query::none())?;
         Ok(get_list_as!(video, Video))
     }
 
+    #[allow(missing_docs)]
     pub fn info<'a, S>(&self, client: &Client, format: S) -> Result<VideoInfo>
     where
         S: Into<Option<&'a str>>,
@@ -223,6 +229,7 @@ impl<'de> Deserialize<'de> for Video {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub struct VideoInfo {
     pub id: usize,
@@ -255,6 +262,7 @@ impl<'de> Deserialize<'de> for VideoInfo {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub struct AudioTrack {
     pub id: usize,
@@ -283,6 +291,7 @@ impl<'de> Deserialize<'de> for AudioTrack {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub struct Captions {
     pub id: usize,
@@ -307,6 +316,7 @@ impl<'de> Deserialize<'de> for Captions {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub struct Conversion {
     pub id: usize,

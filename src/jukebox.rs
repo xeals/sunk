@@ -1,3 +1,5 @@
+//! Jukebox management and control APIs.
+
 use std::result;
 
 use serde::de::{Deserialize, Deserializer};
@@ -27,6 +29,7 @@ pub struct JukeboxStatus {
     /// Volume level of the jukebox, from `0` to `1.0`.
     #[serde(rename = "gain")]
     pub volume: f32,
+    #[allow(missing_docs)]
     pub position: usize,
 }
 

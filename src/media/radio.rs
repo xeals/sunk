@@ -1,3 +1,5 @@
+//! Radio APIs.
+
 use std::result;
 
 use serde::de::{Deserialize, Deserializer};
@@ -5,6 +7,7 @@ use serde::de::{Deserialize, Deserializer};
 use crate::query::Query;
 use crate::{Client, Result};
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 #[readonly::make]
 pub struct RadioStation {
@@ -37,6 +40,7 @@ impl<'de> Deserialize<'de> for RadioStation {
     }
 }
 
+#[allow(missing_docs)]
 impl RadioStation {
     pub fn id(&self) -> usize {
         self.id

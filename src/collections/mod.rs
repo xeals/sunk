@@ -1,3 +1,5 @@
+//! Collections management APIs.
+
 use std::result;
 
 use serde::de::{Deserialize, Deserializer};

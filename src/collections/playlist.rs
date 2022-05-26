@@ -1,3 +1,5 @@
+//! Playlist APIs.
+
 use std::result;
 
 use serde::de::{Deserialize, Deserializer};
@@ -6,6 +8,7 @@ use serde_json;
 use crate::query::Query;
 use crate::{Client, Error, Media, Result, Song};
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 #[readonly::make]
 pub struct Playlist {
@@ -87,11 +90,13 @@ impl Media for Playlist {
     }
 }
 
+#[allow(missing_docs)]
 pub fn get_playlists(client: &Client, user: Option<String>) -> Result<Vec<Playlist>> {
     let playlist = client.get("getPlaylists", Query::with("username", user))?;
     Ok(get_list_as!(playlist, Playlist))
 }
 
+#[allow(missing_docs)]
 pub fn get_playlist(client: &Client, id: u64) -> Result<Playlist> {
     let res = client.get("getPlaylist", Query::with("id", id))?;
     Ok(serde_json::from_value::<Playlist>(res)?)
@@ -144,6 +149,7 @@ where
     Ok(())
 }
 
+#[allow(missing_docs)]
 pub fn delete_playlist(client: &Client, id: u64) -> Result<()> {
     client.get("deletePlaylist", Query::with("id", id))?;
     Ok(())

@@ -1,3 +1,5 @@
+//! User access and management APIs.
+
 use serde_json;
 
 use crate::query::Query;
@@ -203,6 +205,7 @@ pub struct UserBuilder {
 
 macro_rules! build {
     ($f:ident: $t:ty) => {
+        #[allow(missing_docs)]
         pub fn $f(&mut self, $f: $t) -> &mut UserBuilder {
             self.$f = $f.into();
             self

@@ -98,6 +98,8 @@
 //! Bug reports and broken features are encouraged to be reported! **If
 //! something does not work as reported, it's probably broken.**
 
+#![deny(missing_docs)]
+
 #[macro_use]
 extern crate failure;
 #[macro_use]
@@ -115,11 +117,10 @@ mod macros;
 mod client;
 mod error;
 
-pub mod collections;
-pub mod media;
-
 pub mod annotate;
+pub mod collections;
 pub mod jukebox;
+pub mod media;
 pub mod query;
 pub mod response;
 pub mod search;

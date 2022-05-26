@@ -1,3 +1,5 @@
+//! Search response APIs.
+
 use serde_json;
 
 use crate::ApiError;

@@ -1,3 +1,5 @@
+//! Artist APIs.
+
 use std::{fmt, result};
 
 use serde::de::{Deserialize, Deserializer};
@@ -7,6 +9,7 @@ use crate::query::Query;
 use crate::{Album, Client, Error, Media, Result, Song};
 
 /// Basic information about an artist.
+#[allow(missing_docs)]
 #[derive(Debug, Clone)]
 pub struct Artist {
     pub id: usize,
@@ -32,6 +35,7 @@ pub struct ArtistInfo {
 }
 
 impl Artist {
+    #[allow(missing_docs)]
     pub fn get(client: &Client, id: usize) -> Result<Artist> {
         self::get_artist(client, id)
     }
