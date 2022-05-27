@@ -1,6 +1,9 @@
-use query::Query;
+//! User access and management APIs.
+
 use serde_json;
-use {Client, Result};
+
+use crate::query::Query;
+use crate::{Client, Result};
 
 /// A struct representing a Subsonic user.
 #[derive(Debug, Deserialize)]
@@ -202,6 +205,7 @@ pub struct UserBuilder {
 
 macro_rules! build {
     ($f:ident: $t:ty) => {
+        #[allow(missing_docs)]
         pub fn $f(&mut self, $f: $t) -> &mut UserBuilder {
             self.$f = $f.into();
             self
@@ -220,40 +224,40 @@ impl UserBuilder {
         }
     }
 
-    /// Sets the user's username.
+    // Sets the user's username.
     build!(username: &str);
-    /// Sets the user's password.
+    // Sets the user's password.
     build!(password: &str);
-    /// Set's the user's email.
+    // Set's the user's email.
     build!(email: &str);
-    /// Enables LDAP authentication for the user.
+    // Enables LDAP authentication for the user.
     build!(ldap_authenticated: bool);
-    /// Bestows admin rights onto the user.
+    // Bestows admin rights onto the user.
     build!(admin_role: bool);
-    /// Allows the user to change personal settings and their own password.
+    // Allows the user to change personal settings and their own password.
     build!(settings_role: bool);
-    /// Allows the user to play files.
+    // Allows the user to play files.
     build!(stream_role: bool);
-    /// Allows the user to play files in jukebox mode.
+    // Allows the user to play files in jukebox mode.
     build!(jukebox_role: bool);
-    /// Allows the user to download files.
+    // Allows the user to download files.
     build!(download_role: bool);
-    /// Allows the user to upload files.
+    // Allows the user to upload files.
     build!(upload_role: bool);
-    /// Allows the user to change cover art and tags.
+    // Allows the user to change cover art and tags.
     build!(cover_art_role: bool);
-    /// Allows the user to create and edit comments and ratings.
+    // Allows the user to create and edit comments and ratings.
     build!(comment_role: bool);
-    /// Allows the user to administrate podcasts.
+    // Allows the user to administrate podcasts.
     build!(podcast_role: bool);
-    /// Allows the user to share files with others.
+    // Allows the user to share files with others.
     build!(share_role: bool);
-    /// Allows the user to start video coversions.
+    // Allows the user to start video coversions.
     build!(video_conversion_role: bool);
-    /// IDs of the music folders the user is allowed to access.
+    // IDs of the music folders the user is allowed to access.
     build!(folders: &[u64]);
-    /// The maximum bit rate (in Kbps) the user is allowed to stream at. Higher
-    /// bit rate streams will be downsampled to their limit.
+    // The maximum bit rate (in Kbps) the user is allowed to stream at. Higher
+    // bit rate streams will be downsampled to their limit.
     build!(max_bit_rate: u64);
 
     /// Pushes a defined new user to the Subsonic server.
@@ -283,14 +287,13 @@ impl UserBuilder {
 
 #[cfg(test)]
 mod tests {
-    use test_util;
-
     use super::*;
+    use crate::test_util;
 
     #[test]
     fn remote_parse_user() {
-        let mut srv = test_util::demo_site().unwrap();
-        let guest = User::get(&mut srv, "guest3").unwrap();
+        let srv = test_util::demo_site().unwrap();
+        let guest = User::get(&srv, "guest3").unwrap();
 
         assert_eq!(guest.username, "guest3");
         assert!(guest.stream_role);

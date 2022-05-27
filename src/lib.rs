@@ -1,6 +1,3 @@
-#![warn(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/sunk/0.1.2")]
-
 //! # sunk
 //!
 //! `sunk` provides natural Rust bindings to the [Subsonic] music server API.
@@ -101,6 +98,8 @@
 //! Bug reports and broken features are encouraged to be reported! **If
 //! something does not work as reported, it's probably broken.**
 
+#![deny(missing_docs)]
+
 #[macro_use]
 extern crate failure;
 #[macro_use]
@@ -118,16 +117,15 @@ mod macros;
 mod client;
 mod error;
 
-mod collections;
-mod media;
-
-mod annotate;
-mod jukebox;
-mod query;
-mod response;
+pub mod annotate;
+pub mod collections;
+pub mod jukebox;
+pub mod media;
+pub mod query;
+pub mod response;
 pub mod search;
-mod user;
-mod version;
+pub mod user;
+pub mod version;
 
 #[cfg(test)]
 mod test_util;

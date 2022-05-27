@@ -1,11 +1,17 @@
-use media::NowPlaying;
-use query::Query;
+use std::io::Read;
+use std::iter;
+
+use md5;
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use reqwest::Client as ReqwestClient;
 use reqwest::Url;
-use response::Response;
-use search::{SearchPage, SearchResult};
 use serde_json;
-use {Error, Genre, Hls, Lyrics, MusicFolder, Result, UrlError, Version};
+
+use crate::media::NowPlaying;
+use crate::query::Query;
+use crate::response::Response;
+use crate::search::{SearchPage, SearchResult};
+use crate::{Error, Genre, Hls, Lyrics, MusicFolder, Result, UrlError, Version};
 
 const SALT_SIZE: usize = 36; // Minimum 6 characters.
 
@@ -73,11 +79,6 @@ impl SubsonicAuth {
     fn to_url(&self, ver: Version) -> String {
         // First md5 support.
         let auth = if ver >= "1.13.0".into() {
-            use std::iter;
-
-            use md5;
-            use rand::{distributions::Alphanumeric, thread_rng, Rng};
-
             let mut rng = thread_rng();
             let salt: String = iter::repeat(())
                 .map(|()| rng.sample(Alphanumeric))
@@ -205,7 +206,6 @@ impl Client {
 
     /// Returns a response as a vector of bytes rather than serialising it.
     pub(crate) fn get_bytes(&self, query: &str, args: Query) -> Result<Vec<u8>> {
-        use std::io::Read;
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
         let res = self.reqclient.get(uri).send()?;
         Ok(res.bytes().map(|b| b.unwrap()).collect())
@@ -213,7 +213,6 @@ impl Client {
 
     /// Returns the raw bytes of a HLS slice.
     pub fn hls_bytes(&self, hls: &Hls) -> Result<Vec<u8>> {
-        use std::io::Read;
         let url: Url = self.url.join(&hls.url)?;
         let res = self.reqclient.get(url).send()?;
         Ok(res.bytes().map(|b| b.unwrap()).collect())
@@ -387,9 +386,8 @@ pub struct License {
 
 #[cfg(test)]
 mod tests {
-    use test_util;
-
     use super::*;
+    use crate::test_util;
 
     #[test]
     fn test_token_auth() {
@@ -424,8 +422,8 @@ mod tests {
     fn demo_scan_status() {
         let cli = test_util::demo_site().unwrap();
         let (status, n) = cli.scan_status().unwrap();
-        assert_eq!(status, false);
-        assert_eq!(n, 521);
+        assert!(!status);
+        assert_eq!(n, 525);
     }
 
     #[test]

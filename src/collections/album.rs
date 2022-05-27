@@ -1,11 +1,15 @@
+//! Album APIs.
+
 use std::{fmt, result};
 
-use query::{Arg, IntoArg, Query};
-use search::SearchPage;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
-use {Client, Error, Media, Result, Song};
 
+use crate::query::{Arg, IntoArg, Query};
+use crate::search::SearchPage;
+use crate::{Client, Error, Media, Result, Song};
+
+#[allow(missing_docs)]
 #[derive(Debug, Clone, Copy)]
 pub enum ListType {
     AlphaByArtist,
@@ -47,18 +51,20 @@ impl IntoArg for ListType {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug, Clone)]
+#[readonly::make]
 pub struct Album {
     pub id: u64,
     pub name: String,
     pub artist: Option<String>,
-    artist_id: Option<u64>,
-    cover_id: Option<String>,
+    pub artist_id: Option<u64>,
+    pub cover_id: Option<String>,
     pub duration: u64,
     pub year: Option<u64>,
     pub genre: Option<String>,
     pub song_count: u64,
-    songs: Vec<Song>,
+    pub songs: Vec<Song>,
 }
 
 impl Album {
@@ -121,7 +127,7 @@ impl<'de> Deserialize<'de> for Album {
     where
         D: Deserializer<'de>,
     {
-        #[derive(Debug, Deserialize)]
+        #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
         struct _Album {
             id: String,
@@ -131,7 +137,7 @@ impl<'de> Deserialize<'de> for Album {
             cover_art: Option<String>,
             song_count: u64,
             duration: u64,
-            created: String,
+            // created: String,
             year: Option<u64>,
             genre: Option<String>,
             #[serde(default)]
@@ -179,6 +185,7 @@ impl Media for Album {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub struct AlbumInfo {
     pub notes: String,
@@ -246,14 +253,13 @@ where
 
 #[cfg(test)]
 mod tests {
-    use test_util;
-
     use super::*;
+    use crate::test_util;
 
     #[test]
     fn demo_get_albums() {
-        let mut srv = test_util::demo_site().unwrap();
-        let albums = get_albums(&mut srv, ListType::AlphaByArtist, None, None, None).unwrap();
+        let srv = test_util::demo_site().unwrap();
+        let albums = get_albums(&srv, ListType::AlphaByArtist, None, None, None).unwrap();
 
         assert!(!albums.is_empty())
     }

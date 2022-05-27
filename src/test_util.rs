@@ -1,5 +1,5 @@
-use client;
-use error;
+use crate::client;
+use crate::error;
 
 pub fn demo_site() -> error::Result<client::Client> {
     let site = "http://demo.subsonic.org";

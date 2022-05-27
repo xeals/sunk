@@ -1,11 +1,14 @@
+//! Individual media APIs.
+
 use std::ops::Index;
 use std::result;
 use std::str::FromStr;
 
 use serde::de::{Deserialize, Deserializer};
-use {Client, Error, Result};
 
-// pub mod format;
+use crate::{Client, Error, Result};
+
+pub mod format;
 pub mod podcast;
 mod radio;
 pub mod song;
@@ -202,6 +205,11 @@ impl HlsPlaylist {
         self.hls.len()
     }
 
+    /// Returns whether this playlist is empty.
+    pub fn is_empty(&self) -> bool {
+        self.hls.is_empty()
+    }
+
     /// Returns the total duration of the playlist.
     pub fn duration(&self) -> usize {
         self.hls.iter().fold(0, |c, h| c + h.inc)
@@ -298,18 +306,18 @@ impl<'de> Deserialize<'de> for NowPlaying {
             minutes_ago: usize,
             player_id: usize,
             id: String,
-            is_dir: bool,
-            title: String,
-            size: usize,
-            content_type: String,
-            suffix: String,
-            transcoded_content_type: Option<String>,
-            transcoded_suffix: Option<String>,
-            path: String,
+            // is_dir: bool,
+            // title: String,
+            // size: usize,
+            // content_type: String,
+            // suffix: String,
+            // transcoded_content_type: Option<String>,
+            // transcoded_suffix: Option<String>,
+            // path: String,
             is_video: bool,
-            created: String,
-            #[serde(rename = "type")]
-            media_type: String,
+            // created: String,
+            // #[serde(rename = "type")]
+            // media_type: String,
         }
 
         let raw = _NowPlaying::deserialize(de)?;

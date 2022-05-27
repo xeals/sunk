@@ -1,19 +1,22 @@
+//! Search response APIs.
+
 use serde_json;
-use ApiError;
+
+use crate::ApiError;
 
 /// A top-level response from a Subsonic server.
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 pub struct Response {
     #[serde(rename = "subsonic-response")]
     inner: InnerResponse,
 }
 
 /// A struct containing the possible responses of the Subsonic API.
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct InnerResponse {
-    status: String,
-    version: String,
+    // status: String,
+    // version: String,
     error: Option<ApiError>,
     license: Option<serde_json::Value>,
     music_folders: Option<serde_json::Value>,

@@ -1,3 +1,5 @@
+//! Search query APIs.
+
 use std::{fmt, iter};
 
 /// An expandable query set for an API call.
@@ -84,7 +86,7 @@ impl Query {
     /// assert_eq!(query_list, query_manual);
     /// ```
     pub fn arg_list<A: IntoArg + Clone>(&mut self, key: &str, values: &[A]) -> &mut Query {
-        for v in values.to_owned() {
+        for v in values.iter().cloned() {
             self.inner.push((key.to_string(), v.into_arg()))
         }
         self
@@ -124,6 +126,7 @@ impl Default for Query {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct Arg(Option<String>);
 
@@ -143,7 +146,9 @@ impl fmt::Display for Arg {
     }
 }
 
+#[allow(missing_docs)]
 pub trait IntoArg {
+    #[allow(missing_docs)]
     fn into_arg(self) -> Arg;
 }
 

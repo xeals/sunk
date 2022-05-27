@@ -1,40 +1,46 @@
+//! Video APIs.
+
 use std::result;
 
-use query::Query;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
-use {Client, Error, Media, Result, Streamable};
 
+use crate::query::Query;
+use crate::{Client, Error, Media, Result, Streamable};
+
+#[allow(missing_docs)]
 #[derive(Debug)]
+#[readonly::make]
 pub struct Video {
     pub id: usize,
-    parent: usize,
-    is_dir: bool,
+    pub parent: usize,
+    pub is_dir: bool,
     pub title: String,
     pub album: Option<String>,
-    cover_id: Option<String>,
+    pub cover_id: Option<String>,
     pub size: usize,
-    content_type: String,
-    suffix: String,
-    transcoded_suffix: Option<String>,
-    transcoded_content_type: Option<String>,
+    pub content_type: String,
+    pub suffix: String,
+    pub transcoded_suffix: Option<String>,
+    pub transcoded_content_type: Option<String>,
     pub duration: usize,
-    bitrate: usize,
-    path: String,
-    is_video: bool,
-    created: String,
-    play_count: Option<u64>,
+    pub bitrate: usize,
+    pub path: String,
+    pub is_video: bool,
+    pub created: String,
+    pub play_count: Option<u64>,
     pub media_type: String,
-    bookmark_position: Option<u64>,
-    original_height: Option<u64>,
-    original_width: Option<u64>,
-    stream_br: Option<usize>,
-    stream_size: Option<(usize, usize)>,
-    stream_offset: usize,
-    stream_tc: Option<String>,
+    pub bookmark_position: Option<u64>,
+    pub original_height: Option<u64>,
+    pub original_width: Option<u64>,
+    pub stream_br: Option<usize>,
+    pub stream_size: Option<(usize, usize)>,
+    pub stream_offset: usize,
+    pub stream_tc: Option<String>,
 }
 
 impl Video {
+    #[allow(missing_docs)]
     pub fn get(client: &Client, id: usize) -> Result<Video> {
         Video::list(client)?
             .into_iter()
@@ -42,11 +48,13 @@ impl Video {
             .ok_or(Error::Other("no video found"))
     }
 
+    #[allow(missing_docs)]
     pub fn list(client: &Client) -> Result<Vec<Video>> {
         let video = client.get("getVideos", Query::none())?;
         Ok(get_list_as!(video, Video))
     }
 
+    #[allow(missing_docs)]
     pub fn info<'a, S>(&self, client: &Client, format: S) -> Result<VideoInfo>
     where
         S: Into<Option<&'a str>>,
@@ -221,6 +229,7 @@ impl<'de> Deserialize<'de> for Video {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub struct VideoInfo {
     pub id: usize,
@@ -253,6 +262,7 @@ impl<'de> Deserialize<'de> for VideoInfo {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub struct AudioTrack {
     pub id: usize,
@@ -281,6 +291,7 @@ impl<'de> Deserialize<'de> for AudioTrack {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub struct Captions {
     pub id: usize,
@@ -305,6 +316,7 @@ impl<'de> Deserialize<'de> for Captions {
     }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub struct Conversion {
     pub id: usize,

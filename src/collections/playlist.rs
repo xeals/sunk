@@ -1,18 +1,23 @@
+//! Playlist APIs.
+
 use std::result;
 
-use query::Query;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
-use {Client, Error, Media, Result, Song};
 
+use crate::query::Query;
+use crate::{Client, Error, Media, Result, Song};
+
+#[allow(missing_docs)]
 #[derive(Debug)]
+#[readonly::make]
 pub struct Playlist {
-    id: u64,
-    name: String,
-    duration: u64,
-    cover_id: String,
-    song_count: u64,
-    songs: Vec<Song>,
+    pub id: u64,
+    pub name: String,
+    pub duration: u64,
+    pub cover_id: String,
+    pub song_count: u64,
+    pub songs: Vec<Song>,
 }
 
 impl Playlist {
@@ -31,18 +36,18 @@ impl<'de> Deserialize<'de> for Playlist {
     where
         D: Deserializer<'de>,
     {
-        #[derive(Debug, Deserialize)]
+        #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
         struct _Playlist {
             id: String,
             name: String,
-            #[serde(default)]
-            comment: String,
-            owner: String,
+            // #[serde(default)]
+            // comment: String,
+            // owner: String,
             song_count: u64,
             duration: u64,
-            created: String,
-            changed: String,
+            // created: String,
+            // changed: String,
             cover_art: String,
             #[serde(default)]
             songs: Vec<Song>,
@@ -85,12 +90,14 @@ impl Media for Playlist {
     }
 }
 
-fn get_playlists(client: &Client, user: Option<String>) -> Result<Vec<Playlist>> {
+#[allow(missing_docs)]
+pub fn get_playlists(client: &Client, user: Option<String>) -> Result<Vec<Playlist>> {
     let playlist = client.get("getPlaylists", Query::with("username", user))?;
     Ok(get_list_as!(playlist, Playlist))
 }
 
-fn get_playlist(client: &Client, id: u64) -> Result<Playlist> {
+#[allow(missing_docs)]
+pub fn get_playlist(client: &Client, id: u64) -> Result<Playlist> {
     let res = client.get("getPlaylist", Query::with("id", id))?;
     Ok(serde_json::from_value::<Playlist>(res)?)
 }
@@ -99,7 +106,7 @@ fn get_playlist(client: &Client, id: u64) -> Result<Playlist> {
 ///
 /// Since API version 1.14.0, the newly created playlist is returned. In earlier
 /// versions, an empty response is returned.
-fn create_playlist(client: &Client, name: String, songs: &[u64]) -> Result<Option<Playlist>> {
+pub fn create_playlist(client: &Client, name: String, songs: &[u64]) -> Result<Option<Playlist>> {
     let args = Query::new()
         .arg("name", name)
         .arg_list("songId", songs)
@@ -116,7 +123,7 @@ fn create_playlist(client: &Client, name: String, songs: &[u64]) -> Result<Optio
 }
 
 /// Updates a playlist. Only the owner of the playlist is privileged to do so.
-fn update_playlist<'a, B, S>(
+pub fn update_playlist<'a, B, S>(
     client: &Client,
     id: u64,
     name: S,
@@ -142,29 +149,30 @@ where
     Ok(())
 }
 
-fn delete_playlist(client: &Client, id: u64) -> Result<()> {
+#[allow(missing_docs)]
+pub fn delete_playlist(client: &Client, id: u64) -> Result<()> {
     client.get("deletePlaylist", Query::with("id", id))?;
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-    use test_util;
-
     use super::*;
+    use crate::test_util;
 
     // The demo playlist exists, but can't be accessed
     #[test]
     fn remote_playlist_songs() {
         let parsed = serde_json::from_value::<Playlist>(raw()).unwrap();
-        let mut srv = test_util::demo_site().unwrap();
-        let songs = parsed.songs(&mut srv);
+        let srv = test_util::demo_site().unwrap();
+        let songs = parsed.songs(&srv);
 
-        match songs {
-            Err(::error::Error::Api(::error::ApiError::NotAuthorized(_))) => assert!(true),
-            Err(e) => panic!("unexpected error: {}", e),
-            Ok(_) => panic!("test should have failed; insufficient privilege"),
-        }
+        assert!(matches!(
+            songs,
+            Err(crate::error::Error::Api(
+                crate::error::ApiError::NotAuthorized(_)
+            ))
+        ));
     }
 
     fn raw() -> serde_json::Value {

@@ -10,12 +10,14 @@ readme = "README.md"
 keywords = ["subsonic", "airsonic", "music", "api", "webapi"]
 categories = ["api-bindings"]
 license = "Apache-2.0/MIT"
+edition = "2021"
 
 [dependencies]
 failure = "0.1.3"
 log = "0.4.6"
 md5 = "0.6.0"
 rand = "0.6.1"
+readonly = "0.2"
 serde = "1.0.80"
 serde_derive = "1.0.80"
 serde_json = "1.0.33"

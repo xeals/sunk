@@ -1,11 +1,15 @@
+//! Artist APIs.
+
 use std::{fmt, result};
 
-use query::Query;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
-use {Album, Client, Error, Media, Result, Song};
+
+use crate::query::Query;
+use crate::{Album, Client, Error, Media, Result, Song};
 
 /// Basic information about an artist.
+#[allow(missing_docs)]
 #[derive(Debug, Clone)]
 pub struct Artist {
     pub id: usize,
@@ -31,6 +35,7 @@ pub struct ArtistInfo {
 }
 
 impl Artist {
+    #[allow(missing_docs)]
     pub fn get(client: &Client, id: usize) -> Result<Artist> {
         self::get_artist(client, id)
     }
@@ -187,9 +192,8 @@ fn get_artist(client: &Client, id: usize) -> Result<Artist> {
 
 #[cfg(test)]
 mod tests {
-    use test_util;
-
     use super::*;
+    use crate::test_util;
 
     #[test]
     fn parse_artist() {
@@ -212,9 +216,9 @@ mod tests {
 
     #[test]
     fn remote_artist_album_list() {
-        let mut srv = test_util::demo_site().unwrap();
+        let srv = test_util::demo_site().unwrap();
         let parsed = serde_json::from_value::<Artist>(raw()).unwrap();
-        let albums = parsed.albums(&mut srv).unwrap();
+        let albums = parsed.albums(&srv).unwrap();
 
         assert_eq!(albums[0].id, 1);
         assert_eq!(albums[0].name, String::from("Bellevue"));
@@ -223,11 +227,11 @@ mod tests {
 
     #[test]
     fn remote_artist_cover_art() {
-        let mut srv = test_util::demo_site().unwrap();
+        let srv = test_util::demo_site().unwrap();
         let parsed = serde_json::from_value::<Artist>(raw()).unwrap();
         assert_eq!(parsed.cover_id, Some(String::from("ar-1")));
 
-        let cover = parsed.cover_art(&mut srv, None).unwrap();
+        let cover = parsed.cover_art(&srv, None).unwrap();
         assert!(!cover.is_empty())
     }
 
