@@ -72,11 +72,16 @@ impl<'de> Deserialize<'de> for JukeboxPlaylist {
 
 impl<'a> Jukebox<'a> {
     /// Creates a new handler to the jukebox of the client.
-    pub fn start(client: &'a Client) -> Jukebox {
+    pub async fn start(client: &'a Client) -> Jukebox {
         Jukebox { client }
     }
 
-    fn send_action_with<U>(&self, action: &str, index: U, ids: &[usize]) -> Result<JukeboxStatus>
+    async fn send_action_with<U>(
+        &self,
+        action: &str,
+        index: U,
+        ids: &[usize],
+    ) -> Result<JukeboxStatus>
     where
         U: Into<Option<usize>>,
     {
@@ -84,37 +89,38 @@ impl<'a> Jukebox<'a> {
             .arg("index", index.into())
             .arg_list("id", ids)
             .build();
-        let res = self.client.get("jukeboxControl", args)?;
+        let res = self.client.get("jukeboxControl", args).await?;
         Ok(serde_json::from_value(res)?)
     }
 
-    fn send_action(&self, action: &str) -> Result<JukeboxStatus> {
-        self.send_action_with(action, None, &[])
+    async fn send_action(&self, action: &str) -> Result<JukeboxStatus> {
+        self.send_action_with(action, None, &[]).await
     }
 
     /// Returns the current playlist of the jukebox, as well as its status. The
     /// status is also returned as it contains the position of the jukebox
     /// in its playlist.
-    pub fn playlist(&self) -> Result<JukeboxPlaylist> {
+    pub async fn playlist(&self) -> Result<JukeboxPlaylist> {
         let res = self
             .client
-            .get("jukeboxControl", Query::with("action", "get"))?;
+            .get("jukeboxControl", Query::with("action", "get"))
+            .await?;
         Ok(serde_json::from_value::<JukeboxPlaylist>(res)?)
     }
 
     /// Returns the status of the jukebox.
-    pub fn status(&self) -> Result<JukeboxStatus> {
-        self.send_action("status")
+    pub async fn status(&self) -> Result<JukeboxStatus> {
+        self.send_action("status").await
     }
 
     /// Tells the jukebox to start playing.
-    pub fn play(&self) -> Result<JukeboxStatus> {
-        self.send_action("start")
+    pub async fn play(&self) -> Result<JukeboxStatus> {
+        self.send_action("start").await
     }
 
     /// Tells the jukebox to pause playback.
-    pub fn stop(&self) -> Result<JukeboxStatus> {
-        self.send_action("stop")
+    pub async fn stop(&self) -> Result<JukeboxStatus> {
+        self.send_action("stop").await
     }
 
     /// Moves the jukebox's currently playing song to the provided index
@@ -122,13 +128,14 @@ impl<'a> Jukebox<'a> {
     ///
     /// Using an index outside the range of the jukebox playlist will play the
     /// last song in the playlist.
-    pub fn skip_to(&self, n: usize) -> Result<JukeboxStatus> {
-        self.send_action_with("skip", n, &[])
+    pub async fn skip_to(&self, n: usize) -> Result<JukeboxStatus> {
+        self.send_action_with("skip", n, &[]).await
     }
 
     /// Adds the song to the jukebox's playlist.
-    pub fn add(&self, song: &Song) -> Result<JukeboxStatus> {
+    pub async fn add(&self, song: &Song) -> Result<JukeboxStatus> {
         self.send_action_with("add", None, &[song.id as usize])
+            .await
     }
 
     /// Adds a song matching the provided ID to the playlist.
@@ -137,17 +144,18 @@ impl<'a> Jukebox<'a> {
     ///
     /// The method will return an error if a song matching the provided ID
     /// cannot be found.
-    pub fn add_id(&self, id: usize) -> Result<JukeboxStatus> {
-        self.send_action_with("add", None, &[id])
+    pub async fn add_id(&self, id: usize) -> Result<JukeboxStatus> {
+        self.send_action_with("add", None, &[id]).await
     }
 
     /// Adds all the songs to the jukebox's playlist.
-    pub fn add_all(&self, songs: &[Song]) -> Result<JukeboxStatus> {
+    pub async fn add_all(&self, songs: &[Song]) -> Result<JukeboxStatus> {
         self.send_action_with(
             "add",
             None,
             &songs.iter().map(|s| s.id as usize).collect::<Vec<_>>(),
         )
+        .await
     }
 
     /// Adds multiple songs matching the provided IDs to the playlist.
@@ -156,31 +164,31 @@ impl<'a> Jukebox<'a> {
     ///
     /// The method will return an error if at least one ID cannot be matched to
     /// a song.
-    pub fn add_all_ids(&self, ids: &[usize]) -> Result<JukeboxStatus> {
-        self.send_action_with("add", None, ids)
+    pub async fn add_all_ids(&self, ids: &[usize]) -> Result<JukeboxStatus> {
+        self.send_action_with("add", None, ids).await
     }
 
     /// Clears the jukebox's playlist.
-    pub fn clear(&self) -> Result<JukeboxStatus> {
-        self.send_action("clear")
+    pub async fn clear(&self) -> Result<JukeboxStatus> {
+        self.send_action("clear").await
     }
 
     /// Removes the song at the provided index from the playlist.
-    pub fn remove_id(&self, idx: usize) -> Result<JukeboxStatus> {
-        self.send_action_with("remove", idx, &[])
+    pub async fn remove_id(&self, idx: usize) -> Result<JukeboxStatus> {
+        self.send_action_with("remove", idx, &[]).await
     }
 
     /// Shuffles the jukebox's playlist.
-    pub fn shuffle(&self) -> Result<JukeboxStatus> {
-        self.send_action("shuffle")
+    pub async fn shuffle(&self) -> Result<JukeboxStatus> {
+        self.send_action("shuffle").await
     }
 
     /// Sets the jukebox's playback volume.
     ///
     /// Seting the volume above `1.0` will have no effect.
-    pub fn set_volume(&self, volume: f32) -> Result<JukeboxStatus> {
+    pub async fn set_volume(&self, volume: f32) -> Result<JukeboxStatus> {
         let args = Query::with("action", "setGain").arg("gain", volume).build();
-        let res = self.client.get("jukeboxControl", args)?;
+        let res = self.client.get("jukeboxControl", args).await?;
         Ok(serde_json::from_value(res)?)
     }
 }

@@ -46,33 +46,42 @@ impl RadioStation {
         self.id
     }
 
-    pub fn list(client: &Client) -> Result<Vec<RadioStation>> {
+    pub async fn list(client: &Client) -> Result<Vec<RadioStation>> {
         #[allow(non_snake_case)]
-        let internetRadioStation = client.get("getInternetRadioStations", Query::none())?;
-        Ok(get_list_as!(internetRadioStation, RadioStation))
+        let internet_radio_station = client
+            .get("getInternetRadioStations", Query::none())
+            .await?;
+        Ok(get_list_as!(internet_radio_station, RadioStation))
     }
 
-    pub fn create(client: &Client, name: &str, url: &str, homepage: Option<&str>) -> Result<()> {
+    pub async fn create(
+        client: &Client,
+        name: &str,
+        url: &str,
+        homepage: Option<&str>,
+    ) -> Result<()> {
         let args = Query::with("name", name)
             .arg("streamUrl", url)
             .arg("homepageUrl", homepage)
             .build();
-        client.get("createInternetRadioStation", args)?;
+        client.get("createInternetRadioStation", args).await?;
         Ok(())
     }
 
-    pub fn update(&self, client: &Client) -> Result<()> {
+    pub async fn update(&self, client: &Client) -> Result<()> {
         let args = Query::with("id", self.id)
             .arg("streamUrl", self.stream_url.as_str())
             .arg("name", self.name.as_str())
             .arg("homepageUrl", self.homepage_url.as_deref())
             .build();
-        client.get("updateInternetRadioStation", args)?;
+        client.get("updateInternetRadioStation", args).await?;
         Ok(())
     }
 
-    pub fn delete(&self, client: &Client) -> Result<()> {
-        client.get("deleteInternetRadioStation", Query::with("id", self.id))?;
+    pub async fn delete(&self, client: &Client) -> Result<()> {
+        client
+            .get("deleteInternetRadioStation", Query::with("id", self.id))
+            .await?;
         Ok(())
     }
 }

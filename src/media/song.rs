@@ -64,8 +64,8 @@ impl Song {
     ///
     /// Aside from other errors the `Client` may cause, the server will return
     /// an error if there is no song matching the provided ID.
-    pub fn get(client: &Client, id: u64) -> Result<Song> {
-        let res = client.get("getSong", Query::with("id", id))?;
+    pub async fn get(client: &Client, id: u64) -> Result<Song> {
+        let res = client.get("getSong", Query::with("id", id)).await?;
         Ok(serde_json::from_value(res)?)
     }
 
@@ -74,7 +74,7 @@ impl Song {
     /// last.fm suggests a number of similar songs to the one the method is
     /// called on. Optionally takes a `count` to specify the maximum number of
     /// results to return.
-    pub fn similar<U>(&self, client: &Client, count: U) -> Result<Vec<Song>>
+    pub async fn similar<U>(&self, client: &Client, count: U) -> Result<Vec<Song>>
     where
         U: Into<Option<usize>>,
     {
@@ -82,7 +82,7 @@ impl Song {
             .arg("count", count.into())
             .build();
 
-        let song = client.get("getSimilarSongs2", args)?;
+        let song = client.get("getSimilarSongs2", args).await?;
         Ok(get_list_as!(song, Song))
     }
 
@@ -93,12 +93,12 @@ impl Song {
     /// to set these optional fields.
     ///
     /// [`random_with`]: #method.random_with
-    pub fn random<U>(client: &Client, size: U) -> Result<Vec<Song>>
+    pub async fn random<U>(client: &Client, size: U) -> Result<Vec<Song>>
     where
         U: Into<Option<usize>>,
     {
         let arg = Query::with("size", size.into().unwrap_or(10));
-        let song = client.get("getRandomSongs", arg)?;
+        let song = client.get("getRandomSongs", arg).await?;
         Ok(get_list_as!(song, Song))
     }
 
@@ -108,7 +108,7 @@ impl Song {
     /// the builder.
     ///
     /// [struct level documentation]: ./struct.RandomSongs.html
-    pub fn random_with(client: &Client) -> RandomSongs {
+    pub async fn random_with(client: &Client) -> RandomSongs {
         RandomSongs::new(client, 10)
     }
 
@@ -118,7 +118,7 @@ impl Song {
     /// See the [struct level documentation] about paging for more.
     ///
     /// [struct level documentation]: ../search/struct.SearchPage.html
-    pub fn list_in_genre<U>(
+    pub async fn list_in_genre<U>(
         client: &Client,
         genre: &str,
         page: SearchPage,
@@ -133,7 +133,7 @@ impl Song {
             .arg("musicFolderId", folder_id.into())
             .build();
 
-        let song = client.get("getSongsByGenre", args)?;
+        let song = client.get("getSongsByGenre", args).await?;
         Ok(get_list_as!(song, Song))
     }
 
@@ -151,21 +151,22 @@ impl Song {
     /// the specified bitrates. The `bit_rate` parameter can be omitted (with an
     /// empty array) to disable adaptive streaming, or given a single value to
     /// force streaming at that bit rate.
-    pub fn hls(&self, client: &Client, bit_rates: &[u64]) -> Result<HlsPlaylist> {
+    pub async fn hls(&self, client: &Client, bit_rates: &[u64]) -> Result<HlsPlaylist> {
         let args = Query::with("id", self.id)
             .arg_list("bitrate", bit_rates)
             .build();
 
-        let raw = client.get_raw("hls", args)?;
+        let raw = client.get_raw("hls", args).await?;
         raw.parse::<HlsPlaylist>()
     }
 }
 
+#[async_trait::async_trait]
 impl Streamable for Song {
-    fn stream(&self, client: &Client) -> Result<Vec<u8>> {
+    async fn stream(&self, client: &Client) -> Result<Vec<u8>> {
         let mut q = Query::with("id", self.id);
         q.arg("maxBitRate", self.stream_br);
-        client.get_bytes("stream", q)
+        client.get_bytes("stream", q).await
     }
 
     fn stream_url(&self, client: &Client) -> Result<String> {
@@ -174,8 +175,10 @@ impl Streamable for Song {
         client.build_url("stream", q)
     }
 
-    fn download(&self, client: &Client) -> Result<Vec<u8>> {
-        client.get_bytes("download", Query::with("id", self.id))
+    async fn download(&self, client: &Client) -> Result<Vec<u8>> {
+        client
+            .get_bytes("download", Query::with("id", self.id))
+            .await
     }
 
     fn download_url(&self, client: &Client) -> Result<String> {
@@ -197,6 +200,7 @@ impl Streamable for Song {
     }
 }
 
+#[async_trait::async_trait]
 impl Media for Song {
     fn has_cover_art(&self) -> bool {
         self.cover_id.is_some()
@@ -206,11 +210,15 @@ impl Media for Song {
         self.cover_id.as_deref()
     }
 
-    fn cover_art<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<Vec<u8>> {
+    async fn cover_art<U: Into<Option<usize>> + Send>(
+        &self,
+        client: &Client,
+        size: U,
+    ) -> Result<Vec<u8>> {
         let cover = self.cover_id().ok_or(Error::Other("no cover art found"))?;
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
-        client.get_bytes("getCoverArt", query)
+        client.get_bytes("getCoverArt", query).await
     }
 
     fn cover_art_url<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<String> {
@@ -380,7 +388,7 @@ impl<'a> RandomSongs<'a> {
     }
 
     /// Sets the number of songs to return.
-    pub fn size(&mut self, n: usize) -> &mut RandomSongs<'a> {
+    pub async fn size(&mut self, n: usize) -> &mut RandomSongs<'a> {
         self.size = n;
         self
     }
@@ -391,19 +399,19 @@ impl<'a> RandomSongs<'a> {
     /// [`Client::genres`] method.
     ///
     /// [`Client::genres`]: ../struct.Client.html#method.genres
-    pub fn genre(&mut self, genre: &'a str) -> &mut RandomSongs<'a> {
+    pub async fn genre(&mut self, genre: &'a str) -> &mut RandomSongs<'a> {
         self.genre = Some(genre);
         self
     }
 
     /// Sets a lower bound on the year that songs were released in.
-    pub fn from_year(&mut self, year: usize) -> &mut RandomSongs<'a> {
+    pub async fn from_year(&mut self, year: usize) -> &mut RandomSongs<'a> {
         self.from_year = Some(year);
         self
     }
 
     /// Sets an upper bound on the year that songs were released in.
-    pub fn to_year(&mut self, year: usize) -> &mut RandomSongs<'a> {
+    pub async fn to_year(&mut self, year: usize) -> &mut RandomSongs<'a> {
         self.to_year = Some(year);
         self
     }
@@ -413,7 +421,7 @@ impl<'a> RandomSongs<'a> {
     /// The range is set *inclusive* at both ends, unlike a standard Rust
     /// range. For example, a range `2013..2016` will return songs that
     /// were released in 2013, 2014, 2015, and 2016.
-    pub fn in_years(&mut self, years: Range<usize>) -> &mut RandomSongs<'a> {
+    pub async fn in_years(&mut self, years: Range<usize>) -> &mut RandomSongs<'a> {
         self.from_year = Some(years.start);
         self.to_year = Some(years.end);
         self
@@ -426,14 +434,14 @@ impl<'a> RandomSongs<'a> {
     /// folders can be found using the [`Client::music_folders`] method.
     ///
     /// [`Client::music_folders`]: ../struct.Client.html#method.music_folders
-    pub fn in_folder(&mut self, id: usize) -> &mut RandomSongs<'a> {
+    pub async fn in_folder(&mut self, id: usize) -> &mut RandomSongs<'a> {
         self.folder_id = Some(id);
         self
     }
 
     /// Issues the query to the Subsonic server. Returns a list of random
     /// songs, modified by the builder.
-    pub fn request(&mut self) -> Result<Vec<Song>> {
+    pub async fn request(&mut self) -> Result<Vec<Song>> {
         let args = Query::with("size", self.size)
             .arg("genre", self.genre)
             .arg("fromYear", self.from_year)
@@ -441,7 +449,7 @@ impl<'a> RandomSongs<'a> {
             .arg("musicFolderId", self.folder_id)
             .build();
 
-        let song = self.client.get("getRandomSongs", args)?;
+        let song = self.client.get("getRandomSongs", args).await?;
         Ok(get_list_as!(song, Song))
     }
 }
@@ -465,7 +473,7 @@ mod tests {
         let srv = test_util::demo_site().unwrap();
         let song = serde_json::from_value::<Song>(raw()).unwrap();
 
-        let hls = song.hls(&srv, &[]).unwrap();
+        let hls = tokio_test::block_on(song.hls(&srv, &[])).unwrap();
         assert_eq!(hls.len(), 20)
     }
 

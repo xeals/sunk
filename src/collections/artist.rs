@@ -36,22 +36,24 @@ pub struct ArtistInfo {
 
 impl Artist {
     #[allow(missing_docs)]
-    pub fn get(client: &Client, id: usize) -> Result<Artist> {
-        self::get_artist(client, id)
+    pub async fn get(client: &Client, id: usize) -> Result<Artist> {
+        self::get_artist(client, id).await
     }
 
     /// Returns a list of albums released by the artist.
-    pub fn albums(&self, client: &Client) -> Result<Vec<Album>> {
+    pub async fn albums(&self, client: &Client) -> Result<Vec<Album>> {
         if self.albums.len() != self.album_count {
-            Ok(self::get_artist(client, self.id)?.albums)
+            Ok(self::get_artist(client, self.id).await?.albums)
         } else {
             Ok(self.albums.clone())
         }
     }
 
     /// Queries last.fm for more information about the artist.
-    pub fn info(&self, client: &Client) -> Result<ArtistInfo> {
-        let res = client.get("getArtistInfo", Query::with("id", self.id))?;
+    pub async fn info(&self, client: &Client) -> Result<ArtistInfo> {
+        let res = client
+            .get("getArtistInfo", Query::with("id", self.id))
+            .await?;
         Ok(serde_json::from_value(res)?)
     }
 
@@ -61,7 +63,7 @@ impl Artist {
     /// called on. Optionally takes a `count` to specify the maximum number of
     /// results to return, and whether to only include artists in the Subsonic
     /// library (defaults to true).
-    pub fn similar<B, U>(
+    pub async fn similar<B, U>(
         &self,
         client: &Client,
         count: U,
@@ -75,12 +77,12 @@ impl Artist {
             .arg("count", count.into())
             .arg("includeNotPresent", include_not_present.into())
             .build();
-        let res = serde_json::from_value::<ArtistInfo>(client.get("getArtistInfo", args)?)?;
+        let res = serde_json::from_value::<ArtistInfo>(client.get("getArtistInfo", args).await?)?;
         Ok(res.similar_artists)
     }
 
     /// Returns the top `count` most played songs released by the artist.
-    pub fn top_songs<U>(&self, client: &Client, count: U) -> Result<Vec<Song>>
+    pub async fn top_songs<U>(&self, client: &Client, count: U) -> Result<Vec<Song>>
     where
         U: Into<Option<usize>>,
     {
@@ -88,7 +90,7 @@ impl Artist {
             .arg("count", count.into())
             .build();
 
-        let song = client.get("getTopSongs", args)?;
+        let song = client.get("getTopSongs", args).await?;
         Ok(get_list_as!(song, Song))
     }
 }
@@ -121,6 +123,7 @@ impl<'de> Deserialize<'de> for Artist {
     }
 }
 
+#[async_trait::async_trait]
 impl Media for Artist {
     fn has_cover_art(&self) -> bool {
         self.cover_id.is_some()
@@ -130,11 +133,15 @@ impl Media for Artist {
         self.cover_id.as_deref()
     }
 
-    fn cover_art<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<Vec<u8>> {
+    async fn cover_art<U: Into<Option<usize>> + Send>(
+        &self,
+        client: &Client,
+        size: U,
+    ) -> Result<Vec<u8>> {
         let cover = self.cover_id().ok_or(Error::Other("no cover art found"))?;
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
-        client.get_bytes("getCoverArt", query)
+        client.get_bytes("getCoverArt", query).await
     }
 
     fn cover_art_url<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<String> {
@@ -185,8 +192,8 @@ impl<'de> Deserialize<'de> for ArtistInfo {
 }
 
 /// Fetches an artist from the Subsonic server.
-fn get_artist(client: &Client, id: usize) -> Result<Artist> {
-    let res = client.get("getArtist", Query::with("id", id))?;
+async fn get_artist(client: &Client, id: usize) -> Result<Artist> {
+    let res = client.get("getArtist", Query::with("id", id)).await?;
     Ok(serde_json::from_value::<Artist>(res)?)
 }
 
@@ -218,7 +225,7 @@ mod tests {
     fn remote_artist_album_list() {
         let srv = test_util::demo_site().unwrap();
         let parsed = serde_json::from_value::<Artist>(raw()).unwrap();
-        let albums = parsed.albums(&srv).unwrap();
+        let albums = tokio_test::block_on(async { parsed.albums(&srv).await.unwrap() });
 
         assert_eq!(albums[0].id, 1);
         assert_eq!(albums[0].name, String::from("Bellevue"));
@@ -231,7 +238,7 @@ mod tests {
         let parsed = serde_json::from_value::<Artist>(raw()).unwrap();
         assert_eq!(parsed.cover_id, Some(String::from("ar-1")));
 
-        let cover = parsed.cover_art(&srv, None).unwrap();
+        let cover = tokio_test::block_on(async { parsed.cover_art(&srv, None).await.unwrap() });
         assert!(!cover.is_empty())
     }
 

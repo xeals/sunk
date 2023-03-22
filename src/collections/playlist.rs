@@ -22,9 +22,9 @@ pub struct Playlist {
 
 impl Playlist {
     /// Fetches the songs contained in a playlist.
-    pub fn songs(&self, client: &Client) -> Result<Vec<Song>> {
+    pub async fn songs(&self, client: &Client) -> Result<Vec<Song>> {
         if self.songs.len() as u64 != self.song_count {
-            Ok(get_playlist(client, self.id)?.songs)
+            Ok(get_playlist(client, self.id).await?.songs)
         } else {
             Ok(self.songs.clone())
         }
@@ -66,6 +66,7 @@ impl<'de> Deserialize<'de> for Playlist {
     }
 }
 
+#[async_trait::async_trait]
 impl Media for Playlist {
     fn has_cover_art(&self) -> bool {
         !self.cover_id.is_empty()
@@ -75,11 +76,15 @@ impl Media for Playlist {
         Some(self.cover_id.as_ref())
     }
 
-    fn cover_art<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<Vec<u8>> {
+    async fn cover_art<U: Into<Option<usize>> + Send>(
+        &self,
+        client: &Client,
+        size: U,
+    ) -> Result<Vec<u8>> {
         let cover = self.cover_id().ok_or(Error::Other("no cover art found"))?;
         let query = Query::with("id", cover).arg("size", size.into()).build();
 
-        client.get_bytes("getCoverArt", query)
+        client.get_bytes("getCoverArt", query).await
     }
 
     fn cover_art_url<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<String> {
@@ -91,14 +96,16 @@ impl Media for Playlist {
 }
 
 #[allow(missing_docs)]
-pub fn get_playlists(client: &Client, user: Option<String>) -> Result<Vec<Playlist>> {
-    let playlist = client.get("getPlaylists", Query::with("username", user))?;
+pub async fn get_playlists(client: &Client, user: Option<String>) -> Result<Vec<Playlist>> {
+    let playlist = client
+        .get("getPlaylists", Query::with("username", user))
+        .await?;
     Ok(get_list_as!(playlist, Playlist))
 }
 
 #[allow(missing_docs)]
-pub fn get_playlist(client: &Client, id: u64) -> Result<Playlist> {
-    let res = client.get("getPlaylist", Query::with("id", id))?;
+pub async fn get_playlist(client: &Client, id: u64) -> Result<Playlist> {
+    let res = client.get("getPlaylist", Query::with("id", id)).await?;
     Ok(serde_json::from_value::<Playlist>(res)?)
 }
 
@@ -106,13 +113,17 @@ pub fn get_playlist(client: &Client, id: u64) -> Result<Playlist> {
 ///
 /// Since API version 1.14.0, the newly created playlist is returned. In earlier
 /// versions, an empty response is returned.
-pub fn create_playlist(client: &Client, name: String, songs: &[u64]) -> Result<Option<Playlist>> {
+pub async fn create_playlist(
+    client: &Client,
+    name: String,
+    songs: &[u64],
+) -> Result<Option<Playlist>> {
     let args = Query::new()
         .arg("name", name)
         .arg_list("songId", songs)
         .build();
 
-    let res = client.get("createPlaylist", args)?;
+    let res = client.get("createPlaylist", args).await?;
 
     // TODO API is private
     // if client.api >= "1.14.0".into() {
@@ -123,7 +134,7 @@ pub fn create_playlist(client: &Client, name: String, songs: &[u64]) -> Result<O
 }
 
 /// Updates a playlist. Only the owner of the playlist is privileged to do so.
-pub fn update_playlist<'a, B, S>(
+pub async fn update_playlist<'a, B, S>(
     client: &Client,
     id: u64,
     name: S,
@@ -145,13 +156,13 @@ where
         .arg_list("songIndexToRemove", to_remove)
         .build();
 
-    client.get("updatePlaylist", args)?;
+    client.get("updatePlaylist", args).await?;
     Ok(())
 }
 
 #[allow(missing_docs)]
-pub fn delete_playlist(client: &Client, id: u64) -> Result<()> {
-    client.get("deletePlaylist", Query::with("id", id))?;
+pub async fn delete_playlist(client: &Client, id: u64) -> Result<()> {
+    client.get("deletePlaylist", Query::with("id", id)).await?;
     Ok(())
 }
 
@@ -165,7 +176,7 @@ mod tests {
     fn remote_playlist_songs() {
         let parsed = serde_json::from_value::<Playlist>(raw()).unwrap();
         let srv = test_util::demo_site().unwrap();
-        let songs = parsed.songs(&srv);
+        let songs = tokio_test::block_on(parsed.songs(&srv));
 
         assert!(matches!(
             songs,
