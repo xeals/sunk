@@ -92,13 +92,7 @@ impl SubsonicAuth {
         let format = "json";
         let crate_name = env!("CARGO_PKG_NAME");
 
-        format!(
-            "{auth}&v={v}&c={c}&f={f}",
-            auth = auth,
-            v = ver,
-            c = crate_name,
-            f = format
-        )
+        format!("{auth}&v={ver}&c={crate_name}&f={format}")
     }
 }
 
@@ -108,7 +102,7 @@ impl Client {
         let auth = SubsonicAuth::new(user, password);
         let url = url
             .parse::<Url>()
-            .map_err(|e| <url::ParseError as Into<UrlError>>::into(e))?;
+            .map_err(<url::ParseError as Into<UrlError>>::into)?;
         let ver = Version::from("1.14.0");
         let target_ver = ver;
 
@@ -216,7 +210,7 @@ impl Client {
         let url: Url = self
             .url
             .join(&hls.url)
-            .map_err(|e| <url::ParseError as Into<UrlError>>::into(e))?;
+            .map_err(<url::ParseError as Into<UrlError>>::into)?;
         let res = self.reqclient.get(url).send().await?;
         Ok(res.bytes().await?.to_vec())
     }

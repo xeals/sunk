@@ -146,13 +146,13 @@ impl fmt::Display for ApiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::ApiError::*;
         match *self {
-            Generic(ref s) => write!(f, "Generic error: {}", s),
+            Generic(ref s) => write!(f, "Generic error: {s}"),
             MissingParameter => write!(f, "Missing a required parameter"),
             ClientMustUpgrade => write!(f, "Incompatible protocol; client must upgrade"),
             ServerMustUpgrade => write!(f, "Incompatible protocol; server must upgrade"),
             WrongAuth => write!(f, "Wrong username or password"),
             Ldap => write!(f, "Token authentication not supported for LDAP users"),
-            NotAuthorized(ref s) => write!(f, "Not authorized: {}", s),
+            NotAuthorized(ref s) => write!(f, "Not authorized: {s}"),
             TrialExpired => write!(f, "Subsonic trial period has expired"),
             NotFound => write!(f, "Requested data not found"),
         }

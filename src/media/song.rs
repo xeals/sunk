@@ -232,19 +232,19 @@ impl Media for Song {
 impl fmt::Display for Song {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(ref artist) = self.artist {
-            write!(f, "{} - ", artist)?;
+            write!(f, "{artist} - ")?;
         } else {
             write!(f, "Unknown Artist - ")?;
         }
 
         if let Some(ref album) = self.album {
-            write!(f, "{}", album)?;
+            write!(f, "{album}")?;
         } else {
             write!(f, "Unknown Album")?;
         }
 
         if let Some(year) = self.year {
-            write!(f, " [{}]", year)?;
+            write!(f, " [{year}]")?;
         }
 
         write!(f, " - {}", self.title)?;

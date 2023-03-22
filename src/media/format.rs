@@ -31,7 +31,7 @@ pub enum AudioFormat {
 
 impl fmt::Display for AudioFormat {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
+        write!(f, "{}", format!("{self:?}").to_lowercase())
     }
 }
 
@@ -59,7 +59,7 @@ pub enum VideoFormat {
 
 impl fmt::Display for VideoFormat {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
+        write!(f, "{}", format!("{self:?}").to_lowercase())
     }
 }
 

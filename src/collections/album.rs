@@ -35,7 +35,7 @@ impl fmt::Display for ListType {
             Recent => "recent",
             Starred => "starred",
         };
-        write!(f, "{}", fmt)
+        write!(f, "{fmt}")
     }
 }
 
@@ -109,7 +109,7 @@ impl Album {
 impl fmt::Display for Album {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(ref artist) = self.artist {
-            write!(f, "{} - ", artist)?;
+            write!(f, "{artist} - ")?;
         } else {
             write!(f, "Unknown Artist - ")?;
         }
@@ -117,7 +117,7 @@ impl fmt::Display for Album {
         write!(f, "{}", self.name)?;
 
         if let Some(year) = self.year {
-            write!(f, " [{}] ", year)?;
+            write!(f, " [{year}] ")?;
         }
 
         Ok(())

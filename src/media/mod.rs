@@ -244,7 +244,7 @@ impl Hls {
 impl FromStr for HlsPlaylist {
     type Err = Error;
     fn from_str(s: &str) -> result::Result<Self, Self::Err> {
-        fn chew<'a, 'b>(s: &'a str, head: &'b str) -> result::Result<&'a str, Error> {
+        fn chew<'a>(s: &'a str, head: &str) -> result::Result<&'a str, Error> {
             if s.starts_with(head) {
                 return Ok(s.trim_start_matches(head));
             } else {

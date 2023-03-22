@@ -99,10 +99,7 @@ impl Streamable for Video {
     async fn stream(&self, client: &Client) -> Result<Vec<u8>> {
         let args = Query::with("id", self.id)
             .arg("maxBitRate", self.stream_br)
-            .arg(
-                "size",
-                self.stream_size.map(|(w, h)| format!("{}x{}", w, h)),
-            )
+            .arg("size", self.stream_size.map(|(w, h)| format!("{w}x{h}")))
             .arg("timeOffset", self.stream_offset)
             .build();
         client.get_bytes("stream", args).await
@@ -111,10 +108,7 @@ impl Streamable for Video {
     fn stream_url(&self, client: &Client) -> Result<String> {
         let args = Query::with("id", self.id)
             .arg("maxBitRate", self.stream_br)
-            .arg(
-                "size",
-                self.stream_size.map(|(w, h)| format!("{}x{}", w, h)),
-            )
+            .arg("size", self.stream_size.map(|(w, h)| format!("{w}x{h}")))
             .arg("timeOffset", self.stream_offset)
             .build();
         client.build_url("stream", args)
