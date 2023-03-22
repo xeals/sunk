@@ -52,24 +52,28 @@ pub struct Episode {
 
 impl Podcast {
     /// Fetches the details of a single podcast and its episodes.
-    pub fn get<U>(client: &Client, id: U) -> Result<Podcast>
+    pub async fn get<U>(client: &Client, id: U) -> Result<Podcast>
     where
         U: Into<Option<usize>>,
     {
-        let channel = client.get("getPodcasts", Query::with("id", id.into()))?;
+        let channel = client
+            .get("getPodcasts", Query::with("id", id.into()))
+            .await?;
         Ok(get_list_as!(channel, Podcast).remove(0))
     }
     /// Returns a list of all podcasts the server subscribes to and,
     /// optionally, their episodes.
-    pub fn list<B, U>(client: &Client, include_episodes: B) -> Result<Vec<Podcast>>
+    pub async fn list<B, U>(client: &Client, include_episodes: B) -> Result<Vec<Podcast>>
     where
         B: Into<Option<bool>>,
         U: Into<Option<usize>>,
     {
-        let channel = client.get(
-            "getPodcasts",
-            Query::with("includeEpisodes", include_episodes.into()),
-        )?;
+        let channel = client
+            .get(
+                "getPodcasts",
+                Query::with("includeEpisodes", include_episodes.into()),
+            )
+            .await?;
         Ok(get_list_as!(channel, Podcast))
     }
 }
@@ -77,11 +81,13 @@ impl Podcast {
 impl Episode {
     /// Returns a list of the newest episodes of podcasts the server subscribes
     /// to. Optionally takes a number of episodes to maximally return.
-    pub fn newest<U>(client: &Client, count: U) -> Result<Vec<Episode>>
+    pub async fn newest<U>(client: &Client, count: U) -> Result<Vec<Episode>>
     where
         U: Into<Option<usize>>,
     {
-        let episode = client.get("getNewestPodcasts", Query::with("count", count.into()))?;
+        let episode = client
+            .get("getNewestPodcasts", Query::with("count", count.into()))
+            .await?;
         Ok(get_list_as!(episode, Episode))
     }
 }

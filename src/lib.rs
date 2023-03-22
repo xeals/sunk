@@ -101,8 +101,6 @@
 #![deny(missing_docs)]
 
 #[macro_use]
-extern crate failure;
-#[macro_use]
 extern crate log;
 extern crate md5;
 extern crate rand;

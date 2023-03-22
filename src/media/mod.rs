@@ -22,6 +22,7 @@ use self::video::Video;
 // use self::format::{AudioFormat, VideoFormat};
 
 /// A trait for forms of streamable media.
+#[async_trait::async_trait]
 pub trait Streamable {
     /// Returns the raw bytes of the media.
     ///
@@ -31,7 +32,7 @@ pub trait Streamable {
     ///
     /// The method does not provide any information about the encoding of the
     /// media without evaluating the stream itself.
-    fn stream(&self, client: &Client) -> Result<Vec<u8>>;
+    async fn stream(&self, client: &Client) -> Result<Vec<u8>>;
 
     /// Returns a constructed URL for streaming.
     ///
@@ -47,7 +48,7 @@ pub trait Streamable {
     ///
     /// The method does not provide any information about the encoding of the
     /// media without evaluating the stream itself.
-    fn download(&self, client: &Client) -> Result<Vec<u8>>;
+    async fn download(&self, client: &Client) -> Result<Vec<u8>>;
 
     /// Returns a constructed URL for downloading the song.
     fn download_url(&self, client: &Client) -> Result<String>;
@@ -85,6 +86,7 @@ pub trait Streamable {
 }
 
 /// A trait deriving common methods for any form of media.
+#[async_trait::async_trait]
 pub trait Media {
     /// Returns whether or not the media has an associated cover.
     fn has_cover_art(&self) -> bool;
@@ -112,7 +114,11 @@ pub trait Media {
     ///
     /// Aside from errors that the `Client` may cause, the method will error
     /// if the media does not have an associated cover art.
-    fn cover_art<U: Into<Option<usize>>>(&self, client: &Client, size: U) -> Result<Vec<u8>>;
+    async fn cover_art<U: Into<Option<usize>> + Send>(
+        &self,
+        client: &Client,
+        size: U,
+    ) -> Result<Vec<u8>>;
 
     /// Returns the URL pointing to the cover art of the media.
     ///
@@ -152,11 +158,11 @@ impl NowPlaying {
     /// error if the `NowPlaying` is not a song.
     ///
     /// [`Client`]: ../struct.Client.html
-    pub fn song_info(&self, client: &Client) -> Result<Song> {
+    pub async fn song_info(&self, client: &Client) -> Result<Song> {
         if self.is_video {
             Err(Error::Other("Now Playing info is not a song"))
         } else {
-            Song::get(client, self.id as u64)
+            Song::get(client, self.id as u64).await
         }
     }
 
@@ -168,11 +174,11 @@ impl NowPlaying {
     /// error if the `NowPlaying` is not a video.
     ///
     /// [`Client`]: ../struct.Client.html
-    pub fn video_info(&self, client: &Client) -> Result<Video> {
+    pub async fn video_info(&self, client: &Client) -> Result<Video> {
         if !self.is_video {
             Err(Error::Other("Now Playing info is not a video"))
         } else {
-            Video::get(client, self.id)
+            Video::get(client, self.id).await
         }
     }
 
@@ -230,15 +236,15 @@ impl Hls {
     ///
     /// Will likely error if the `Client` is not the same one that the HLS slice
     /// was generated from.
-    pub fn get_bytes(&self, client: &Client) -> Result<Vec<u8>> {
-        client.hls_bytes(self)
+    pub async fn get_bytes(&self, client: &Client) -> Result<Vec<u8>> {
+        client.hls_bytes(self).await
     }
 }
 
 impl FromStr for HlsPlaylist {
     type Err = Error;
     fn from_str(s: &str) -> result::Result<Self, Self::Err> {
-        fn chew<'a, 'b>(s: &'a str, head: &'b str) -> result::Result<&'a str, Error> {
+        fn chew<'a>(s: &'a str, head: &str) -> result::Result<&'a str, Error> {
             if s.starts_with(head) {
                 return Ok(s.trim_start_matches(head));
             } else {

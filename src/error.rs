@@ -1,65 +1,65 @@
-use std::convert::From;
 use std::{fmt, io, num, result};
 
-use reqwest;
 use serde::de::{Deserialize, Deserializer};
-use serde_json;
 
 /// An alias for `sunk`'s error result type.
-pub type Result<T> = result::Result<T, self::Error>;
+pub type Result<T, E = self::Error> = result::Result<T, E>;
 
 /// Possible errors that may be returned by a function.
-#[derive(Debug, Fail)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// Unable to connect to the Subsonic server.
-    #[fail(display = "Unable to connect to server: received {}", _0)]
+    #[error("Unable to connect to server: received {}", _0)]
     Connection(reqwest::StatusCode),
 
     /// Unable to recognize the URL provided in `Client` setup.
-    #[fail(display = "Invalid URL: {}", _0)]
-    Url(UrlError),
+    #[error("Invalid URL: {}", _0)]
+    Url(#[from] UrlError),
     /// The Subsonic server returned an error.
-    #[fail(display = "{}", _0)]
-    Api(#[cause] ApiError),
+    #[error("{}", _0)]
+    Api(#[from] ApiError),
 
-    /// A number conversion failed.
-    #[fail(display = "Failed to parse int: {}", _0)]
-    Parse(#[cause] num::ParseIntError),
+    /// A number conversion errored.
+    #[error("Failed to parse int: {}", _0)]
+    Parse(#[from] num::ParseIntError),
     /// An IO issue occurred.
-    #[fail(display = "IO error: {}", _0)]
-    Io(#[cause] io::Error),
+    #[error("IO error: {}", _0)]
+    Io(#[from] io::Error),
     /// An error in the web framework occurred.
-    #[fail(display = "Connection error: {}", _0)]
-    Reqwest(#[cause] reqwest::Error),
+    #[error("Connection error: {}", _0)]
+    Reqwest(#[from] reqwest::Error),
     /// An error occurred in serialization.
-    #[fail(display = "Error serialising: {}", _0)]
-    Serde(#[cause] serde_json::Error),
+    #[error("Error serialising: {}", _0)]
+    Serde(#[from] serde_json::Error),
 
     /// For general, one-off errors.
-    #[fail(display = "{}", _0)]
+    #[error("{}", _0)]
     Other(&'static str),
 }
 
 /// Possible errors when initializing a `Client`.
-#[derive(Debug, Fail)]
+#[derive(Debug, thiserror::Error)]
 pub enum UrlError {
     /// Unable to parse the URL.
-    #[fail(display = "{}", _0)]
-    Reqwest(#[cause] reqwest::UrlError),
+    #[error("{}", _0)]
+    Reqwest(#[from] reqwest::Error),
     /// Unable to determine the scheme of the address.
     ///
     /// The provider for the `Client` does not automatically add the HTTP
     /// scheme like other Rust frameworks. If you encounter this error,
     /// you probably need to add `http://` or `https://` to your server address.
-    #[fail(display = "Unable to determine scheme")]
+    #[error("Unable to determine scheme")]
     Scheme,
     /// The server address was not provided.
-    #[fail(display = "Missing server address")]
+    #[error("Missing server address")]
     Address,
+    /// The URL failed to parse
+    #[error("{0}")]
+    ParsingError(#[from] url::ParseError),
 }
 
 /// The possible errors a Subsonic server may return.
-#[derive(Debug, Fail, Clone)]
+#[derive(Debug, thiserror::Error, Clone)]
 pub enum ApiError {
     /// A generic error.
     Generic(String),
@@ -146,43 +146,15 @@ impl fmt::Display for ApiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::ApiError::*;
         match *self {
-            Generic(ref s) => write!(f, "Generic error: {}", s),
+            Generic(ref s) => write!(f, "Generic error: {s}"),
             MissingParameter => write!(f, "Missing a required parameter"),
             ClientMustUpgrade => write!(f, "Incompatible protocol; client must upgrade"),
             ServerMustUpgrade => write!(f, "Incompatible protocol; server must upgrade"),
             WrongAuth => write!(f, "Wrong username or password"),
             Ldap => write!(f, "Token authentication not supported for LDAP users"),
-            NotAuthorized(ref s) => write!(f, "Not authorized: {}", s),
+            NotAuthorized(ref s) => write!(f, "Not authorized: {s}"),
             TrialExpired => write!(f, "Subsonic trial period has expired"),
             NotFound => write!(f, "Requested data not found"),
         }
-    }
-}
-macro_rules! box_err {
-    ($err:ty, $to:ident) => {
-        impl From<$err> for Error {
-            fn from(err: $err) -> Error {
-                Error::$to(err)
-            }
-        }
-    };
-}
-
-box_err!(reqwest::Error, Reqwest);
-box_err!(io::Error, Io);
-box_err!(num::ParseIntError, Parse);
-box_err!(serde_json::Error, Serde);
-box_err!(UrlError, Url);
-box_err!(ApiError, Api);
-
-impl From<reqwest::UrlError> for UrlError {
-    fn from(err: reqwest::UrlError) -> UrlError {
-        UrlError::Reqwest(err)
-    }
-}
-
-impl From<reqwest::UrlError> for Error {
-    fn from(err: reqwest::UrlError) -> Error {
-        Error::Url(err.into())
     }
 }

@@ -213,27 +213,27 @@ mod tests {
     #[test]
     fn empty_query_is_empty() {
         let q = Query::none();
-        assert_eq!("", &format!("{}", q))
+        assert_eq!("", &format!("{q}"))
     }
 
     #[test]
     fn single_query() {
         let q = Query::with("id", 64);
-        assert_eq!("id=64", &format!("{}", q))
+        assert_eq!("id=64", &format!("{q}"))
     }
 
     #[test]
     fn two_queries() {
         let q = Query::new().arg("id", 64).arg("album", 12).build();
-        assert_eq!("id=64&album=12", &format!("{}", q))
+        assert_eq!("id=64&album=12", &format!("{q}"))
     }
 
     #[test]
     fn optional_query() {
         let mut q = Query::with("album", Arg(None));
-        assert_eq!("", &format!("{}", q));
+        assert_eq!("", &format!("{q}"));
         q.arg("id", 64);
-        assert_eq!("id=64", &format!("{}", q));
+        assert_eq!("id=64", &format!("{q}"));
     }
 
     #[test]
@@ -241,6 +241,6 @@ mod tests {
         let ids = &[1, 2, 3, 4];
         let mut q = Query::new();
         q.arg_list("id", ids);
-        assert_eq!("id=1&id=2&id=3&id=4", &format!("{}", q))
+        assert_eq!("id=1&id=2&id=3&id=4", &format!("{q}"))
     }
 }
