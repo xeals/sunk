@@ -12,7 +12,7 @@ use crate::{Client, Error, Media, Result, Song};
 #[derive(Debug)]
 #[readonly::make]
 pub struct Playlist {
-    pub id: u64,
+    pub id: String,
     pub name: String,
     pub duration: u64,
     pub cover_id: String,
@@ -24,7 +24,7 @@ impl Playlist {
     /// Fetches the songs contained in a playlist.
     pub fn songs(&self, client: &Client) -> Result<Vec<Song>> {
         if self.songs.len() as u64 != self.song_count {
-            Ok(get_playlist(client, self.id)?.songs)
+            Ok(get_playlist(client, self.id.clone())?.songs)
         } else {
             Ok(self.songs.clone())
         }
@@ -97,7 +97,7 @@ pub fn get_playlists(client: &Client, user: Option<String>) -> Result<Vec<Playli
 }
 
 #[allow(missing_docs)]
-pub fn get_playlist(client: &Client, id: u64) -> Result<Playlist> {
+pub fn get_playlist(client: &Client, id: String) -> Result<Playlist> {
     let res = client.get("getPlaylist", Query::with("id", id))?;
     Ok(serde_json::from_value::<Playlist>(res)?)
 }
@@ -125,7 +125,7 @@ pub fn create_playlist(client: &Client, name: String, songs: &[u64]) -> Result<O
 /// Updates a playlist. Only the owner of the playlist is privileged to do so.
 pub fn update_playlist<'a, B, S>(
     client: &Client,
-    id: u64,
+    id: String,
     name: S,
     comment: S,
     public: B,
@@ -150,7 +150,7 @@ where
 }
 
 #[allow(missing_docs)]
-pub fn delete_playlist(client: &Client, id: u64) -> Result<()> {
+pub fn delete_playlist(client: &Client, id: String) -> Result<()> {
     client.get("deletePlaylist", Query::with("id", id))?;
     Ok(())
 }

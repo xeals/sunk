@@ -209,7 +209,7 @@ mod tests {
         let parsed = serde_json::from_value::<Artist>(raw()).unwrap();
 
         assert_eq!(parsed.albums.len(), parsed.album_count);
-        assert_eq!(parsed.albums[0].id, 1);
+        assert_eq!(parsed.albums[0].id, "1");
         assert_eq!(parsed.albums[0].name, String::from("Bellevue"));
         assert_eq!(parsed.albums[0].song_count, 9);
     }
@@ -220,7 +220,7 @@ mod tests {
         let parsed = serde_json::from_value::<Artist>(raw()).unwrap();
         let albums = parsed.albums(&srv).unwrap();
 
-        assert_eq!(albums[0].id, 1);
+        assert_eq!(albums[0].id, "1");
         assert_eq!(albums[0].name, String::from("Bellevue"));
         assert_eq!(albums[0].song_count, 9);
     }

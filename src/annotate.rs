@@ -72,12 +72,12 @@ impl Annotatable for Artist {
 
 impl Annotatable for Album {
     fn star(&self, client: &Client) -> Result<()> {
-        client.get("star", Query::with("albumId", self.id))?;
+        client.get("star", Query::with("albumId", self.id.clone()))?;
         Ok(())
     }
 
     fn unstar(&self, client: &Client) -> Result<()> {
-        client.get("unstar", Query::with("albumId", self.id))?;
+        client.get("unstar", Query::with("albumId", self.id.clone()))?;
         Ok(())
     }
 
@@ -86,7 +86,7 @@ impl Annotatable for Album {
             return Err(Error::Other("rating must be between 0 and 5 inclusive"));
         }
 
-        let args = Query::with("id", self.id).arg("rating", rating).build();
+        let args = Query::with("id", self.id.clone()).arg("rating", rating).build();
         client.get("setRating", args)?;
         Ok(())
     }
@@ -96,7 +96,7 @@ impl Annotatable for Album {
         B: Into<Option<bool>>,
         T: Into<Option<&'a str>>,
     {
-        let args = Query::with("id", self.id)
+        let args = Query::with("id", self.id.clone())
             .arg("time", time.into())
             .arg("submission", now_playing.into().map(|b| !b))
             .build();
@@ -107,12 +107,12 @@ impl Annotatable for Album {
 
 impl Annotatable for Song {
     fn star(&self, client: &Client) -> Result<()> {
-        client.get("star", Query::with("id", self.id))?;
+        client.get("star", Query::with("id", self.id.clone()))?;
         Ok(())
     }
 
     fn unstar(&self, client: &Client) -> Result<()> {
-        client.get("unstar", Query::with("id", self.id))?;
+        client.get("unstar", Query::with("id", self.id.clone()))?;
         Ok(())
     }
 
@@ -121,7 +121,7 @@ impl Annotatable for Song {
             return Err(Error::Other("rating must be between 0 and 5 inclusive"));
         }
 
-        let args = Query::with("id", self.id).arg("rating", rating).build();
+        let args = Query::with("id", self.id.clone()).arg("rating", rating).build();
         client.get("setRating", args)?;
         Ok(())
     }
@@ -131,7 +131,7 @@ impl Annotatable for Song {
         B: Into<Option<bool>>,
         T: Into<Option<&'a str>>,
     {
-        let args = Query::with("id", self.id)
+        let args = Query::with("id", self.id.clone())
             .arg("time", time.into())
             .arg("submission", now_playing.into().map(|b| !b))
             .build();

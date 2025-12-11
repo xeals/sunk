@@ -12,7 +12,7 @@ use crate::{Client, Error, Media, Result, Streamable};
 #[derive(Debug)]
 #[readonly::make]
 pub struct Video {
-    pub id: usize,
+    pub id: String,
     pub parent: usize,
     pub is_dir: bool,
     pub title: String,
@@ -41,7 +41,7 @@ pub struct Video {
 
 impl Video {
     #[allow(missing_docs)]
-    pub fn get(client: &Client, id: usize) -> Result<Video> {
+    pub fn get(client: &Client, id: String) -> Result<Video> {
         Video::list(client)?
             .into_iter()
             .find(|v| v.id == id)
@@ -59,7 +59,7 @@ impl Video {
     where
         S: Into<Option<&'a str>>,
     {
-        let args = Query::with("id", self.id)
+        let args = Query::with("id", self.id.clone())
             .arg("format", format.into())
             .build();
         let res = client.get("getVideoInfo", args)?;
@@ -71,7 +71,7 @@ impl Video {
     where
         S: Into<Option<&'a str>>,
     {
-        let args = Query::with("id", self.id)
+        let args = Query::with("id", self.id.clone())
             .arg("format", format.into())
             .build();
         let res = client.get_raw("getCaptions", args)?;
@@ -95,7 +95,7 @@ impl Video {
 
 impl Streamable for Video {
     fn stream(&self, client: &Client) -> Result<Vec<u8>> {
-        let args = Query::with("id", self.id)
+        let args = Query::with("id", self.id.clone())
             .arg("maxBitRate", self.stream_br)
             .arg(
                 "size",
@@ -107,7 +107,7 @@ impl Streamable for Video {
     }
 
     fn stream_url(&self, client: &Client) -> Result<String> {
-        let args = Query::with("id", self.id)
+        let args = Query::with("id", self.id.clone())
             .arg("maxBitRate", self.stream_br)
             .arg(
                 "size",
@@ -119,11 +119,11 @@ impl Streamable for Video {
     }
 
     fn download(&self, client: &Client) -> Result<Vec<u8>> {
-        client.get_bytes("download", Query::with("id", self.id))
+        client.get_bytes("download", Query::with("id", self.id.clone()))
     }
 
     fn download_url(&self, client: &Client) -> Result<String> {
-        client.build_url("download", Query::with("id", self.id))
+        client.build_url("download", Query::with("id", self.id.clone()))
     }
 
     fn encoding(&self) -> &str {
@@ -350,7 +350,7 @@ mod tests {
     fn parse_video() {
         let parsed = serde_json::from_value::<Video>(raw()).unwrap();
 
-        assert_eq!(parsed.id, 460);
+        assert_eq!(parsed.id, "460");
         assert_eq!(parsed.title, "Big Buck Bunny");
         assert!(!parsed.has_cover_art());
     }

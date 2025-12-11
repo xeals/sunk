@@ -76,7 +76,7 @@ impl<'a> Jukebox<'a> {
         Jukebox { client }
     }
 
-    fn send_action_with<U>(&self, action: &str, index: U, ids: &[usize]) -> Result<JukeboxStatus>
+    fn send_action_with<U>(&self, action: &str, index: U, ids: &[String]) -> Result<JukeboxStatus>
     where
         U: Into<Option<usize>>,
     {
@@ -128,7 +128,7 @@ impl<'a> Jukebox<'a> {
 
     /// Adds the song to the jukebox's playlist.
     pub fn add(&self, song: &Song) -> Result<JukeboxStatus> {
-        self.send_action_with("add", None, &[song.id as usize])
+        self.send_action_with("add", None, &[song.id.clone()])
     }
 
     /// Adds a song matching the provided ID to the playlist.
@@ -137,8 +137,8 @@ impl<'a> Jukebox<'a> {
     ///
     /// The method will return an error if a song matching the provided ID
     /// cannot be found.
-    pub fn add_id(&self, id: usize) -> Result<JukeboxStatus> {
-        self.send_action_with("add", None, &[id])
+    pub fn add_id(&self, id: String) -> Result<JukeboxStatus> {
+        self.send_action_with("add", None, &[id.clone()])
     }
 
     /// Adds all the songs to the jukebox's playlist.
@@ -146,7 +146,7 @@ impl<'a> Jukebox<'a> {
         self.send_action_with(
             "add",
             None,
-            &songs.iter().map(|s| s.id as usize).collect::<Vec<_>>(),
+            &songs.iter().map(|s| s.id.clone()).collect::<Vec<_>>(),
         )
     }
 
@@ -156,7 +156,7 @@ impl<'a> Jukebox<'a> {
     ///
     /// The method will return an error if at least one ID cannot be matched to
     /// a song.
-    pub fn add_all_ids(&self, ids: &[usize]) -> Result<JukeboxStatus> {
+    pub fn add_all_ids(&self, ids: &[String]) -> Result<JukeboxStatus> {
         self.send_action_with("add", None, ids)
     }
 
