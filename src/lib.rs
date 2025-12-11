@@ -23,8 +23,8 @@
 //! let random_songs = Song::random(&client, 20)?;
 //! for mut song in random_songs {
 //!     song.set_max_bit_rate(320);
-//!     let bytes = song.stream(&client)?;
-//!     // Use another library to stream the `bytes`!
+//!     let mut reader = song.stream(&client)?;
+//!     // Use the reader to stream the audio data
 //! }
 //! # Ok(())
 //! # }

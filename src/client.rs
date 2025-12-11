@@ -150,7 +150,7 @@ impl Client {
         let addr = self.url.host_str().ok_or(Error::Url(UrlError::Address))?;
         let path = self.url.path();
 
-        let mut url = [scheme, "://", addr, path, "/rest/"].concat();
+        let mut url = [scheme, "://", addr, path, "rest/"].concat();
         url.push_str(query);
         url.push('?');
         url.push_str(&self.auth.to_url(self.target_ver));
@@ -210,6 +210,12 @@ impl Client {
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
         let res = self.reqclient.get(uri).send()?;
         Ok(res.bytes().map(|b| b.unwrap()).collect())
+    }
+
+    /// Returns a streaming response.
+    pub(crate) fn get_stream(&self, query: &str, args: Query) -> Result<reqwest::Response> {
+        let uri: Url = self.build_url(query, args)?.parse().unwrap();
+        Ok(self.reqclient.get(uri).send()?)
     }
 
     /// Returns the raw bytes of a HLS slice.

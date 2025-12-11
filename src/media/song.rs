@@ -1,6 +1,7 @@
 //! Song APIs.
 
 use std::fmt;
+use std::io::Read;
 use std::ops::Range;
 
 use serde::de::{Deserialize, Deserializer};
@@ -162,10 +163,11 @@ impl Song {
 }
 
 impl Streamable for Song {
-    fn stream(&self, client: &Client) -> Result<Vec<u8>> {
+    fn stream(&self, client: &Client) -> Result<Box<dyn Read>> {
         let mut q = Query::with("id", self.id);
         q.arg("maxBitRate", self.stream_br);
-        client.get_bytes("stream", q)
+        let response = client.get_stream("stream", q)?;
+        Ok(Box::new(response))
     }
 
     fn stream_url(&self, client: &Client) -> Result<String> {

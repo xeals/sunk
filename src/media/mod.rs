@@ -1,5 +1,6 @@
 //! Individual media APIs.
 
+use std::io::Read;
 use std::ops::Index;
 use std::result;
 use std::str::FromStr;
@@ -23,15 +24,16 @@ use self::video::Video;
 
 /// A trait for forms of streamable media.
 pub trait Streamable {
-    /// Returns the raw bytes of the media.
+    /// Returns a reader for the media.
     ///
     /// Supports transcoding options specified on the media beforehand. See the
     /// struct-level documentation for available options. The `Media` trait
     /// provides setting a maximum bit rate and a target transcoding format.
     ///
-    /// The method does not provide any information about the encoding of the
-    /// media without evaluating the stream itself.
-    fn stream(&self, client: &Client) -> Result<Vec<u8>>;
+    /// The method returns a reader that implements `Read`, allowing
+    /// for efficient streaming without loading the entire media into memory
+    /// at once.
+    fn stream(&self, client: &Client) -> Result<Box<dyn Read>>;
 
     /// Returns a constructed URL for streaming.
     ///
