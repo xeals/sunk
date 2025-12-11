@@ -58,7 +58,7 @@ pub struct Album {
     pub id: String,
     pub name: String,
     pub artist: Option<String>,
-    pub artist_id: Option<u64>,
+    pub artist_id: Option<String>,
     pub cover_id: Option<String>,
     pub duration: u64,
     pub year: Option<u64>,
