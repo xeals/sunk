@@ -150,7 +150,7 @@ impl Client {
         let addr = self.url.host_str().ok_or(Error::Url(UrlError::Address))?;
         let path = self.url.path();
 
-        let mut url = [scheme, "://", addr, path, "/rest/"].concat();
+        let mut url = [scheme, "://", addr, path, "rest/"].concat();
         url.push_str(query);
         url.push('?');
         url.push_str(&self.auth.to_url(self.target_ver));
