@@ -5,6 +5,7 @@ use std::result;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
+use crate::id::Id;
 use crate::query::Query;
 use crate::{Client, Error, Media, Result, Song};
 
@@ -12,7 +13,7 @@ use crate::{Client, Error, Media, Result, Song};
 #[derive(Debug)]
 #[readonly::make]
 pub struct Playlist {
-    pub id: u64,
+    pub id: Id,
     pub name: String,
     pub duration: u64,
     pub cover_id: String,
@@ -24,7 +25,7 @@ impl Playlist {
     /// Fetches the songs contained in a playlist.
     pub fn songs(&self, client: &Client) -> Result<Vec<Song>> {
         if self.songs.len() as u64 != self.song_count {
-            Ok(get_playlist(client, self.id)?.songs)
+            Ok(get_playlist(client, self.id.clone())?.songs)
         } else {
             Ok(self.songs.clone())
         }
@@ -97,8 +98,8 @@ pub fn get_playlists(client: &Client, user: Option<String>) -> Result<Vec<Playli
 }
 
 #[allow(missing_docs)]
-pub fn get_playlist(client: &Client, id: u64) -> Result<Playlist> {
-    let res = client.get("getPlaylist", Query::with("id", id))?;
+pub fn get_playlist<I: Into<Id>>(client: &Client, id: I) -> Result<Playlist> {
+    let res = client.get("getPlaylist", Query::with("id", id.into()))?;
     Ok(serde_json::from_value::<Playlist>(res)?)
 }
 
@@ -106,10 +107,11 @@ pub fn get_playlist(client: &Client, id: u64) -> Result<Playlist> {
 ///
 /// Since API version 1.14.0, the newly created playlist is returned. In earlier
 /// versions, an empty response is returned.
-pub fn create_playlist(client: &Client, name: String, songs: &[u64]) -> Result<Option<Playlist>> {
+pub fn create_playlist<I: Into<Id> + Clone>(client: &Client, name: String, songs: &[I]) -> Result<Option<Playlist>> {
+    let song_ids: Vec<Id> = songs.iter().cloned().map(|id| id.into()).collect();
     let args = Query::new()
         .arg("name", name)
-        .arg_list("songId", songs)
+        .arg_list("songId", &song_ids)
         .build();
 
     let res = client.get("createPlaylist", args)?;
@@ -123,25 +125,28 @@ pub fn create_playlist(client: &Client, name: String, songs: &[u64]) -> Result<O
 }
 
 /// Updates a playlist. Only the owner of the playlist is privileged to do so.
-pub fn update_playlist<'a, B, S>(
+pub fn update_playlist<'a, B, S, I, T>(
     client: &Client,
-    id: u64,
+    id: I,
     name: S,
     comment: S,
     public: B,
-    to_add: &[u64],
+    to_add: &[T],
     to_remove: &[u64],
 ) -> Result<()>
 where
+    I: Into<Id>,
     S: Into<Option<&'a str>>,
     B: Into<Option<bool>>,
+    T: Into<Id> + Clone,
 {
+    let song_ids_to_add: Vec<Id> = to_add.iter().cloned().map(|id| id.into()).collect();
     let args = Query::new()
-        .arg("id", id)
+        .arg("id", id.into())
         .arg("name", name.into())
         .arg("comment", comment.into())
         .arg("public", public.into())
-        .arg_list("songIdToAdd", to_add)
+        .arg_list("songIdToAdd", &song_ids_to_add)
         .arg_list("songIndexToRemove", to_remove)
         .build();
 
@@ -150,8 +155,8 @@ where
 }
 
 #[allow(missing_docs)]
-pub fn delete_playlist(client: &Client, id: u64) -> Result<()> {
-    client.get("deletePlaylist", Query::with("id", id))?;
+pub fn delete_playlist<I: Into<Id>>(client: &Client, id: I) -> Result<()> {
+    client.get("deletePlaylist", Query::with("id", id.into()))?;
     Ok(())
 }
 

@@ -6,6 +6,7 @@ use std::ops::Range;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
+use crate::id::Id;
 use crate::query::Query;
 use crate::search::SearchPage;
 use crate::{Client, Error, HlsPlaylist, Media, Result, Streamable};
@@ -15,18 +16,18 @@ use crate::{Client, Error, HlsPlaylist, Media, Result, Streamable};
 #[readonly::make]
 pub struct Song {
     /// Unique identifier for the song.
-    pub id: u64,
+    pub id: Id,
     /// Title of the song. Prefers the song's ID3 tags, but will fall back to
     /// the file name.
     pub title: String,
     /// Album the song belongs to. Reads from the song's ID3 tags.
     pub album: Option<String>,
     /// The ID of the released album.
-    pub album_id: Option<u64>,
+    pub album_id: Option<Id>,
     /// Credited artist for the song. Reads from the song's ID3 tags.
     pub artist: Option<String>,
     /// The ID of the releasing artist.
-    pub artist_id: Option<u64>,
+    pub artist_id: Option<Id>,
     /// Position of the song in the album.
     pub track: Option<u64>,
     /// Year the song was released.
@@ -64,8 +65,8 @@ impl Song {
     ///
     /// Aside from other errors the `Client` may cause, the server will return
     /// an error if there is no song matching the provided ID.
-    pub fn get(client: &Client, id: u64) -> Result<Song> {
-        let res = client.get("getSong", Query::with("id", id))?;
+    pub fn get<I: Into<Id>>(client: &Client, id: I) -> Result<Song> {
+        let res = client.get("getSong", Query::with("id", id.into()))?;
         Ok(serde_json::from_value(res)?)
     }
 
@@ -78,7 +79,7 @@ impl Song {
     where
         U: Into<Option<usize>>,
     {
-        let args = Query::with("id", self.id)
+        let args = Query::with("id", self.id.clone())
             .arg("count", count.into())
             .build();
 
@@ -152,7 +153,7 @@ impl Song {
     /// empty array) to disable adaptive streaming, or given a single value to
     /// force streaming at that bit rate.
     pub fn hls(&self, client: &Client, bit_rates: &[u64]) -> Result<HlsPlaylist> {
-        let args = Query::with("id", self.id)
+        let args = Query::with("id", self.id.clone())
             .arg_list("bitrate", bit_rates)
             .build();
 
@@ -163,23 +164,23 @@ impl Song {
 
 impl Streamable for Song {
     fn stream(&self, client: &Client) -> Result<Vec<u8>> {
-        let mut q = Query::with("id", self.id);
+        let mut q = Query::with("id", self.id.clone());
         q.arg("maxBitRate", self.stream_br);
         client.get_bytes("stream", q)
     }
 
     fn stream_url(&self, client: &Client) -> Result<String> {
-        let mut q = Query::with("id", self.id);
+        let mut q = Query::with("id", self.id.clone());
         q.arg("maxBitRate", self.stream_br);
         client.build_url("stream", q)
     }
 
     fn download(&self, client: &Client) -> Result<Vec<u8>> {
-        client.get_bytes("download", Query::with("id", self.id))
+        client.get_bytes("download", Query::with("id", self.id.clone()))
     }
 
     fn download_url(&self, client: &Client) -> Result<String> {
-        client.build_url("download", Query::with("id", self.id))
+        client.build_url("download", Query::with("id", self.id.clone()))
     }
 
     fn encoding(&self) -> &str {
@@ -364,7 +365,7 @@ pub struct RandomSongs<'a> {
     genre: Option<&'a str>,
     from_year: Option<usize>,
     to_year: Option<usize>,
-    folder_id: Option<usize>,
+    folder_id: Option<Id>,
 }
 
 impl<'a> RandomSongs<'a> {
@@ -426,8 +427,8 @@ impl<'a> RandomSongs<'a> {
     /// folders can be found using the [`Client::music_folders`] method.
     ///
     /// [`Client::music_folders`]: ../struct.Client.html#method.music_folders
-    pub fn in_folder(&mut self, id: usize) -> &mut RandomSongs<'a> {
-        self.folder_id = Some(id);
+    pub fn in_folder<I: Into<Id>>(&mut self, id: I) -> &mut RandomSongs<'a> {
+        self.folder_id = Some(id.into());
         self
     }
 
@@ -438,7 +439,7 @@ impl<'a> RandomSongs<'a> {
             .arg("genre", self.genre)
             .arg("fromYear", self.from_year)
             .arg("toYear", self.to_year)
-            .arg("musicFolderId", self.folder_id)
+            .arg("musicFolderId", self.folder_id.clone())
             .build();
 
         let song = self.client.get("getRandomSongs", args)?;
@@ -455,7 +456,7 @@ mod tests {
     fn parse_song() {
         let parsed = serde_json::from_value::<Song>(raw()).unwrap();
 
-        assert_eq!(parsed.id, 27);
+        assert_eq!(parsed.id, Id::from(27));
         assert_eq!(parsed.title, String::from("Bellevue Avenue"));
         assert_eq!(parsed.track, Some(1));
     }

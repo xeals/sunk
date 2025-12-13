@@ -4,6 +4,7 @@ use std::result;
 
 use serde::de::{Deserialize, Deserializer};
 
+use crate::id::Id;
 use crate::query::Query;
 use crate::{Client, Result};
 
@@ -11,7 +12,7 @@ use crate::{Client, Result};
 #[derive(Debug)]
 #[readonly::make]
 pub struct RadioStation {
-    pub id: usize,
+    pub id: Id,
     pub name: String,
     pub stream_url: String,
     pub homepage_url: Option<String>,
@@ -42,8 +43,8 @@ impl<'de> Deserialize<'de> for RadioStation {
 
 #[allow(missing_docs)]
 impl RadioStation {
-    pub fn id(&self) -> usize {
-        self.id
+    pub fn id(&self) -> Id {
+        self.id.clone()
     }
 
     pub fn list(client: &Client) -> Result<Vec<RadioStation>> {
@@ -62,7 +63,7 @@ impl RadioStation {
     }
 
     pub fn update(&self, client: &Client) -> Result<()> {
-        let args = Query::with("id", self.id)
+        let args = Query::with("id", self.id.clone())
             .arg("streamUrl", self.stream_url.as_str())
             .arg("name", self.name.as_str())
             .arg("homepageUrl", self.homepage_url.as_deref())
@@ -72,7 +73,7 @@ impl RadioStation {
     }
 
     pub fn delete(&self, client: &Client) -> Result<()> {
-        client.get("deleteInternetRadioStation", Query::with("id", self.id))?;
+        client.get("deleteInternetRadioStation", Query::with("id", self.id.clone()))?;
         Ok(())
     }
 }
