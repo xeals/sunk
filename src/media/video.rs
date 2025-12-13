@@ -5,6 +5,7 @@ use std::result;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
+use crate::id::Id;
 use crate::query::Query;
 use crate::{Client, Error, Media, Result, Streamable};
 
@@ -12,8 +13,8 @@ use crate::{Client, Error, Media, Result, Streamable};
 #[derive(Debug)]
 #[readonly::make]
 pub struct Video {
-    pub id: String,
-    pub parent: usize,
+    pub id: Id,
+    pub parent: Id,
     pub is_dir: bool,
     pub title: String,
     pub album: Option<String>,
@@ -41,7 +42,9 @@ pub struct Video {
 
 impl Video {
     #[allow(missing_docs)]
-    pub fn get(client: &Client, id: String) -> Result<Video> {
+    pub fn get(client: &Client, id: impl Into<Id>) -> Result<Video> {
+        let id = id.into();
+
         Video::list(client)?
             .into_iter()
             .find(|v| v.id == id)
@@ -350,7 +353,7 @@ mod tests {
     fn parse_video() {
         let parsed = serde_json::from_value::<Video>(raw()).unwrap();
 
-        assert_eq!(parsed.id, "460");
+        assert_eq!(parsed.id, Id::from(460));
         assert_eq!(parsed.title, "Big Buck Bunny");
         assert!(!parsed.has_cover_art());
     }

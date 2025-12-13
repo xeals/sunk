@@ -4,6 +4,8 @@ use std::result;
 
 use serde::de::{Deserialize, Deserializer};
 
+use crate::id::Id;
+
 pub mod album;
 pub mod artist;
 pub mod playlist;
@@ -16,7 +18,7 @@ pub use self::playlist::Playlist;
 #[derive(Debug)]
 pub struct MusicFolder {
     /// The index number of the folder.
-    pub id: usize,
+    pub id: Id,
     /// The name assigned to the folder.
     pub name: String,
     _private: bool,

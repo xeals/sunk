@@ -5,7 +5,8 @@ use std::result;
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
-use crate::query::Query;
+use crate::id::Id;
+use crate::query::{Arg, IntoArg, Query};
 use crate::{Client, Result, Song};
 
 /// A wrapper on a `Client` to control just the jukebox.
@@ -76,20 +77,22 @@ impl<'a> Jukebox<'a> {
         Jukebox { client }
     }
 
-    fn send_action_with<U>(&self, action: &str, index: U, ids: &[String]) -> Result<JukeboxStatus>
+    fn send_action_with<U, T>(&self, action: &str, index: U, ids: &[T]) -> Result<JukeboxStatus>
     where
         U: Into<Option<usize>>,
+        T: Into<Id> + Clone,
     {
+        let song_ids: Vec<Id> = ids.iter().cloned().map(|id| id.into()).collect();
         let args = Query::with("action", action)
             .arg("index", index.into())
-            .arg_list("id", ids)
+            .arg_list("id", &song_ids)
             .build();
         let res = self.client.get("jukeboxControl", args)?;
         Ok(serde_json::from_value(res)?)
     }
 
     fn send_action(&self, action: &str) -> Result<JukeboxStatus> {
-        self.send_action_with(action, None, &[])
+        self.send_action_with(action, None, &[] as &[Id])
     }
 
     /// Returns the current playlist of the jukebox, as well as its status. The
@@ -123,7 +126,7 @@ impl<'a> Jukebox<'a> {
     /// Using an index outside the range of the jukebox playlist will play the
     /// last song in the playlist.
     pub fn skip_to(&self, n: usize) -> Result<JukeboxStatus> {
-        self.send_action_with("skip", n, &[])
+        self.send_action_with("skip", n, &[] as &[Id])
     }
 
     /// Adds the song to the jukebox's playlist.
@@ -137,8 +140,8 @@ impl<'a> Jukebox<'a> {
     ///
     /// The method will return an error if a song matching the provided ID
     /// cannot be found.
-    pub fn add_id(&self, id: String) -> Result<JukeboxStatus> {
-        self.send_action_with("add", None, &[id.clone()])
+    pub fn add_id<I: Into<Id>>(&self, id: I) -> Result<JukeboxStatus> {
+        self.send_action_with("add", None, &[id.into()])
     }
 
     /// Adds all the songs to the jukebox's playlist.
@@ -156,7 +159,7 @@ impl<'a> Jukebox<'a> {
     ///
     /// The method will return an error if at least one ID cannot be matched to
     /// a song.
-    pub fn add_all_ids(&self, ids: &[String]) -> Result<JukeboxStatus> {
+    pub fn add_all_ids<I: Into<Id> + Clone>(&self, ids: &[I]) -> Result<JukeboxStatus> {
         self.send_action_with("add", None, ids)
     }
 
@@ -167,7 +170,7 @@ impl<'a> Jukebox<'a> {
 
     /// Removes the song at the provided index from the playlist.
     pub fn remove_id(&self, idx: usize) -> Result<JukeboxStatus> {
-        self.send_action_with("remove", idx, &[])
+        self.send_action_with("remove", idx, &[] as &[Id])
     }
 
     /// Shuffles the jukebox's playlist.

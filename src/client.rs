@@ -388,7 +388,7 @@ pub struct License {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_util;
+    use crate::{id::Id, test_util};
 
     #[test]
     fn test_token_auth() {
@@ -433,14 +433,14 @@ mod tests {
         let s = SearchPage::new().with_size(1);
         let r = cli.search("dada", s, s, s).unwrap();
 
-        assert_eq!(r.artists[0].id, 14);
+        assert_eq!(r.artists[0].id, Id::from(14));
         assert_eq!(r.artists[0].name, String::from("The Dada Weatherman"));
         assert_eq!(r.artists[0].album_count, 4);
 
-        assert_eq!(r.albums[0].id, "23");
+        assert_eq!(r.albums[0].id, Id::from(23));
         assert_eq!(r.albums[0].name, String::from("The Green Waltz"));
 
-        assert_eq!(r.songs[0].id, "222");
+        assert_eq!(r.songs[0].id, Id::from(222));
 
         // etc.
     }

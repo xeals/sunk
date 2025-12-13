@@ -2,6 +2,7 @@
 
 use serde_json;
 
+use crate::id::Id;
 use crate::query::Query;
 use crate::{Client, Result};
 
@@ -69,7 +70,7 @@ pub struct User {
     pub avatar_last_changed: String,
     /// The list of media folders the user has access to.
     #[serde(rename = "folder")]
-    pub folders: Vec<u64>,
+    pub folders: Vec<Id>,
     #[serde(default)]
     _private: bool,
 }
@@ -173,7 +174,7 @@ impl User {
             .arg("podcastRole", self.podcast_role)
             .arg("shareRole", self.share_role)
             .arg("videoConversionRole", self.video_conversion_role)
-            .arg_list("musicFolderId", &self.folders.clone())
+            .arg_list("musicFolderId", &self.folders)
             .arg("maxBitRate", self.max_bit_rate)
             .build();
         client.get("updateUser", args)?;
@@ -199,7 +200,7 @@ pub struct UserBuilder {
     podcast_role: bool,
     share_role: bool,
     video_conversion_role: bool,
-    folders: Vec<u64>,
+    folders: Vec<Id>,
     max_bit_rate: u64,
 }
 
@@ -255,7 +256,7 @@ impl UserBuilder {
     // Allows the user to start video coversions.
     build!(video_conversion_role: bool);
     // IDs of the music folders the user is allowed to access.
-    build!(folders: &[u64]);
+    build!(folders: &[Id]);
     // The maximum bit rate (in Kbps) the user is allowed to stream at. Higher
     // bit rate streams will be downsampled to their limit.
     build!(max_bit_rate: u64);

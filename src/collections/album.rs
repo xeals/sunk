@@ -5,6 +5,7 @@ use std::{fmt, result};
 use serde::de::{Deserialize, Deserializer};
 use serde_json;
 
+use crate::id::Id;
 use crate::query::{Arg, IntoArg, Query};
 use crate::search::SearchPage;
 use crate::{Client, Error, Media, Result, Song};
@@ -55,10 +56,10 @@ impl IntoArg for ListType {
 #[derive(Debug, Clone)]
 #[readonly::make]
 pub struct Album {
-    pub id: String,
+    pub id: Id,
     pub name: String,
     pub artist: Option<String>,
-    pub artist_id: Option<String>,
+    pub artist_id: Option<Id>,
     pub cover_id: Option<String>,
     pub duration: u64,
     pub year: Option<u64>,
@@ -74,7 +75,7 @@ impl Album {
     ///
     /// Aside from errors the `Client` may cause, the method will error if
     /// there is no album matching the provided ID.
-    pub fn get(client: &Client, id: String) -> Result<Album> {
+    pub fn get<I: Into<Id>>(client: &Client, id: I) -> Result<Album> {
         self::get_album(client, id)
     }
 
@@ -225,8 +226,8 @@ impl<'de> Deserialize<'de> for AlbumInfo {
     }
 }
 
-fn get_album(client: &Client, id: String) -> Result<Album> {
-    let res = client.get("getAlbum", Query::with("id", id))?;
+fn get_album<I: Into<Id>>(client: &Client, id: I) -> Result<Album> {
+    let res = client.get("getAlbum", Query::with("id", id.into()))?;
     Ok(serde_json::from_value::<Album>(res)?)
 }
 
@@ -254,7 +255,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_util;
+    use crate::{id::Id, test_util};
 
     #[test]
     fn demo_get_albums() {
@@ -268,7 +269,7 @@ mod tests {
     fn parse_album() {
         let parsed = serde_json::from_value::<Album>(raw()).unwrap();
 
-        assert_eq!(parsed.id, "1");
+        assert_eq!(parsed.id, Id::from(1));
         assert_eq!(parsed.name, String::from("Bellevue"));
         assert_eq!(parsed.song_count, 9);
     }
@@ -277,7 +278,7 @@ mod tests {
     fn parse_album_deep() {
         let parsed = serde_json::from_value::<Album>(raw()).unwrap();
 
-        assert_eq!(parsed.songs[0].id, "27");
+        assert_eq!(parsed.songs[0].id, Id::from(27));
         assert_eq!(parsed.songs[0].title, String::from("Bellevue Avenue"));
         assert_eq!(parsed.songs[0].duration, Some(198));
     }

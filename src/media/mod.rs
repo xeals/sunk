@@ -6,6 +6,7 @@ use std::str::FromStr;
 
 use serde::de::{Deserialize, Deserializer};
 
+use crate::id::Id;
 use crate::{Client, Error, Result};
 
 pub mod format;
@@ -139,7 +140,7 @@ pub struct NowPlaying {
     pub minutes_ago: usize,
     /// The ID of the player.
     pub player_id: usize,
-    id: String,
+    id: Id,
     is_video: bool,
 }
 
