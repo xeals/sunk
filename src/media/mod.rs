@@ -7,6 +7,7 @@ use std::str::FromStr;
 
 use serde::de::{Deserialize, Deserializer};
 
+use crate::id::Id;
 use crate::{Client, Error, Result};
 
 pub mod format;
@@ -141,7 +142,7 @@ pub struct NowPlaying {
     pub minutes_ago: usize,
     /// The ID of the player.
     pub player_id: usize,
-    id: usize,
+    id: Id,
     is_video: bool,
 }
 
@@ -158,7 +159,7 @@ impl NowPlaying {
         if self.is_video {
             Err(Error::Other("Now Playing info is not a song"))
         } else {
-            Song::get(client, self.id as u64)
+            Song::get(client, self.id.clone())
         }
     }
 
@@ -174,7 +175,7 @@ impl NowPlaying {
         if !self.is_video {
             Err(Error::Other("Now Playing info is not a video"))
         } else {
-            Video::get(client, self.id)
+            Video::get(client, self.id.clone())
         }
     }
 

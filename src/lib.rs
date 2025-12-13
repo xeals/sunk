@@ -119,6 +119,7 @@ mod error;
 
 pub mod annotate;
 pub mod collections;
+pub mod id;
 pub mod jukebox;
 pub mod media;
 pub mod query;

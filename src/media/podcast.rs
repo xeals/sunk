@@ -4,6 +4,7 @@ use std::result;
 
 use serde::de::{Deserialize, Deserializer};
 
+use crate::id::Id;
 use crate::query::Query;
 use crate::{Client, Result};
 
@@ -11,7 +12,7 @@ use crate::{Client, Result};
 #[derive(Debug)]
 #[readonly::make]
 pub struct Podcast {
-    pub id: usize,
+    pub id: Id,
     pub url: String,
     pub title: String,
     pub description: String,
@@ -26,8 +27,8 @@ pub struct Podcast {
 #[derive(Debug)]
 #[readonly::make]
 pub struct Episode {
-    pub id: usize,
-    pub parent: usize,
+    pub id: Id,
+    pub parent: Id,
     pub is_dir: bool,
     pub title: String,
     pub album: String,
@@ -41,7 +42,7 @@ pub struct Episode {
     pub bitrate: usize,
     pub is_video: bool,
     pub created: String,
-    pub artist_id: String,
+    pub artist_id: Id,
     pub media_type: String,
     pub stream_id: String,
     pub channel_id: String,
@@ -54,7 +55,7 @@ impl Podcast {
     /// Fetches the details of a single podcast and its episodes.
     pub fn get<U>(client: &Client, id: U) -> Result<Podcast>
     where
-        U: Into<Option<usize>>,
+        U: Into<Option<Id>>,
     {
         let channel = client.get("getPodcasts", Query::with("id", id.into()))?;
         Ok(get_list_as!(channel, Podcast).remove(0))
@@ -178,7 +179,7 @@ impl<'de> Deserialize<'de> for Episode {
             bitrate: raw.bit_rate,
             is_video: raw.is_video,
             created: raw.created,
-            artist_id: raw.artist_id,
+            artist_id: raw.artist_id.parse().unwrap(),
             media_type: raw._type,
             stream_id: raw.stream_id,
             channel_id: raw.channel_id,
