@@ -181,7 +181,7 @@ impl Client {
     pub(crate) fn get(&self, query: &str, args: Query) -> Result<serde_json::Value> {
         let uri: Url = self.build_url(query, args)?.parse().unwrap();
 
-        println!("Connecting to {}", uri);
+        info!("Connecting to {}", uri);
         let mut res = self.reqclient.get(uri).send()?;
 
         if res.status().is_success() {
