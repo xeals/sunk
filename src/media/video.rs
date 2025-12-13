@@ -1,5 +1,6 @@
 //! Video APIs.
 
+use std::io::Read;
 use std::result;
 
 use serde::de::{Deserialize, Deserializer};
@@ -97,7 +98,7 @@ impl Video {
 }
 
 impl Streamable for Video {
-    fn stream(&self, client: &Client) -> Result<Vec<u8>> {
+    fn stream(&self, client: &Client) -> Result<Box<dyn Read>> {
         let args = Query::with("id", self.id.clone())
             .arg("maxBitRate", self.stream_br)
             .arg(
@@ -106,7 +107,8 @@ impl Streamable for Video {
             )
             .arg("timeOffset", self.stream_offset)
             .build();
-        client.get_bytes("stream", args)
+        let response = client.get_stream("stream", args)?;
+        Ok(Box::new(response))
     }
 
     fn stream_url(&self, client: &Client) -> Result<String> {
