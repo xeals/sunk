@@ -1,6 +1,7 @@
 use std::io::Read;
 use std::iter;
 
+use base64::prelude::{Engine, BASE64_STANDARD};
 use md5;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use reqwest::Client as ReqwestClient;
@@ -103,6 +104,13 @@ impl SubsonicAuth {
             f = format
         )
     }
+
+    fn to_header(&self) -> String {
+        format!(
+            "Basic {}",
+            BASE64_STANDARD.encode(format!("{u}:{p}", u = self.user, p = self.password))
+        )
+    }
 }
 
 impl Client {
@@ -140,6 +148,19 @@ impl Client {
         let mut cli = self;
         cli.target_ver = ver;
         cli
+    }
+
+    /// Adjusts the client to use the subsonic user:pass for http basic auth.
+    /// This is useful if the server is behind a proxy configured with forward auth.
+    pub fn with_basic_auth(self) -> std::result::Result<Client, Box<dyn std::error::Error>> {
+        let mut headers = reqwest::header::HeaderMap::new();
+        headers.insert(
+            reqwest::header::AUTHORIZATION,
+            reqwest::header::HeaderValue::from_str(&self.auth.to_header())?,
+        );
+        let mut cli = self;
+        cli.reqclient = ReqwestClient::builder().default_headers(headers).build()?;
+        Ok(cli)
     }
 
     /// Internal helper function to construct a URL when the actual fetching is
