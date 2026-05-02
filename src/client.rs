@@ -108,21 +108,11 @@ impl SubsonicAuth {
 impl Client {
     /// Constructs a client to interact with a Subsonic instance.
     pub fn new(url: &str, user: &str, password: &str) -> Result<Client> {
-        let reqclient = ReqwestClient::builder().build()?;
-        Self::with_client(url, user, password, reqclient)
-    }
-
-    /// Constructs a client to interact with a Subsonic instance, accepting a Reqwest Client.
-    pub fn with_client(
-        url: &str,
-        user: &str,
-        password: &str,
-        reqclient: ReqwestClient,
-    ) -> Result<Client> {
         let auth = SubsonicAuth::new(user, password);
         let url = url.parse::<Url>()?;
         let ver = Version::from("1.14.0");
         let target_ver = ver;
+        let reqclient = ReqwestClient::builder().build()?;
 
         Ok(Client {
             url,
@@ -131,6 +121,12 @@ impl Client {
             ver,
             target_ver,
         })
+    }
+
+    /// Replaces the reqwest client with the provided instance.
+    pub fn with_client(mut self, reqclient: ReqwestClient) -> Client {
+        self.reqclient = reqclient;
+        self
     }
 
     /// Adjusts the client to target a specific version.
