@@ -13,7 +13,7 @@ pub type Result<T> = result::Result<T, self::Error>;
 #[derive(Debug, Error)]
 pub enum Error {
     /// Unable to connect to the Subsonic server.
-    #[error("Unable to connect to server: received {}", _0)]
+    #[error("Unable to connect to server: received {0}")]
     Connection(reqwest::StatusCode),
 
     /// Unable to recognize the URL provided in `Client` setup.
@@ -37,7 +37,7 @@ pub enum Error {
     Serde(#[from] serde_json::Error),
 
     /// For general, one-off errors.
-    #[error("{}", _0)]
+    #[error("{0}")]
     Other(&'static str),
 }
 
