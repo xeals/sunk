@@ -73,7 +73,10 @@ impl RadioStation {
     }
 
     pub fn delete(&self, client: &Client) -> Result<()> {
-        client.get("deleteInternetRadioStation", Query::with("id", self.id.clone()))?;
+        client.get(
+            "deleteInternetRadioStation",
+            Query::with("id", self.id.clone()),
+        )?;
         Ok(())
     }
 }

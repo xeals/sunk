@@ -167,6 +167,9 @@ impl Streamable for Song {
     fn stream(&self, client: &Client) -> Result<Box<dyn Read>> {
         let mut q = Query::with("id", self.id.clone());
         q.arg("maxBitRate", self.stream_br);
+        if let Some(tc) = self.stream_tc.as_ref() {
+            q.arg("format", tc.clone());
+        }
         let response = client.get_stream("stream", q)?;
         Ok(Box::new(response))
     }
@@ -178,7 +181,14 @@ impl Streamable for Song {
     }
 
     fn download(&self, client: &Client) -> Result<Vec<u8>> {
-        client.get_bytes("download", Query::with("id", self.id.clone()))
+        let mut q = Query::with("id", self.id.clone());
+        // Navidrome supports transcoding with downloads.
+        if let Some(tc) = self.stream_tc.as_ref() {
+            q.arg("format", tc.clone());
+        }
+        q.arg("maxBitRate", self.stream_br);
+
+        client.get_bytes("download", q)
     }
 
     fn download_url(&self, client: &Client) -> Result<String> {

@@ -25,7 +25,8 @@ impl Playlist {
     /// Fetches the songs contained in a playlist.
     pub fn songs(&self, client: &Client) -> Result<Vec<Song>> {
         if self.songs.len() as u64 != self.song_count {
-            Ok(get_playlist(client, self.id.clone())?.songs)
+            let remote_songs = get_playlist(client, self.id.clone())?.songs;
+            Ok(remote_songs)
         } else {
             Ok(self.songs.clone())
         }
@@ -107,7 +108,11 @@ pub fn get_playlist<I: Into<Id>>(client: &Client, id: I) -> Result<Playlist> {
 ///
 /// Since API version 1.14.0, the newly created playlist is returned. In earlier
 /// versions, an empty response is returned.
-pub fn create_playlist<I: Into<Id> + Clone>(client: &Client, name: String, songs: &[I]) -> Result<Option<Playlist>> {
+pub fn create_playlist<I: Into<Id> + Clone>(
+    client: &Client,
+    name: String,
+    songs: &[I],
+) -> Result<Option<Playlist>> {
     let song_ids: Vec<Id> = songs.iter().cloned().map(|id| id.into()).collect();
     let args = Query::new()
         .arg("name", name)

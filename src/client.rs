@@ -112,7 +112,6 @@ impl Client {
         let url = url.parse::<Url>()?;
         let ver = Version::from("1.14.0");
         let target_ver = ver;
-
         let reqclient = ReqwestClient::builder().build()?;
 
         Ok(Client {
@@ -122,6 +121,12 @@ impl Client {
             ver,
             target_ver,
         })
+    }
+
+    /// Replaces the reqwest client with the provided instance.
+    pub fn with_client(mut self, reqclient: ReqwestClient) -> Client {
+        self.reqclient = reqclient;
+        self
     }
 
     /// Adjusts the client to target a specific version.

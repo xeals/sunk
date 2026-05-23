@@ -51,7 +51,9 @@ impl Annotatable for Artist {
             return Err(Error::Other("rating must be between 0 and 5 inclusive"));
         }
 
-        let args = Query::with("id", self.id.clone()).arg("rating", rating).build();
+        let args = Query::with("id", self.id.clone())
+            .arg("rating", rating)
+            .build();
         client.get("setRating", args)?;
         Ok(())
     }
@@ -86,7 +88,9 @@ impl Annotatable for Album {
             return Err(Error::Other("rating must be between 0 and 5 inclusive"));
         }
 
-        let args = Query::with("id", self.id.clone()).arg("rating", rating).build();
+        let args = Query::with("id", self.id.clone())
+            .arg("rating", rating)
+            .build();
         client.get("setRating", args)?;
         Ok(())
     }
@@ -121,7 +125,9 @@ impl Annotatable for Song {
             return Err(Error::Other("rating must be between 0 and 5 inclusive"));
         }
 
-        let args = Query::with("id", self.id.clone()).arg("rating", rating).build();
+        let args = Query::with("id", self.id.clone())
+            .arg("rating", rating)
+            .build();
         client.get("setRating", args)?;
         Ok(())
     }
