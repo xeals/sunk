@@ -34,7 +34,7 @@ pub trait Streamable {
     /// The method returns a reader that implements `Read`, allowing
     /// for efficient streaming without loading the entire media into memory
     /// at once.
-    fn stream(&self, client: &Client) -> Result<Box<dyn Read>>;
+    fn stream(&self, client: &Client) -> Result<Box<dyn Read + Send>>;
 
     /// Returns a constructed URL for streaming.
     ///

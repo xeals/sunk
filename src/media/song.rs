@@ -164,7 +164,7 @@ impl Song {
 }
 
 impl Streamable for Song {
-    fn stream(&self, client: &Client) -> Result<Box<dyn Read>> {
+    fn stream(&self, client: &Client) -> Result<Box<dyn Read + Send>> {
         let mut q = Query::with("id", self.id.clone());
         q.arg("maxBitRate", self.stream_br);
         if let Some(tc) = self.stream_tc.as_ref() {
