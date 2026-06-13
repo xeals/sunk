@@ -98,7 +98,7 @@ impl Video {
 }
 
 impl Streamable for Video {
-    fn stream(&self, client: &Client) -> Result<Box<dyn Read>> {
+    fn stream(&self, client: &Client) -> Result<Box<dyn Read + Send>> {
         let args = Query::with("id", self.id.clone())
             .arg("maxBitRate", self.stream_br)
             .arg(
